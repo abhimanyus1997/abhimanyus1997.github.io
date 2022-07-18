@@ -63,9 +63,9 @@ nav {
     left: 0;
     right: 0;
     text-align: center;
-    opacity: 30%;
-    max-height: 8%;
-    width: auto;
+    opacity: 50%;
+    width: 60px;
+    height: auto;
     border-width: 0px;
     background-color: transparent;
     animation: text-pop-up-bottom 3s ease-in-out alternate infinite;
