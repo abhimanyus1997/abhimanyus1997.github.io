@@ -15,7 +15,7 @@ function landingPg() {
         i++;
         setTimeout(typeWriter, speed);
     }
-    document.getElementById("landingPg2").style.animation = "text-flicker-in-glow 4s ease-in-out 6s infinite";
+    document.getElementById("landingPg2").style.animation = "text-flicker-in-glow 4s ease-in-out 2s infinite";
 }
 
 //start drone
