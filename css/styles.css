@@ -1,0 +1,170 @@
+@import url('https://fonts.googleapis.com/css2?family=Expletus+Sans&family=Codystar&family=Raleway+Dots&family=Roboto:wght@100&display=swap');
+
+html,body {
+    padding: 0px;
+    margin: 0px;
+}
+
+:root {
+    --xi: 0px;
+    --yi: 0px;
+    --xf: 100px;
+    --yf: 100px;
+
+    /* drone positions at 25% randomized using js */
+    --drone-x: 0vw;
+    --drone-y: 0vh;
+}
+
+
+
+body {
+    background-color: rgb(0, 0, 0);
+    color: white;
+    font-family: 'Codystar', serif;
+}
+
+.drone {
+    margin-top: 20%;
+    max-width: 10%;
+    height: auto;
+    animation: floating 5s ease-in-out 2s infinite;
+}
+
+nav {
+    font-family: 'Expletus Sans';
+    color: white;
+    box-shadow: 1px 12px 33px 19px rgba(0, 0, 0, 0.71);
+    -webkit-box-shadow: 1px 12px 33px 19px rgba(0, 0, 0, 0.71);
+    -moz-box-shadow: 1px 12px 33px 19px rgba(0, 0, 0, 0.71);
+}
+
+.nav-item {
+    font-size: 1.1rem;
+    padding-right: 10px;
+}
+
+.nav-item:hover {
+    font-weight: bold;
+    font-size: 115%;
+}
+
+
+#nav-title {
+    font-size: 150%;
+    font-family: 'Codystar';
+}
+
+
+.link-white {
+    color: white;
+
+}
+
+
+
+.glass {
+    /* From https://css.glass */
+    background: rgba(255, 255, 255, 0.19);
+    border-radius: 1px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2.4px);
+    -webkit-backdrop-filter: blur(2.4px);
+
+
+}
+
+
+
+
+#welcome-msg {
+    font-family: monospace;
+}
+
+
+
+
+/* Animations comes here */
+@keyframes biggerTxt {
+    0% {
+        font-size: smaller;
+    }
+
+    50% {
+        font-size: larger;
+    }
+
+    100% {
+        font-size: smaller;
+    }
+
+
+}
+
+
+@keyframes floating {
+    0%{
+        transform: rotate(-10deg);
+    }
+    25% {
+        transform: scale(0.5,0.5) translate(var(--drone-x),var(--drone-y)) rotate(10deg);
+
+    }
+    50% {
+        transform: scale(2, 2) translate(40vw,20vh) rotate(20deg);
+    }
+    100% {
+        transform: scale(1, 1) translate(0vw, 20vh) rotate(-20deg);
+    }
+
+}
+
+@keyframes balltranslate {
+    0% {
+        transform: translate(var(--xi), var(--yi))
+    }
+
+    100% {
+        transform: translate(var(--xf), var(--yf))
+    }
+}
+
+
+
+
+/* Scroll bar */
+/* width */
+::-webkit-scrollbar {
+    width: 7px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background-color: rgb(252, 123, 3);
+    background-image: -webkit-linear-gradient(45deg,
+            rgba(255, 255, 255, .2) 25%,
+            transparent 25%,
+            transparent 50%,
+            rgba(255, 255, 255, .2) 50%,
+            rgba(255, 255, 255, .2) 75%,
+            transparent 75%,
+            transparent)
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(252, 57, 3);
+    background-image: -webkit-linear-gradient(45deg,
+            rgba(255, 255, 255, .2) 25%,
+            transparent 25%,
+            transparent 50%,
+            rgba(255, 255, 255, .2) 50%,
+            rgba(255, 255, 255, .2) 75%,
+            transparent 75%,
+            transparent)
+}
