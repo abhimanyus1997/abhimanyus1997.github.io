@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Expletus+Sans&family=Codystar&family=Raleway+Dots&family=Roboto:wght@100&display=swap');
 
-html,body {
+html,
+body {
     padding: 0px;
     margin: 0px;
 }
@@ -55,6 +56,21 @@ nav {
     font-family: 'Codystar';
 }
 
+#scrollarrow {
+    position: absolute;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    bottom: 10%;
+    text-align: center;
+    opacity: 30%;
+    max-height: 8%;
+    width: auto;
+    border-width: 0px;
+    background-color: transparent;
+    animation: text-pop-up-bottom 3s ease-in-out alternate infinite;
+}
 
 .link-white {
     color: white;
@@ -103,16 +119,19 @@ nav {
 
 
 @keyframes floating {
-    0%{
+    0% {
         transform: rotate(-10deg);
     }
+
     25% {
-        transform: scale(0.5,0.5) translate(var(--drone-x),var(--drone-y)) rotate(10deg);
+        transform: scale(0.5, 0.5) translate(var(--drone-x), var(--drone-y)) rotate(10deg);
 
     }
+
     50% {
-        transform: scale(2, 2) translate(40vw,20vh) rotate(20deg);
+        transform: scale(2, 2) translate(40vw, 20vh) rotate(20deg);
     }
+
     100% {
         transform: scale(1, 1) translate(0vw, 20vh) rotate(-20deg);
     }
