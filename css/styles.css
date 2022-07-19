@@ -29,7 +29,7 @@ body {
     margin-top: 20%;
     max-width: 10%;
     height: auto;
-    animation: floating 5s ease-in-out 2s infinite;
+    /* animation: floating 5s ease-in-out 2s infinite; */
 }
 
 nav {
@@ -63,8 +63,8 @@ nav {
     left: 0;
     right: 0;
     text-align: center;
-    opacity: 50%;
-    width: 0px;
+    opacity: 30%;
+    width: 10px;
     height: auto;
     border-width: 0px;
     background-color: transparent;

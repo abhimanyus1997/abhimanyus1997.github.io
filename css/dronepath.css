@@ -1,0 +1,30 @@
+:root{
+    --drone-svg-path: 'M-25-15C-105-55 115-55 0-125-30-130-165-140 5-65Q25-50 15-25L5-15C-10-10-16.6667-10-25-15';;
+    --drone-svg-path1: 'M-470.4 0S-323.232-89.2416-179.424-1.6128C-5.376 117.1968-60.256 145.3312 46.368-85.4784Q92.064-199.9872 223.776-98.9184L463.008 48.9216A.672.5376 0 00-469.728 0';
+    --drone-svg-path2: 'M1.2-28.8C75.6 47.2 111.6 114.4 189.2 114.4S329.2 52 329.2-25.6 266.8-166.4 189.2-165.6C111.6-164.8 82.8-108 12.4-28.8-58.8 41.6-113.2 114.4-190.8 114.4S-330.8 52-330.8-25.6-268.4-165.6-190.8-165.6-60.4-91.2 1.2-28.8Z'
+}
+
+
+#motion-drone {
+    offset-path: path(var(--drone-svg-path2));
+    offset-rotation: 0deg;
+    animation: follow-path 10s infinite alternate ease-in-out;
+    width: 80px;
+    height: 80px;
+    position: relative;
+    top: 50%;
+    left: 50%;
+    margin-top: 20%;
+    margin-left: 50%;
+    margin-right: auto;
+}
+
+@keyframes follow-path {
+    0% {
+        offset-distance: 0%;
+    }
+
+    100% {
+        offset-distance: 100%;
+    }
+}
