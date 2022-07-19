@@ -50,10 +50,14 @@ nav {
     font-size: 115%;
 }
 
-
+#landingPg1{
+    text-align: center;
+}
 #nav-title {
     font-size: 150%;
     font-family: 'Codystar';
+    font-weight: bolder;
+    margin: 0
 }
 
 #scrollarrow {

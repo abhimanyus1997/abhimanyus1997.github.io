@@ -20,26 +20,28 @@
 
 <body data-bs-spy="scroll" data-bs-target=".navbar" data-bs-offset="50" onload="typeWriter()">
 
-
+	<!-- Landing page -->
 	<header class="landingpageclass" id="landingpage">
 		<div class="mx-auto align-self-center ">
 			<h1 id="landingPg1"></h1>
-			<p class="mx-auto" style="font-family: 'Roboto';font-weight: bolder;"><span id="landingPg2">Robotics Engineer</span></p>
+			<p class="mx-auto" style="font-family: 'Roboto';font-weight: bolder;"><span id="landingPg2">Robotics
+					Engineer</span></p>
 		</div>
 		<div class="scroller container-fluid">
 			<a href="#mainpage"><img src="/res/down.png" id="scrollarrow" class="img-thumbnail"></a>
 		</div>
 	</header>
 
+	<!-- Navigation bar -->
+	<nav class="navbar navbar-expand-lg navbar-light" style="background-color: #2a9d8f ;">
+		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo03"
+			aria-controls="navbarTogglerDemo03" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+		<a class="navbar-brand mb-0 h1 ml-3" id="nav-title">&lt;&nbsp; Abhimanyu's Portfolio &nbsp;&gt;</a>
+		<div class="collapse navbar-collapse" id="navbarTogglerDemo03">
 
-
-	<!-- As a heading -->
-	<nav class="navbar navbar-dark navbar-expand-sm bg-dark py-3" id="mainpage">
-		<div class="container-fluid">
-			<span class="navbar-brand mb-0 h1" id="nav-title">&lt;&nbsp; Abhimanyu's Portfolio &nbsp;&gt;</span>
-
-			<!-- Links -->
-			<ul class="navbar-nav">
+			<ul class="navbar-nav mt-2 mt-lg-0 ml-5 ms-auto">
 				<li class="nav-item">
 					<a class="nav-link" href="#projects">Projects</a>
 				</li>
@@ -50,11 +52,11 @@
 					<a class="nav-link" href="#contact">Contact Me</a>
 				</li>
 			</ul>
-
 		</div>
-
 	</nav>
 
+
+	<!-- Main content of page -->
 	<div class="" id="projects">
 		<img src="/res/drone.svg" class="drone p-2 mx-auto float-right" id="motion-drone">
 	</div>
@@ -69,7 +71,8 @@
 		</div>
 		<div class="row mt-2 py-2">
 			<div class="col-4"></div>
-			<div id="welcome-msg" class=" d-flex col glass justify-content-center" onmouseover="startdrone()" onclick="destroydrone()">Randomize Drone Endpoint</div>
+			<div id="welcome-msg" class=" d-flex col glass justify-content-center" onmouseover="startdrone()"
+				onclick="destroydrone()">Randomize Drone Endpoint</div>
 			<div class="col-4"></div>
 		</div>
 	</div>
