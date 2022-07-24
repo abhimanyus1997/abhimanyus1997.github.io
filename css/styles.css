@@ -40,14 +40,34 @@ nav {
     -moz-box-shadow: 1px 12px 33px 19px rgba(0, 0, 0, 0.71);
 }
 
+
+.navbar-mylogo{
+
+}
+
+.navbar-toggler{
+    margin-right: 5vw;
+
+}
+
+.navbar-toggler:hover{
+    margin-right: 4.8vw;
+    background-color: #f1f1f134;
+    color: #d64161;
+}
+
 .nav-item {
     font-size: 1.1rem;
+    padding-left: 10px;
     padding-right: 10px;
+    margin: auto;
 }
 
 .nav-item:hover {
-    font-weight: bold;
-    font-size: 115%;
+    font-size: 110%;
+    border-bottom: 2px solid white;
+    padding-left: 10%;
+    margin: 10px;
 }
 
 #landingPg1{
