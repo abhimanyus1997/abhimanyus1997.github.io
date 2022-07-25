@@ -113,6 +113,12 @@ nav {
 
 }
 
+footer{
+    font-family: "Raleway Dots";
+    font-weight: bolder;
+    font-size: smaller;
+    box-shadow: 0px -10px 5px grey;
+}
 
 
 
