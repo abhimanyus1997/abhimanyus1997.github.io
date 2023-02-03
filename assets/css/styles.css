@@ -221,3 +221,23 @@ html, body {
   letter-spacing: -1px;
 }
 
+hr.star-dark:after {
+  color: #fff;
+  background-color: #18bc9c;
+}
+
+hr.star-light-dark:after {
+  color: #fff;
+  background-color: #18bc9c;
+}
+
+hr.star-light:after, hr.star-dark:after, hr.star-light-dark:after {
+  position: relative;
+  top: -0.8em;
+  display: inline-block;
+  padding: 0 .25em;
+  content: "";
+  font-family: FontAwesome;
+  font-size: 2em;
+}
+
