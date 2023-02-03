@@ -20,6 +20,10 @@ html, body {
 
 /* *Aniamtions* */
 
+.roll-in-left {
+  animation: roll-in-left 3s cubic-bezier(0.755, 0.050, 0.855, 0.060) both;
+}
+
 .flicker-2 {
   animation: flicker-2 3s linear infinite both;
 }
@@ -211,6 +215,7 @@ html, body {
 
 .text-stroke-animation text {
   font-family: Montserrat, sans-serif;
+  font-size: 2.6rem;
   font-weight: 600;
   font-style: normal;
   letter-spacing: -1px;
