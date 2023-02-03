@@ -7,5 +7,5 @@ function mailMe(){
     body = "Hi, I am " + name +"\nMail Regarding: " + msg
 	document.location.href = "mailto:abhimanyus1997@gmail.com?subject='Mail From "
         + encodeURIComponent(`${email}(${phone})`)
-        + "&body=" + encodeURIComponent(body);
+        + "&body=" + encodeURIComponent(msg);
 }
