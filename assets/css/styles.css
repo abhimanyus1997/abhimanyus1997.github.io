@@ -1,17 +1,17 @@
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
 :root {
   --light-green: #417d7a;
   --green: #1d5c63;
   --dark-green: #1a3c40;
   --beige: #ede6db;
   --white: #fff;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  list-style: none;
-  scroll-behavior: smooth;
 }
 
 .navbar {
@@ -200,5 +200,10 @@
 
 .social-button--npmjs::after {
   background: #c12127;
+}
+
+#mainNav {
+  overflow-wrap: break-word;
+  width: 100vw;
 }
 
