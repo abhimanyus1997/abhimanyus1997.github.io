@@ -207,3 +207,12 @@ html, body {
   width: 100vw;
 }
 
+/* Stroke animation */
+
+.text-stroke-animation text {
+  font-family: Montserrat, sans-serif;
+  font-weight: 600;
+  font-style: normal;
+  letter-spacing: -1px;
+}
+
