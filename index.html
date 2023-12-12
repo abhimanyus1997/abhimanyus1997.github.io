@@ -28,9 +28,14 @@
     <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/animations.css">
     <link rel="stylesheet" href="assets/css/particles.css">
+    <script src="https://cdn.jsdelivr.net/npm/simple-parallax-js@5.6.1/dist/simpleParallax.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
 </head>
 
 <body id="page-top" data-bs-spy="scroll" data-bs-target="#mainNav" data-bs-offset="72">
+    <canvas></canvas>
+
     <nav class="navbar navbar-light navbar-expand-lg fixed-top bg-secondary d-inline rubberBand animated text-uppercase particles-js"
         data-bss-disabled-mobile="true" id="mainNav" style="box-shadow: -3px 5px 4px var(--bs-navbar-color);">
         <div class="container"><a class="navbar-brand d-inline" href="#landingTitle"
@@ -65,9 +70,12 @@
             <svg height="100" stroke="#162029" stroke-width="1.5" class="text-stroke-animation" width="100%">
                 <text x="50%" dominant-baseline="middle" text-anchor="middle" y="50%">Abhimanyu Singh</text>
             </svg>
-            <!-- End: Heading_Stroke --><img class="rounded-circle img-fluid" src="assets/img/profile.png"
-                style="display: block;margin-left: auto;margin-right: auto;width: 20vw;height: 20vw;/*width: 75px;*//*height: 75px;*//*border-radius: 50%;*/filter: drop-shadow(0 10px 20px rgba(181,184,186,0.77));box-shadow: 1px 5px 10px 5px var(--green);animation: roll-in-left 2s ease-out 2s both;/*animation: roll-in-left 3s cubic-bezier(0.755, 0.050, 0.855, 0.060) 2s both;*/"><br>
-            <h2 id="landingTitle-1" class="text-capitalize fs-5 fw-light focus-in-contract mt-2 mb-1"
+            <!-- End: Heading_Stroke -->
+            <!-- <img src="assets/img/profile.png" class="profileParallax"/> -->
+            <!-- Consider placing this within the body section where you want the image to appear -->
+            <img id="profilePic" class="rounded-circle img-fluid profile-pic" src="assets/img/profile.jpg">
+
+                <h2 id="landingTitle-1" class="text-capitalize fs-5 fw-light focus-in-contract mt-2 mb-1"
                 style="font-family: Montserrat, sans-serif;">A passionate <span class="hover-underline-animation"
                     style="font-weight: bold;">Robotics Engineer</span> from Jaipur, India</h2>
             <hr data-bss-hover-animate="pulse" class="star-light">
@@ -80,6 +88,7 @@
             </h2>
         </div>
     </header>
+
     <section id="portfolio" class="portfolio">
         <div class="container" style="/*border-width: -7px;*/">
             <h2 class="text-uppercase text-center text-secondary">Portfolio</h2>
@@ -436,6 +445,10 @@
     <script src="http://threejs.org/examples/js/libs/stats.min.js"></script>
     <script src="assets/js/particle.js"></script>
     <script src="assets/js/script.js"></script>
+    <script>
+        var image = document.getElementsByClassName('profileParallax');
+        new simpleParallax(image);
+    </script>
 </body>
 
 </html>

@@ -4,6 +4,8 @@ html, body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  /* overflow-y: auto; */
+    /* This will enable vertical scrolling if the content exceeds the viewport height */
 }
 
 :root {
@@ -223,12 +225,12 @@ html, body {
 
 hr.star-dark:after {
   color: #fff;
-  background-color: #18bc9c;
+  background-color: #000000;
 }
 
 hr.star-light-dark:after {
   color: #fff;
-  background-color: #18bc9c;
+  background-color: rgb(0, 0, 0);
 }
 
 hr.star-light:after, hr.star-dark:after, hr.star-light-dark:after {
@@ -236,8 +238,54 @@ hr.star-light:after, hr.star-dark:after, hr.star-light-dark:after {
   top: -0.8em;
   display: inline-block;
   padding: 0 .25em;
-  content: "";
-  font-family: FontAwesome;
+  content: "x";
+  font-family: FontAwesome, 'Courier New', Courier, monospace;
   font-size: 2em;
 }
 
+/* Scrollbar */
+/* Width */
+::-webkit-scrollbar {
+  width: 12px;
+  /* You can adjust this value to make the scrollbar wider */
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  /* You can change this color */
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #888;
+  /* You can change this color */
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+  /* You can change this color */
+}
+
+/* Profile picture */
+.profile-pic {
+  display: block;
+  margin: 0 auto;
+  width: 10vw;
+  height: 10vw;
+  border-radius: 50%;
+  filter: drop-shadow(0 10px 20px rgba(181, 184, 186, 0.77));
+  transition: transform 0.3s ease-in-out;
+}
+.parallax {
+  transform: scale(1.5);
+}
+
+/* adding cursor
+https: //dev.to/uuuuuulala/coding-an-interactive-and-damn-satisfying-cursor-7-simple-steps-2kb-of-code-1c8b */
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+}
