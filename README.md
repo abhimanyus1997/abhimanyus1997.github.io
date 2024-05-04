@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Abhimanyu's Portfolio
 
-## Getting Started
+This portfolio website is crafted using Next.js, React.js, Tailwind CSS, Shadcn UI, and Aceternity UI.
 
-First, run the development server:
+## Technologies Used:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Next.js**: Next.js is a React framework that enables functionality like server-side rendering and generating static websites for React-based web applications.
+  
+- **React.js**: React.js is a JavaScript library for building user interfaces, enabling the creation of interactive UI components.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Tailwind CSS**: Tailwind CSS is a utility-first CSS framework that provides pre-built classes to style web applications, allowing for rapid development and customization.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Shadcn UI**: Shadcn UI is a UI component library that offers ready-to-use components for building modern user interfaces.
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+- **Aceternity UI**: Aceternity UI provides a collection of UI components designed to enhance the user experience of web applications.
 
-## Learn More
+## Features:
 
-To learn more about Next.js, take a look at the following resources:
+- **Dynamic Content**: Utilizing Next.js, the portfolio dynamically renders content, enabling seamless navigation and efficient content management.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Responsive Design**: Tailwind CSS facilitates responsive design, ensuring the portfolio website adapts seamlessly to various screen sizes and devices.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+- **Interactive Components**: Leveraging React.js, the portfolio incorporates interactive components to engage users and enhance usability.
 
-## Deploy on Vercel
+- **Stylish UI Elements**: Shadcn UI and Aceternity UI contribute stylish UI elements, enhancing the visual appeal and user experience of the portfolio.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Getting Started:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+1. **Clone the Repository**: 
+   ```
+   git clone <repository-url>
+   ```
+
+2. **Install Dependencies**:
+   ```
+   cd <project-folder>
+   npm install
+   ```
+
+3. **Run the Development Server**:
+   ```
+   npm run dev
+   ```
+
+4. **Open in Browser**:
+   Open your web browser and navigate to `http://localhost:3000` to view the portfolio website.
+
+## Contributing:
+
+Contributions are welcome! If you'd like to contribute to this portfolio project, feel free to submit a pull request or open an issue.
+
+## License:
+
+This project is licensed under the [MIT License](LICENSE). Feel free to use, modify, and distribute this code for personal or commercial projects.
