@@ -1,0 +1,25 @@
+/* FloatingButton.module.css */
+.floatingButtonContainer {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+
+.floatingButton {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: rgb(31, 41, 55);
+    color: white;
+    border: none;
+    padding: 0;
+    /* Remove padding */
+    font-size: 1.5rem;
+    box-shadow: 0 2px 4px darkslategray;
+    cursor: pointer;
+    /* Add cursor pointer */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

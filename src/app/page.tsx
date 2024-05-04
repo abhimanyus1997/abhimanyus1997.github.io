@@ -2,12 +2,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useScroll, useTransform } from "framer-motion";
 import { BackgroundBeams } from "@/components/ui/background-beams";
-import Navbar from "@/components/navbar";
+// import Navbar from "@/components/navbar";
 import { GoogleGeminiEffect } from "@/components/ui/google-gemini-effect";
 import Image from "next/image";
 import { StickyScroll } from "@/components/ui/sticky-scroll-reveal";
-import Head from 'next/head';
 import { TracingBeam } from "@/components/ui/tracing-beam";
+import { Navbar } from "@/components/navbar";
+import { SheetDemo } from "@/components/mobilenavbar";
 
 
 export default function PortfolioPage() {
@@ -141,8 +142,8 @@ export default function PortfolioPage() {
     },
   ];
 
-
   const [showNavbar, setShowNavbar] = useState(false);
+  const [isMobile, setIsMobile] = useState(false); // State to track if device is mobile
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -155,11 +156,19 @@ export default function PortfolioPage() {
       }
     };
 
-    // Add scroll event listener
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768); // Assuming mobile width is <= 768px
+    };
+
+    // Add event listeners
     window.addEventListener("scroll", handleScroll);
+    window.addEventListener("resize", checkMobile);
 
     // Clean up
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", checkMobile);
+    };
   }, []);
 
   const { scrollYProgress } = useScroll({
@@ -175,13 +184,12 @@ export default function PortfolioPage() {
 
   return (
     <div>
-      <Head>
-        <title>Abhimanyu's Portfolio</title>
-        <meta name="viewport" content="initial-scale=1.0, width=device-width" />
-      </Head>
       <BackgroundBeams />
       <div className="min-h-screen bg-black">
-        {showNavbar && <Navbar />}
+        {/* Render Navbar only if not mobile */}
+        {!isMobile && <Navbar />}
+
+
         <div
           className="h-[200vh] bg-black w-full dark:border dark:border-white/[0.1] rounded-md relative pt-20 overflow-clip"
           ref={ref}
@@ -208,6 +216,7 @@ export default function PortfolioPage() {
               projects and experiences.
             </p>
 
+            {isMobile && <SheetDemo />}
 
             <TracingBeam className="px-6">
               <div className="max-w-2xl mx-auto antialiased pt-4 relative">
