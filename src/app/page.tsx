@@ -2,10 +2,146 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useScroll, useTransform } from "framer-motion";
 import { BackgroundBeams } from "@/components/ui/background-beams";
-import Navbar from "@/components/navbar"; // Import the Navbar component
+import Navbar from "@/components/navbar";
 import { GoogleGeminiEffect } from "@/components/ui/google-gemini-effect";
+import Image from "next/image";
+import { StickyScroll } from "@/components/ui/sticky-scroll-reveal";
+import Head from 'next/head';
+import { TracingBeam } from "@/components/ui/tracing-beam";
+
 
 export default function PortfolioPage() {
+  //tracing beam content
+  const beam_dummyContent = [
+    {
+      title: "Lorem Ipsum Dolor Sit Amet",
+      description: (
+        <>
+          <p>
+            Sit duis est minim proident non nisi velit non consectetur. Esse
+            adipisicing laboris consectetur enim ipsum reprehenderit eu deserunt
+            Lorem ut aliqua anim do. Duis cupidatat qui irure cupidatat incididunt
+            incididunt enim magna id est qui sunt fugiat. Laboris do duis pariatur
+            fugiat Lorem aute sit ullamco. Qui deserunt non reprehenderit dolore
+            nisi velit exercitation Lorem qui do enim culpa. Aliqua eiusmod in
+            occaecat reprehenderit laborum nostrud fugiat voluptate do Lorem culpa
+            officia sint labore. Tempor consectetur excepteur ut fugiat veniam
+            commodo et labore dolore commodo pariatur.
+          </p>
+          <p>
+            Dolor minim irure ut Lorem proident. Ipsum do pariatur est ad ad
+            veniam in commodo id reprehenderit adipisicing. Proident duis
+            exercitation ad quis ex cupidatat cupidatat occaecat adipisicing.
+          </p>
+          <p>
+            Tempor quis dolor veniam quis dolor. Sit reprehenderit eiusmod
+            reprehenderit deserunt amet laborum consequat adipisicing officia qui
+            irure id sint adipisicing. Adipisicing fugiat aliqua nulla nostrud.
+            Amet culpa officia aliquip deserunt veniam deserunt officia
+            adipisicing aliquip proident officia sunt.
+          </p>
+        </>
+      ),
+      badge: "React",
+      image:
+        "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&q=80&w=3540&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    },
+    {
+      title: "Lorem Ipsum Dolor Sit Amet",
+      description: (
+        <>
+          <p>
+            Ex irure dolore veniam ex velit non aute nisi labore ipsum occaecat
+            deserunt cupidatat aute. Enim cillum dolor et nulla sunt exercitation
+            non voluptate qui aliquip esse tempor. Ullamco ut sunt consectetur
+            sint qui qui do do qui do. Labore laborum culpa magna reprehenderit ea
+            velit id esse adipisicing deserunt amet dolore. Ipsum occaecat veniam
+            commodo proident aliqua id ad deserunt dolor aliquip duis veniam sunt.
+          </p>
+          <p>
+            In dolore veniam excepteur eu est et sunt velit. Ipsum sint esse
+            veniam fugiat esse qui sint ad sunt reprehenderit do qui proident
+            reprehenderit. Laborum exercitation aliqua reprehenderit ea sint
+            cillum ut mollit.
+          </p>
+        </>
+      ),
+      badge: "Changelog",
+      image:
+        "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80&w=3540&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    },
+    {
+      title: "Lorem Ipsum Dolor Sit Amet",
+      description: (
+        <>
+          <p>
+            Ex irure dolore veniam ex velit non aute nisi labore ipsum occaecat
+            deserunt cupidatat aute. Enim cillum dolor et nulla sunt exercitation
+            non voluptate qui aliquip esse tempor. Ullamco ut sunt consectetur
+            sint qui qui do do qui do. Labore laborum culpa magna reprehenderit ea
+            velit id esse adipisicing deserunt amet dolore. Ipsum occaecat veniam
+            commodo proident aliqua id ad deserunt dolor aliquip duis veniam sunt.
+          </p>
+        </>
+      ),
+      badge: "Launch Week",
+      image:
+        "https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&q=80&w=3506&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    },
+  ];
+
+
+  // Sticky Scroll Reveal
+  const content = [
+    {
+      title: "Collaborative Editing",
+      description:
+        "Work together in real time with your team, clients, and stakeholders. Collaborate on documents, share ideas, and make decisions quickly. With our platform, you can streamline your workflow and increase productivity.",
+      content: (
+        <div className="h-full w-full bg-[linear-gradient(to_bottom_right,var(--cyan-500),var(--emerald-500))] flex items-center justify-center text-white">
+          Collaborative Editing
+        </div>
+      ),
+    },
+    {
+      title: "Real time changes",
+      description:
+        "See changes as they happen. With our platform, you can track every modification in real time. No more confusion about the latest version of your project. Say goodbye to the chaos of version control and embrace the simplicity of real-time updates.",
+      content: (
+        <div className="h-full w-full  flex items-center justify-center text-white">
+          <Image
+            src="/images/img1.jpg"
+            width={300}
+            height={300}
+            className="h-full w-full object-cover"
+            alt="linear board demo"
+          />
+        </div>
+      ),
+    },
+    {
+      title: "Version control",
+      description:
+        "Experience real-time updates and never stress about version control again. Our platform ensures that you're always working on the most recent version of your project, eliminating the need for constant manual updates. Stay in the loop, keep your team aligned, and maintain the flow of your work without any interruptions.",
+      content: (
+        <div className="h-full w-full bg-[linear-gradient(to_bottom_right,var(--orange-500),var(--yellow-500))] flex items-center justify-center text-white">
+          Version control
+        </div>
+      ),
+    },
+    {
+      title: "Running out of content",
+      description:
+        "Experience real-time updates and never stress about version control again. Our platform ensures that you're always working on the most recent version of your project, eliminating the need for constant manual updates. Stay in the loop, keep your team aligned, and maintain the flow of your work without any interruptions.",
+      content: (
+        <div className="h-full w-full bg-[linear-gradient(to_bottom_right,var(--cyan-500),var(--emerald-500))] flex items-center justify-center text-white">
+          Running out of content
+        </div>
+      ),
+    },
+  ];
+
+
   const [showNavbar, setShowNavbar] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -39,6 +175,10 @@ export default function PortfolioPage() {
 
   return (
     <div>
+      <Head>
+        <title>Abhimanyu's Portfolio</title>
+        <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+      </Head>
       <BackgroundBeams />
       <div className="min-h-screen bg-black">
         {showNavbar && <Navbar />}
@@ -67,6 +207,38 @@ export default function PortfolioPage() {
               Welcome to my portfolio page! Here you'll find some of my recent
               projects and experiences.
             </p>
+
+
+            <TracingBeam className="px-6">
+              <div className="max-w-2xl mx-auto antialiased pt-4 relative">
+                {beam_dummyContent.map((item, index) => (
+                  <div key={`content-${index}`} className="mb-10">
+                    <h2 className="bg-black text-white rounded-full text-sm w-fit px-4 py-1 mb-4">
+                      {item.badge}
+                    </h2>
+
+                    <p className="text-xl mb-4">{item.title}</p>
+
+                    <div className="text-sm  prose prose-sm dark:prose-invert">
+                      {item?.image && (
+                        <Image
+                          src={item.image}
+                          alt="blog thumbnail"
+                          height="1000"
+                          width="1000"
+                          className="rounded-lg mb-10 object-cover"
+                        />
+                      )}
+                      {item.description}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TracingBeam>
+
+            <StickyScroll content={content} />
+
+
             <div className="mt-8">
               <h2 className="text-2xl sm:text-3xl font-bold mb-4">Projects</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
