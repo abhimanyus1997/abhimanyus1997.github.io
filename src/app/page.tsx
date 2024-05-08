@@ -248,10 +248,9 @@ export default function PortfolioPage() {
             <StickyScroll content={content} />
 
 
-            <div className="mt-8">
+            {/*<div className="mt-8">
               <h2 className="text-2xl sm:text-3xl font-bold mb-4">Projects</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                {/* Example project cards */}
                 <div className="bg-gray-800 p-6 rounded-lg">
                   <h3 className="text-xl font-bold mb-2">Project 1</h3>
                   <p>Description of Project 1...</p>
@@ -261,13 +260,14 @@ export default function PortfolioPage() {
                   <p>Description of Project 2...</p>
                 </div>
               </div>
-            </div>
+            </div> */}
+            
             <div className="mt-8">
               <h2 className="text-2xl sm:text-3xl font-bold mb-4">Skills</h2>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <li>Deep Learning (Tensorflow/Keras/PyTorch)</li>
-                <li>Computer Vision (OpenCV/SkImage)</li>
-                <li>JavaScript (React, Node.js)</li>
+                <li>Computer Vision (OpenCV/KerasCV/SkImage)</li>
+                <li>JavaScript (NextJS, React, Node.js)</li>
                 <li>HTML5 & CSS3 (Tailwind CSS)</li>
                 <li>Python (Django)</li>
                 <li>Database Management (SQL, MongoDB)</li>
@@ -283,13 +283,13 @@ export default function PortfolioPage() {
               {/* <p>Phone: +1234567890</p> */}
               <p>
                 LinkedIn:{" "}
-                <a href="https://www.linkedin.com/in/abhimanyu-singh/">
+                <a href="https://www.linkedin.com/in/abhimanyus1997">
                   Abhimanyu Singh
                 </a>
               </p>
               <p>
                 GitHub:{" "}
-                <a href="https://github.com/abhimanyu-singh">abhimanyu-singh</a>
+                <a href="https://github.com/abhimanyus1997">abhimanyu-singh</a>
               </p>
             </div>
           </div>
