@@ -158,3 +158,21 @@ body {
     background-color: #23153c;
     border-bottom: 1px solid rgba(255, 255, 255, 0.4);
 }
+
+/* For mobile devices */
+@media (max-width: 600px) {
+    /* Hide navbar by default on mobile */
+    #main-nav {
+        transform: translateY(-100%);
+        opacity: 0;
+        transition: all 0.3s ease-in-out;
+    }
+
+    /* Class to show navbar on mobile */
+    #main-nav.show-nav {
+        transform: translateY(0);
+        opacity: 1;
+        background-color: #23153c;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+    }
+}
