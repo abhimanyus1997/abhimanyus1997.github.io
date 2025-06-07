@@ -2,8 +2,9 @@
 @import url("https://fonts.cdnfonts.com/css/thegoodmonolith");
 
 body {
-    font-family: "TheGoodMonolith",'Poppins', sans-serif;
+    font-family: "TheGoodMonolith", 'Poppins', sans-serif;
     scroll-behavior: smooth;
+    overflow-x: hidden;
 }
 
 .gradient-bg {
@@ -17,6 +18,30 @@ body {
     width: 100%;
     height: 100%;
     z-index: -1;
+    opacity: 0.8;
+    transition: opacity 0.5s ease;
+}
+
+/* Fade-in animation for page load */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Scale-up animation for hover effects */
+@keyframes scaleUp {
+    from {
+        transform: scale(1);
+    }
+    to {
+        transform: scale(1.05);
+    }
 }
 
 /* Mobile responsiveness tweaks */
@@ -32,6 +57,13 @@ body {
     backdrop-filter: blur(10px);
     background: rgba(30, 41, 59, 0.7);
     border: 1px solid rgba(100, 116, 139, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    animation: fadeIn 0.6s ease-out forwards;
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
 }
 
 .timeline::before {
@@ -40,8 +72,18 @@ body {
     top: 0;
     bottom: 0;
     width: 2px;
-    background: #a855f7;
+    background: linear-gradient(to bottom, #a855f7, #3b82f6);
     left: 20px;
+    animation: timelineGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes timelineGlow {
+    0% {
+        box-shadow: 0 0 5px rgba(168, 85, 247, 0.5);
+    }
+    100% {
+        box-shadow: 0 0 15px rgba(168, 85, 247, 0.8);
+    }
 }
 
 .skill-bar {
@@ -49,16 +91,46 @@ body {
     background: #334155;
     border-radius: 4px;
     overflow: hidden;
+    position: relative;
 }
 
 .skill-progress {
     height: 100%;
     border-radius: 4px;
-    background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+    background: linear-gradient(90deg, #a855f7, #3b82f6);
+    transition: width 1.5s ease-in-out;
+    position: relative;
+    overflow: hidden;
+}
+
+.skill-progress::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.2) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.2) 75%, transparent 75%, transparent);
+    background-size: 30px 30px;
+    animation: moveStripes 2s linear infinite;
+}
+
+@keyframes moveStripes {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 30px 0;
+    }
+}
+
+.project-card {
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+    animation: fadeIn 0.8s ease-out forwards;
 }
 
 .project-card:hover {
-    transform: translateY(-8px);
+    transform: translateY(-8px) scale(1.02);
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
 }
 
@@ -66,6 +138,7 @@ body {
     position: relative;
     display: inline-block;
     padding-bottom: 8px;
+    animation: fadeIn 0.6s ease-out forwards;
 }
 
 .section-title::after {
@@ -73,32 +146,32 @@ body {
     position: absolute;
     bottom: 0;
     left: 0;
-    width: 50%;
+    width: 0;
     height: 3px;
-    background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+    background: linear-gradient(90deg, #a855f7, #3b82f6);
+    transition: width 0.5s ease;
+}
+
+.section-title:hover::after {
+    width: 50%;
 }
 
 .hi-section {
     font-family: 'Poppins', sans-serif;
     color: white;
+    animation: slideInLeft 1s ease-out forwards;
 }
 
-/* effect-underline
-.hi-section-name:after {
-	content: '';
-  position: absolute;
-  left: 0;
-  display: inline-block;
-  height: 1em;
-  width: 100%;
-  border-bottom: 1px solid;
-  margin-top: 10px;
-  opacity: 0;
-	-webkit-transition: opacity 0.35s, -webkit-transform 0.35s;
-	transition: opacity 0.35s, transform 0.35s;
-	-webkit-transform: scale(0,1);
-	transform: scale(0,1);
-} */
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
 
 .hi-section-name {
     position: relative;
@@ -116,8 +189,8 @@ body {
     left: -100%;
     width: 100%;
     height: 100%;
-    background-color: rgb(246, 10, 155);
-    transition: transform 0.4s ease;
+    background: linear-gradient(90deg, transparent, rgba(246, 10, 155, 0.4), transparent);
+    transition: transform 0.6s ease;
     z-index: -1;
 }
 
@@ -129,10 +202,8 @@ body {
 .hi-section-name:hover,
 .hi-section-name:active {
     color: white;
-    padding: 1%;
+    text-shadow: 0 0 10px rgba(246, 10, 155, 0.8);
 }
-
-
 
 .hero-section {
     background: rgba(0, 0, 0, 0.2);
@@ -140,39 +211,142 @@ body {
     backdrop-filter: blur(1px);
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 5px;
+    animation: fadeIn 1s ease-out forwards;
 }
 
-
-
-/* Hide navbar by default on top */
+/* Navigation Animations */
 #main-nav {
     transform: translateY(-100%);
     opacity: 0;
-    transition: all 0.3s ease-in-out;
+    transition: all 0.5s ease-in-out;
 }
 
-/* Class to show navbar */
 #main-nav.show-nav {
     transform: translateY(0);
     opacity: 1;
-    background-color: #23153c;
+    background: linear-gradient(135deg, rgba(35, 21, 60, 0.9), rgba(30, 41, 59, 0.9));
     border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+
+.nav-link {
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: #a855f7;
+    transition: width 0.3s ease;
+}
+
+.nav-link:hover::after {
+    width: 100%;
+}
+
+/* Mobile Menu Animation */
+#mobile-menu {
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+}
+
+#mobile-menu.show {
+    max-height: 500px;
+    opacity: 1;
 }
 
 /* For mobile devices */
 @media (max-width: 600px) {
-    /* Hide navbar by default on mobile */
     #main-nav {
         transform: translateY(-100%);
         opacity: 0;
-        transition: all 0.3s ease-in-out;
+        transition: all 0.5s ease-in-out;
     }
 
-    /* Class to show navbar on mobile */
     #main-nav.show-nav {
         transform: translateY(0);
         opacity: 1;
-        background-color: #23153c;
+        background: linear-gradient(135deg, rgba(35, 21, 60, 0.9), rgba(30, 41, 59, 0.9));
         border-bottom: 1px solid rgba(255, 255, 255, 0.4);
     }
+}
+
+
+/* Skills Section */
+/* Remove skill bar styles */
+.skill-bar,
+.skill-progress {
+    display: none; /* Remove skill bars entirely */
+}
+
+/* New styles for text-based proficiency */
+.skill-item {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.skill-item.animate {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.proficiency {
+    font-size: 0.9rem;
+    font-weight: 500;
+    position: relative;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: rgba(168, 85, 247, 0.1);
+    transition: background 0.3s ease, transform 0.3s ease;
+}
+
+.proficiency:hover {
+    background: rgba(168, 85, 247, 0.3);
+    transform: scale(1.05);
+}
+
+/* Update existing card styles to ensure consistency */
+.card {
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(100, 116, 139, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    animation: fadeIn 0.6s ease-out forwards;
+}
+
+.card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Ensure section title animations remain */
+.section-title {
+    position: relative;
+    display: inline-block;
+    padding-bottom: 8px;
+    animation: fadeIn 0.6s ease-out forwards;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #a855f7, #3b82f6);
+    transition: width 0.5s ease;
+}
+
+.section-title:hover::after {
+    width: 50%;
 }
