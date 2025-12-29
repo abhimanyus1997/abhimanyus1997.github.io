@@ -83,12 +83,17 @@
             box-shadow: 0 0 30px -10px rgba(163, 230, 53, 0.15);
         }
 
-        /* Fluid Professional Blob */
+        /* Fluid Professional Blob with Elastic Transition */
         .blob-mask {
             border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-            transition: border-radius 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            /* Elastic timing function for that 'bobbly' feel */
+            transition: border-radius 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             overflow: hidden;
             position: relative;
+            /* Remove background/border to avoid seeing the rectangle corners */
+            background: transparent;
+            mask-image: -webkit-radial-gradient(white, black);
+            /* Fix for some browser clipping bugs */
         }
 
         /* Hover Color Reveal for Background */
@@ -194,7 +199,7 @@
         }
 
         .parallax-item {
-            transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
             will-change: transform;
         }
 
@@ -218,29 +223,50 @@
             position: absolute;
             bottom: 20px;
             right: 20px;
-            width: 36px;
-            height: 36px;
+            width: 42px;
+            height: 42px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: rgba(163, 230, 53, 0.15);
             border: 1px solid rgba(163, 230, 53, 0.4);
             color: #a3e635;
-            border-radius: 8px;
+            border-radius: 50%;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             z-index: 40;
         }
 
         .btn-random:hover {
             background: #a3e635;
             color: #000;
-            box-shadow: 0 0 15px rgba(163, 230, 53, 0.5);
+            transform: scale(1.1) rotate(180deg);
+            box-shadow: 0 0 20px rgba(163, 230, 53, 0.6);
+        }
+
+        /* Mobile Calibration Overlay */
+        #mobile-calib {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(163, 230, 53, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(163, 230, 53, 0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 10px;
+            color: #a3e635;
+            z-index: 100;
+            pointer-events: none;
         }
     </style>
 </head>
 
 <body class="antialiased selection:bg-primary selection:text-black">
+
+    <div id="mobile-calib" class="font-mono">Motion Parallax Active</div>
 
     <!-- Background -->
     <div class="bg-blob blob-1 animate-blob"></div>
@@ -328,7 +354,7 @@
                     </div>
                 </div>
 
-                <!-- Profile Section with Fixed Blob Mask & Inside Cutout (Trimming) -->
+                <!-- Profile Section with Fixed Blob Mask & Accelerometer Support -->
                 <div class="order-1 lg:order-2 flex justify-center lg:justify-end relative parallax-container"
                     id="profile-container">
                     <div class="relative w-72 h-72 md:w-[480px] md:h-[480px] flex items-center justify-center">
@@ -338,8 +364,8 @@
                             data-depth="-0.2"></div>
 
                         <!-- Combined Blob Mask Layer (Ensures Trimming) -->
-                        <div class="blob-mask border border-white/10 shadow-2xl scale-110 w-full h-full bg-cardDark z-10"
-                            id="main-blob">
+                        <!-- Removed border/bg to eliminate rectangular perception -->
+                        <div class="blob-mask scale-110 w-full h-full z-10" id="main-blob">
                             <!-- Background Image -->
                             <div class="absolute inset-0 parallax-item" data-depth="0.1" data-rotate="0.02">
                                 <img src="./static/PXL_20251116_062127714.PORTRAIT.jpg" alt="Background Profile"
@@ -354,8 +380,8 @@
                             </div>
                         </div>
 
-                        <!-- Mini Randomize Button -->
-                        <button class="btn-random interactable" id="randomize-shape" title="Randomize Module Shape">
+                        <!-- Mini Randomize Button (Now bobbier) -->
+                        <button class="btn-random" id="randomize-shape" title="Randomize Module Shape">
                             <i class="fas fa-shuffle"></i>
                         </button>
 
@@ -1425,48 +1451,90 @@
             if (e.key === 'Enter') onMessageSend();
         });
 
-        // Advanced 3D Parallax with Fluid Movement
+        // --- Integrated Parallax Logic (Mouse + Accelerometer) ---
         const container = document.getElementById('profile-container');
         const items = document.querySelectorAll('.parallax-item');
+        const calibOverlay = document.getElementById('mobile-calib');
 
-        if (!window.matchMedia("(hover: none)").matches) {
+        let targetX = 0, targetY = 0;
+        let currentX = 0, currentY = 0;
+        const lerpFactor = 0.1; // Smoothness
+
+        function updateParallax() {
+            // Smooth interpolation
+            currentX += (targetX - currentX) * lerpFactor;
+            currentY += (targetY - currentY) * lerpFactor;
+
+            items.forEach(item => {
+                const depth = parseFloat(item.getAttribute('data-depth'));
+                const rotateFactor = parseFloat(item.getAttribute('data-rotate') || 0);
+
+                const moveX = currentX * depth * 80;
+                const moveY = currentY * depth * 80;
+                const rotateX = -currentY * rotateFactor * 40;
+                const rotateY = currentX * rotateFactor * 40;
+
+                item.style.transform = `translate3d(${moveX}px, ${moveY}px, 0) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            });
+            requestAnimationFrame(updateParallax);
+        }
+        updateParallax();
+
+        // Mouse Event
+        if (window.matchMedia("(pointer: fine)").matches) {
             container.addEventListener('mousemove', (e) => {
                 const { width, height, left, top } = container.getBoundingClientRect();
-                const xPct = (e.clientX - left) / width - 0.5;
-                const yPct = (e.clientY - top) / height - 0.5;
-
-                items.forEach(item => {
-                    const depth = parseFloat(item.getAttribute('data-depth'));
-                    const rotateFactor = parseFloat(item.getAttribute('data-rotate') || 0);
-                    const moveX = xPct * depth * 60;
-                    const moveY = yPct * depth * 60;
-                    const rotateX = -yPct * rotateFactor * 40;
-                    const rotateY = xPct * rotateFactor * 40;
-                    item.style.transform = `translate3d(${moveX}px, ${moveY}px, 0) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-                });
+                targetX = (e.clientX - left) / width - 0.5;
+                targetY = (e.clientY - top) / height - 0.5;
             });
-
             container.addEventListener('mouseleave', () => {
-                items.forEach(item => {
-                    item.style.transform = 'translate3d(0, 0, 0) rotateX(0) rotateY(0)';
-                });
+                targetX = 0;
+                targetY = 0;
             });
         }
 
+        // Accelerometer Event (Mobile)
+        async function initMotion() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                try {
+                    const permission = await DeviceOrientationEvent.requestPermission();
+                    if (permission === 'granted') startMotionListener();
+                } catch (e) { console.error("Motion permission denied"); }
+            } else if (window.DeviceOrientationEvent) {
+                startMotionListener();
+            }
+        }
+
+        function startMotionListener() {
+            calibOverlay.style.display = 'block';
+            window.addEventListener('deviceorientation', (e) => {
+                // gamma is left-to-right tilt in degrees [-90,90]
+                // beta is front-to-back tilt in degrees [-180,180]
+                let x = e.gamma;
+                let y = e.beta;
+
+                // Constrain and normalize to -0.5 to 0.5 range
+                targetX = Math.max(-1, Math.min(1, x / 30)) * 0.5;
+                targetY = Math.max(-1, Math.min(1, (y - 45) / 30)) * 0.5; // Offset 45deg for natural holding angle
+            });
+        }
+
+        // Request permission on first interaction for mobile
+        document.addEventListener('touchstart', initMotion, { once: true });
 
         // Blob Randomization Logic
         const randomizeBtn = document.getElementById('randomize-shape');
         const mainBlob = document.getElementById('main-blob');
 
         function generateRandomBlob() {
-            const r = () => Math.floor(Math.random() * (75 - 25 + 1)) + 25; // Professional range 25-75%
+            const r = () => Math.floor(Math.random() * (75 - 25 + 1)) + 25;
             const val = `${r()}% ${r()}% ${r()}% ${r()}% / ${r()}% ${r()}% ${r()}% ${r()}%`;
             mainBlob.style.borderRadius = val;
             if (typeof sounds !== 'undefined') sounds.playShuffle();
         }
 
         randomizeBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Don't trigger parallax reset
+            e.stopPropagation();
             generateRandomBlob();
         });
     </script>
