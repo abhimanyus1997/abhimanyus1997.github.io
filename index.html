@@ -35,6 +35,8 @@
                         'blob': 'blob 10s infinite',
                         'float': 'float 6s ease-in-out infinite',
                         'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'glitch': 'glitch 0.3s infinite',
+                        'scanline': 'scanline 8s linear infinite',
                     },
                     keyframes: {
                         blob: {
@@ -46,6 +48,18 @@
                         float: {
                             '0%, 100%': { transform: 'translateY(0)' },
                             '50%': { transform: 'translateY(-10px)' },
+                        },
+                        glitch: {
+                            '0%': { transform: 'translate(0)' },
+                            '20%': { transform: 'translate(-2px, 1px)' },
+                            '40%': { transform: 'translate(-2px, -1px)' },
+                            '60%': { transform: 'translate(2px, 1px)' },
+                            '80%': { transform: 'translate(2px, -1px)' },
+                            '100%': { transform: 'translate(0)' },
+                        },
+                        scanline: {
+                            '0%': { transform: 'translateY(-100%)' },
+                            '100%': { transform: 'translateY(100%)' }
                         }
                     }
                 }
@@ -58,6 +72,29 @@
             background-color: #000000;
             color: #e5e5e5;
             overflow-x: hidden;
+        }
+
+        /* Loading Splash Styles */
+        #splash-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .scanline-effect {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, transparent 0%, rgba(163, 230, 53, 0.05) 50%, transparent 100%);
+            height: 100px;
+            width: 100%;
+            pointer-events: none;
+            z-index: 10000;
         }
 
         /* Tech/Cyber Glassmorphism */
@@ -262,6 +299,35 @@
 </head>
 
 <body class="antialiased selection:bg-primary selection:text-black">
+
+    <!-- Cyberpunk Splash Screen -->
+    <div id="splash-screen">
+        <div class="scanline-effect animate-scanline"></div>
+
+        <div class="relative z-10 flex flex-col items-center space-y-6">
+            <!-- Animated Glitch Text -->
+            <div class="flex flex-col items-center">
+                <div class="font-display font-bold text-2xl md:text-4xl text-primary animate-glitch tracking-[0.2em]">
+                    INITIALIZING_CORE
+                </div>
+                <div class="font-mono text-[10px] text-gray-500 uppercase tracking-widest mt-2">
+                    System Protocol v2.5 // Abhimanyu OS
+                </div>
+            </div>
+
+            <!-- Cyber Progress Bar -->
+            <div class="w-64 h-1 bg-gray-900 border border-primary/20 relative overflow-hidden">
+                <div id="splash-bar"
+                    class="absolute top-0 left-0 h-full bg-primary shadow-[0_0_15px_rgba(163,230,53,0.8)] transition-all duration-[3000ms] ease-out"
+                    style="width: 0%"></div>
+            </div>
+
+            <!-- Dynamic Status Logs -->
+            <div id="status-log" class="font-mono text-[9px] text-primary/60 h-4 uppercase">
+                > Initializing neural links...
+            </div>
+        </div>
+    </div>
 
     <div id="mobile-calib" class="font-mono">HYBRID SENSORS ACTIVE</div>
 
@@ -918,6 +984,41 @@
 
     <!-- Scripts -->
     <script>
+                // --- Splash Screen Logic ---
+                    window.addEventListener('DOMContentLoaded', () => {
+                        const bar = document.getElementById('splash-bar');
+                        const log = document.getElementById('status-log');
+                        const splash = document.getElementById('splash-screen');
+
+                        // Progress Bar Animation
+                        setTimeout(() => {
+                            if (bar) bar.style.width = '100%';
+                        }, 100);
+
+                        // Log sequence
+                        const messages = [
+                            "> Mounting encrypted neural volumes...",
+                            "> Calibrating Agentic AI modules...",
+                            "> Establishing secure handshake...",
+                            "> SYSTEM READY: Welcome back, Abhimanyu."
+                        ];
+
+                        messages.forEach((msg, i) => {
+                            setTimeout(() => {
+                                if (log) log.textContent = msg;
+                            }, 750 * i);
+                        });
+
+                        // Final Hide
+                        setTimeout(() => {
+                            if (splash) {
+                                splash.style.opacity = '0';
+                                splash.style.pointerEvents = 'none';
+                                setTimeout(() => splash.remove(), 800);
+                            }
+                        }, 5000);
+                    });
+
         // --- Sound Controller ---
         class SoundController {
             constructor() {
