@@ -86,15 +86,15 @@
         /* Fluid Professional Blob with Elastic Transition */
         .blob-mask {
             border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-            /* Elastic timing function for that 'bobbly' feel */
             transition: border-radius 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             overflow: hidden;
             position: relative;
             background: transparent;
             border: none;
-            /* Ensure hardware acceleration for clipping */
             transform: translateZ(0);
+            /* Hardware acceleration */
             mask-image: -webkit-radial-gradient(white, black);
+            /* Forced clipping */
         }
 
         /* Hover Color Reveal for Background */
@@ -194,13 +194,14 @@
         }
 
         .parallax-container {
-            perspective: 1000px;
+            perspective: 1500px;
             transform-style: preserve-3d;
         }
 
-        /* Removed transition: transform to allow the JS Lerp to be perfectly fluid without "boxing" */
         .parallax-item {
             will-change: transform;
+            transition: none;
+            /* Let JS handle fluidity */
         }
 
         #sound-toggle {
@@ -251,7 +252,7 @@
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(163, 230, 53, 0.1);
+            background: rgba(163, 230, 53, 0.15);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(163, 230, 53, 0.3);
             padding: 8px 16px;
@@ -260,13 +261,14 @@
             color: #a3e635;
             z-index: 100;
             pointer-events: none;
+            box-shadow: 0 0 20px rgba(163, 230, 53, 0.2);
         }
     </style>
 </head>
 
 <body class="antialiased selection:bg-primary selection:text-black">
 
-    <div id="mobile-calib" class="font-mono">Motion Parallax Active</div>
+    <div id="mobile-calib" class="font-mono">HYBRID SENSORS ACTIVE</div>
 
     <!-- Background -->
     <div class="bg-blob blob-1 animate-blob"></div>
@@ -354,7 +356,7 @@
                     </div>
                 </div>
 
-                <!-- Profile Section with Accelerometer and Liquid Parallax -->
+                <!-- Profile Section with Hybrid Gyroscope Parallax -->
                 <div class="order-1 lg:order-2 flex justify-center lg:justify-end relative parallax-container"
                     id="profile-container">
                     <div class="relative w-72 h-72 md:w-[480px] md:h-[480px] flex items-center justify-center">
@@ -363,20 +365,20 @@
                         <div class="absolute inset-0 bg-primary rounded-full blur-[140px] opacity-10 parallax-item"
                             data-depth="-0.2"></div>
 
-                        <!-- Combined Blob Mask Layer (Added depth to the mask itself to break "box" feel) -->
+                        <!-- Combined Blob Mask Layer (Inverted depth to make it feel like a moving window) -->
                         <div class="blob-mask scale-110 w-full h-full z-10 parallax-item" id="main-blob"
-                            data-depth="0.05">
-                            <!-- Background Image (Increased scale to avoid edge clipping) -->
-                            <div class="absolute inset-0 parallax-item" data-depth="0.15" data-rotate="0.02">
+                            data-depth="0.08">
+                            <!-- Background Image (Extra scale to ensure coverage) -->
+                            <div class="absolute inset-0 parallax-item" data-depth="0.2" data-rotate="0.02">
                                 <img src="./static/PXL_20251116_062127714.PORTRAIT.jpg" alt="Background Profile"
-                                    class="w-full h-full object-cover color-reveal-img scale-150">
+                                    class="w-full h-full object-cover color-reveal-img scale-175">
                             </div>
 
-                            <!-- Cutout Layer (Increased scale and depth) -->
-                            <div class="absolute inset-0 z-20 parallax-item pointer-events-none" data-depth="0.4"
-                                data-rotate="0.06">
+                            <!-- Cutout Layer (High depth for maximum liquid feel) -->
+                            <div class="absolute inset-0 z-20 parallax-item pointer-events-none" data-depth="0.6"
+                                data-rotate="0.08">
                                 <img src="./static/PXL_20251116_062127714.PORTRAIT_BGremoved.png" alt="Profile Cutout"
-                                    class="w-full h-full object-cover scale-150 cutout-reveal">
+                                    class="w-full h-full object-cover scale-175 cutout-reveal">
                             </div>
                         </div>
 
@@ -387,7 +389,7 @@
 
                         <!-- Info Badges (Floating outside the mask) -->
                         <div class="absolute -top-4 -right-4 md:top-10 md:-right-8 bg-black/90 backdrop-blur-md p-3 md:p-4 border border-primary/30 flex items-center gap-3 parallax-item shadow-xl z-30 interactable rounded-xl"
-                            data-depth="0.7" data-rotate="0.15">
+                            data-depth="0.8" data-rotate="0.15">
                             <div
                                 class="w-8 h-8 md:w-10 md:h-10 bg-primary/20 flex items-center justify-center border border-primary/50 rounded-lg">
                                 <i class="fas fa-brain text-primary text-sm md:text-xl"></i>
@@ -399,7 +401,7 @@
                         </div>
 
                         <div class="absolute -bottom-4 -left-4 md:bottom-12 md:-left-8 bg-black/90 backdrop-blur-md p-3 md:p-4 border border-primary/30 flex items-center gap-3 parallax-item shadow-xl z-30 interactable rounded-xl"
-                            data-depth="1.0" data-rotate="0.25">
+                            data-depth="1.2" data-rotate="0.25">
                             <div
                                 class="w-8 h-8 md:w-10 md:h-10 bg-primary/20 flex items-center justify-center border border-primary/50 rounded-lg">
                                 <i class="fas fa-eye text-primary text-sm md:text-xl"></i>
@@ -1451,93 +1453,97 @@
             if (e.key === 'Enter') onMessageSend();
         });
 
-         // --- Integrated Parallax Logic (Mouse + Accelerometer) ---
-            // Enhanced to move the blob container itself to remove the "boxed" feeling
-            const container = document.getElementById('profile-container');
-            const items = document.querySelectorAll('.parallax-item');
-            const calibOverlay = document.getElementById('mobile-calib');
+        // --- Integrated Parallax Logic (Mouse + Gyroscope) ---
+        const container = document.getElementById('profile-container');
+        const items = document.querySelectorAll('.parallax-item');
+        const calibOverlay = document.getElementById('mobile-calib');
 
-            let targetX = 0, targetY = 0;
-            let currentX = 0, currentY = 0;
-            const lerpFactor = 0.08; // Slightly lower for a more "water-like" bobbly feel
+        let targetX = 0, targetY = 0;
+        let currentX = 0, currentY = 0;
+        const lerpFactor = 0.08;
 
-            function updateParallax() {
-                // Smooth interpolation (Lerp)
-                currentX += (targetX - currentX) * lerpFactor;
-                currentY += (targetY - currentY) * lerpFactor;
+        function updateParallax() {
+            currentX += (targetX - currentX) * lerpFactor;
+            currentY += (targetY - currentY) * lerpFactor;
 
-                items.forEach(item => {
-                    const depth = parseFloat(item.getAttribute('data-depth'));
-                    const rotateFactor = parseFloat(item.getAttribute('data-rotate') || 0);
+            items.forEach(item => {
+                const depth = parseFloat(item.getAttribute('data-depth'));
+                const rotateFactor = parseFloat(item.getAttribute('data-rotate') || 0);
 
-                    // Multiplier for movement range
-                    const moveRange = 120;
-                    const moveX = currentX * depth * moveRange;
-                    const moveY = currentY * depth * moveRange;
+                const moveRange = 150; // Increased range
+                const moveX = currentX * depth * moveRange;
+                const moveY = currentY * depth * moveRange;
 
-                    // Rotations
-                    const rotateX = -currentY * rotateFactor * 50;
-                    const rotateY = currentX * rotateFactor * 50;
+                const rotateX = -currentY * rotateFactor * 50;
+                const rotateY = currentX * rotateFactor * 50;
 
-                    item.style.transform = `translate3d(${moveX}px, ${moveY}px, 0) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-                });
-                requestAnimationFrame(updateParallax);
-            }
-            updateParallax();
-
-            // Mouse Event
-            if (window.matchMedia("(pointer: fine)").matches) {
-                container.addEventListener('mousemove', (e) => {
-                    const { width, height, left, top } = container.getBoundingClientRect();
-                    targetX = (e.clientX - left) / width - 0.5;
-                    targetY = (e.clientY - top) / height - 0.5;
-                });
-                container.addEventListener('mouseleave', () => {
-                    targetX = 0;
-                    targetY = 0;
-                });
-            }
-
-            // Accelerometer Event (Mobile)
-            async function initMotion() {
-                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                    try {
-                        const permission = await DeviceOrientationEvent.requestPermission();
-                        if (permission === 'granted') startMotionListener();
-                    } catch (e) { console.error("Motion permission denied"); }
-                } else if (window.DeviceOrientationEvent) {
-                    startMotionListener();
-                }
-            }
-
-            function startMotionListener() {
-                calibOverlay.style.display = 'block';
-                window.addEventListener('deviceorientation', (e) => {
-                    let x = e.gamma;
-                    let y = e.beta;
-                    // Normalize and deadzone
-                    targetX = Math.max(-1, Math.min(1, x / 25)) * 0.5;
-                    targetY = Math.max(-1, Math.min(1, (y - 45) / 25)) * 0.5;
-                });
-            }
-
-            document.addEventListener('touchstart', initMotion, { once: true });
-
-            // Blob Randomization Logic
-            const randomizeBtn = document.getElementById('randomize-shape');
-            const mainBlob = document.getElementById('main-blob');
-
-            function generateRandomBlob() {
-                const r = () => Math.floor(Math.random() * (85 - 15 + 1)) + 15;
-                const val = `${r()}% ${r()}% ${r()}% ${r()}% / ${r()}% ${r()}% ${r()}% ${r()}%`;
-                mainBlob.style.borderRadius = val;
-                if (typeof sounds !== 'undefined') sounds.playShuffle();
-            }
-
-            randomizeBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                generateRandomBlob();
+                item.style.transform = `translate3d(${moveX}px, ${moveY}px, 0) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
             });
+            requestAnimationFrame(updateParallax);
+        }
+        updateParallax();
+
+        // Mouse Tracker
+        if (window.matchMedia("(pointer: fine)").matches) {
+            container.addEventListener('mousemove', (e) => {
+                const { width, height, left, top } = container.getBoundingClientRect();
+                targetX = (e.clientX - left) / width - 0.5;
+                targetY = (e.clientY - top) / height - 0.5;
+            });
+            container.addEventListener('mouseleave', () => {
+                targetX = 0; targetY = 0;
+            });
+        }
+
+        // Gyroscope/Motion (Mobile)
+        async function initMotion() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                try {
+                    const permission = await DeviceOrientationEvent.requestPermission();
+                    if (permission === 'granted') {
+                        startMotionListener();
+                    }
+                } catch (e) { console.error("Permission error", e); }
+            } else if (window.DeviceOrientationEvent) {
+                startMotionListener();
+            }
+        }
+
+        function startMotionListener() {
+            calibOverlay.style.display = 'block';
+            window.addEventListener('deviceorientation', (e) => {
+                // Gamma: Left-Right tilting [-90, 90]
+                // Beta: Front-Back tilting [-180, 180]
+                let roll = e.gamma;
+                let pitch = e.beta;
+
+                // Sensitivity factors for liquid movement
+                // Normalize Gamma (roll) to roughly -1 to 1 at 30 degrees tilt
+                targetX = Math.max(-1, Math.min(1, roll / 30)) * 0.5;
+                // Normalize Beta (pitch) - centered at 45 degrees holding angle
+                targetY = Math.max(-1, Math.min(1, (pitch - 45) / 30)) * 0.5;
+            });
+        }
+
+        // Initialize motion on interaction
+        document.body.addEventListener('click', initMotion, { once: true });
+        document.body.addEventListener('touchstart', initMotion, { once: true });
+
+        // Blob Randomization Logic
+        const randomizeBtn = document.getElementById('randomize-shape');
+        const mainBlob = document.getElementById('main-blob');
+
+        function generateRandomBlob() {
+            const r = () => Math.floor(Math.random() * (85 - 15 + 1)) + 15;
+            const val = `${r()}% ${r()}% ${r()}% ${r()}% / ${r()}% ${r()}% ${r()}% ${r()}%`;
+            mainBlob.style.borderRadius = val;
+            if (typeof sounds !== 'undefined') sounds.playShuffle();
+        }
+
+        randomizeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            generateRandomBlob();
+        });
     </script>
 </body>
 
