@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -9,7 +10,9 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts: Space Grotesk (Tech) & Inter (Readability) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
 
     <script>
         tailwind.config = {
@@ -62,7 +65,7 @@
             background: rgba(5, 5, 5, 0.7);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(163, 230, 53, 0.1); /* Lime border hint */
+            border-bottom: 1px solid rgba(163, 230, 53, 0.1);
         }
 
         .glass-card {
@@ -75,9 +78,40 @@
 
         .glass-card:hover {
             background: rgba(30, 30, 30, 0.8);
-            border-color: rgba(163, 230, 53, 0.5); /* Lime border on hover */
+            border-color: rgba(163, 230, 53, 0.5);
             transform: translateY(-5px);
             box-shadow: 0 0 30px -10px rgba(163, 230, 53, 0.15);
+        }
+
+        /* Fluid Professional Blob */
+        .blob-mask {
+            border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+            transition: border-radius 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Hover Color Reveal for Background */
+        .color-reveal-img {
+            transition: filter 0.6s ease, opacity 0.6s ease, transform 0.6s ease;
+            filter: grayscale(100%) brightness(0.7);
+            opacity: 0.4;
+        }
+
+        .parallax-container:hover .color-reveal-img {
+            filter: grayscale(0%) brightness(1);
+            opacity: 0.8;
+        }
+
+        /* Hover Color Reveal for Cutout */
+        .cutout-reveal {
+            transition: filter 0.6s ease, transform 0.6s ease;
+            filter: grayscale(100%) brightness(0.9) drop-shadow(0 20px 40px rgba(0, 0, 0, 0.8));
+            opacity: 1;
+        }
+
+        .parallax-container:hover .cutout-reveal {
+            filter: grayscale(0%) brightness(1) drop-shadow(0 25px 60px rgba(0, 0, 0, 0.9));
         }
 
         /* Lime Gradient Text */
@@ -87,7 +121,7 @@
             -webkit-text-fill-color: transparent;
         }
 
-        /* Cyber Blobs */
+        /* Cyber Blobs Background */
         .bg-blob {
             position: fixed;
             border-radius: 50%;
@@ -95,9 +129,33 @@
             opacity: 0.25;
             z-index: -1;
         }
-        .blob-1 { top: -10%; left: -10%; width: 700px; height: 700px; background: #a3e635; } /* Lime */
-        .blob-2 { bottom: -10%; right: -10%; width: 600px; height: 600px; background: #15803d; animation-delay: 2s; } /* Green */
-        .blob-3 { top: 40%; left: 30%; width: 500px; height: 500px; background: #0d9488; animation-delay: 4s; opacity: 0.15; } /* Teal */
+
+        .blob-1 {
+            top: -10%;
+            left: -10%;
+            width: 700px;
+            height: 700px;
+            background: #a3e635;
+        }
+
+        .blob-2 {
+            bottom: -10%;
+            right: -10%;
+            width: 600px;
+            height: 600px;
+            background: #15803d;
+            animation-delay: 2s;
+        }
+
+        .blob-3 {
+            top: 40%;
+            left: 30%;
+            width: 500px;
+            height: 500px;
+            background: #0d9488;
+            animation-delay: 4s;
+            opacity: 0.15;
+        }
 
         /* Terminal Cursor */
         .typing-cursor::after {
@@ -106,25 +164,40 @@
             color: #a3e635;
             margin-left: 4px;
         }
-        @keyframes blink { 50% { opacity: 0; } }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #000000; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #a3e635; }
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
 
-        /* Parallax Container */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a3e635;
+        }
+
         .parallax-container {
             perspective: 1000px;
             transform-style: preserve-3d;
         }
+
         .parallax-item {
             transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
             will-change: transform;
         }
 
-        /* Sound Control Button */
         #sound-toggle {
             position: fixed;
             bottom: 20px;
@@ -139,34 +212,34 @@
             cursor: pointer;
             transition: all 0.3s;
         }
-        #sound-toggle:hover {
-            background: rgba(163, 230, 53, 0.2);
-            transform: scale(1.1);
+
+        /* Randomize Button Style */
+        .btn-random {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(163, 230, 53, 0.15);
+            border: 1px solid rgba(163, 230, 53, 0.4);
+            color: #a3e635;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 40;
         }
 
-        /* Input Range Style */
-        input[type=range] {
-            -webkit-appearance: none;
-            background: transparent;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 16px;
-            width: 16px;
-            border-radius: 50%;
+        .btn-random:hover {
             background: #a3e635;
-            cursor: pointer;
-            margin-top: -6px;
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 4px;
-            cursor: pointer;
-            background: #333;
-            border-radius: 2px;
+            color: #000;
+            box-shadow: 0 0 15px rgba(163, 230, 53, 0.5);
         }
     </style>
 </head>
+
 <body class="antialiased selection:bg-primary selection:text-black">
 
     <!-- Background -->
@@ -183,34 +256,30 @@
     <nav class="fixed top-0 w-full z-50 glass-panel">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16 md:h-20">
-                <a href="#" class="text-xl md:text-2xl font-display font-bold tracking-tight text-white group interactable">
+                <a href="#"
+                    class="text-xl md:text-2xl font-display font-bold tracking-tight text-white group interactable">
                     Abhimanyu<span class="text-primary group-hover:animate-pulse">_</span>
                 </a>
 
                 <div class="hidden md:flex space-x-8">
-                    <a href="#about" class="interactable text-sm font-medium text-gray-400 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">About</a>
-                    <a href="#experience" class="interactable text-sm font-medium text-gray-400 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">Experience</a>
-                    <a href="#projects" class="interactable text-sm font-medium text-gray-400 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">Projects</a>
-                    <a href="#skills" class="interactable text-sm font-medium text-gray-400 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">Skills</a>
+                    <a href="#about"
+                        class="interactable text-sm font-medium text-gray-400 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">About</a>
+                    <a href="#experience"
+                        class="interactable text-sm font-medium text-gray-400 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">Experience</a>
+                    <a href="#projects"
+                        class="interactable text-sm font-medium text-gray-400 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">Projects</a>
+                    <a href="#skills"
+                        class="interactable text-sm font-medium text-gray-400 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">Skills</a>
                 </div>
 
-                <a href="#contact" class="interactable hidden md:block px-6 py-2 border border-primary/30 rounded-none bg-primary/10 text-primary font-mono text-xs hover:bg-primary hover:text-black transition-all">
+                <a href="#contact"
+                    class="interactable hidden md:block px-6 py-2 border border-primary/30 rounded-none bg-primary/10 text-primary font-mono text-xs hover:bg-primary hover:text-black transition-all">
                     ./contact_me
                 </a>
 
                 <button id="mobile-menu-btn" class="interactable md:hidden text-primary focus:outline-none">
                     <i class="fas fa-bars text-xl"></i>
                 </button>
-            </div>
-        </div>
-
-        <!-- Mobile Menu -->
-        <div id="mobile-menu" class="hidden md:hidden glass-panel border-t border-white/5 absolute w-full">
-            <div class="px-4 pt-2 pb-4 space-y-1">
-                <a href="#about" class="interactable block px-3 py-3 text-sm font-mono text-gray-300 hover:text-primary">> About</a>
-                <a href="#experience" class="interactable block px-3 py-3 text-sm font-mono text-gray-300 hover:text-primary">> Experience</a>
-                <a href="#projects" class="interactable block px-3 py-3 text-sm font-mono text-gray-300 hover:text-primary">> Projects</a>
-                <a href="#skills" class="interactable block px-3 py-3 text-sm font-mono text-gray-300 hover:text-primary">> Skills</a>
             </div>
         </div>
     </nav>
@@ -222,7 +291,8 @@
 
                 <!-- Text Content -->
                 <div class="order-2 lg:order-1 space-y-6 md:space-y-8 text-center lg:text-left">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 border border-primary/30 bg-primary/5 text-primary text-[10px] font-mono uppercase tracking-wider mx-auto lg:mx-0">
+                    <div
+                        class="inline-flex items-center gap-2 px-3 py-1 border border-primary/30 bg-primary/5 text-primary text-[10px] font-mono uppercase tracking-wider mx-auto lg:mx-0">
                         <span class="w-1.5 h-1.5 bg-primary animate-pulse"></span>
                         System Online
                     </div>
@@ -232,43 +302,68 @@
                         <span class="text-gradient">Abhimanyu Singh</span>
                     </h1>
 
-                    <div class="text-lg md:text-2xl text-gray-400 font-light h-8 flex items-center justify-center lg:justify-start gap-2 font-mono">
+                    <div
+                        class="text-lg md:text-2xl text-gray-400 font-light h-8 flex items-center justify-center lg:justify-start gap-2 font-mono">
                         > <span id="typed-text" class="text-primary font-medium typing-cursor"></span>
                     </div>
 
-                    <p class="text-base md:text-lg text-gray-400 max-w-lg leading-relaxed border-l-0 lg:border-l-2 border-primary/20 lg:pl-6 mx-auto lg:mx-0">
-                        I am a <strong>Data Science Manager</strong> & <strong>AI Engineer</strong> building real-world AI solutions. Specializing in
+                    <p
+                        class="text-base md:text-lg text-gray-400 max-w-lg leading-relaxed border-l-0 lg:border-l-2 border-primary/20 lg:pl-6 mx-auto lg:mx-0">
+                        I am a <strong>Data Science Manager</strong> & <strong>AI Engineer</strong> building real-world
+                        AI solutions. Specializing in
                         <span class="text-white font-medium">Generative AI</span>,
                         <span class="text-white font-medium">Robotics/IoT</span>, and
                         <span class="text-white font-medium">Computer Vision</span>.
                     </p>
 
                     <div class="flex flex-wrap gap-4 justify-center lg:justify-start pt-4">
-                        <a href="#projects" class="interactable px-6 py-3 md:px-8 md:py-3.5 bg-primary hover:bg-primaryHover text-black font-bold transition-all shadow-[0_0_20px_-5px_rgba(163,230,53,0.4)] text-sm md:text-base">
+                        <a href="#projects"
+                            class="interactable px-6 py-3 md:px-8 md:py-3.5 bg-primary hover:bg-primaryHover text-black font-bold transition-all shadow-[0_0_20px_-5px_rgba(163,230,53,0.4)] text-sm md:text-base">
                             View Work
                         </a>
-                        <a href="https://github.com/abhimanyus1997" target="_blank" class="interactable px-6 py-3 md:px-8 md:py-3.5 border border-white/10 hover:border-primary text-white font-medium transition-colors flex items-center gap-2 bg-white/5 text-sm md:text-base">
+                        <a href="https://github.com/abhimanyus1997" target="_blank"
+                            class="interactable px-6 py-3 md:px-8 md:py-3.5 border border-white/10 hover:border-primary text-white font-medium transition-colors flex items-center gap-2 bg-white/5 text-sm md:text-base">
                             <i class="fab fa-github"></i> GitHub
                         </a>
                     </div>
                 </div>
 
-                <!-- Advanced Parallax Image Section -->
-                <div class="order-1 lg:order-2 flex justify-center lg:justify-end relative parallax-container" id="profile-container">
-                    <div class="relative w-64 h-64 md:w-[450px] md:h-[450px]">
+                <!-- Profile Section with Fixed Blob Mask & Inside Cutout (Trimming) -->
+                <div class="order-1 lg:order-2 flex justify-center lg:justify-end relative parallax-container"
+                    id="profile-container">
+                    <div class="relative w-72 h-72 md:w-[480px] md:h-[480px] flex items-center justify-center">
 
-                        <!-- Layer 1: Glow -->
-                        <div class="absolute inset-0 bg-primary rounded-full blur-[100px] opacity-20 parallax-item" data-depth="-0.2" data-rotate="0"></div>
+                        <!-- Ambient Glow -->
+                        <div class="absolute inset-0 bg-primary rounded-full blur-[140px] opacity-10 parallax-item"
+                            data-depth="-0.2"></div>
 
-                        <!-- Layer 2: Main Image -->
-                        <div class="relative w-full h-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl parallax-item bg-cardDark z-10" data-depth="0.1" data-rotate="0.05">
-                            <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CjxwYXRoIGQ9Ik0wIDBoNDB2NDBIMHoiIGZpbGw9Im5vbmUiLz4KPHBhdGggZD0iTTAgNDBoNDBNNDAgMHY0MCIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2Utd2lkdGg9IjEiLz4KPC9zdmc+')] opacity-20 z-10 pointer-events-none"></div>
-                            <img src="./static/PXL_20251118_095147921.PORTRAIT.jpg" alt="Abhimanyu Singh" class="w-full h-full object-cover filter grayscale hover:grayscale-0 transition-all duration-700">
+                        <!-- Combined Blob Mask Layer (Ensures Trimming) -->
+                        <div class="blob-mask border border-white/10 shadow-2xl scale-110 w-full h-full bg-cardDark z-10"
+                            id="main-blob">
+                            <!-- Background Image -->
+                            <div class="absolute inset-0 parallax-item" data-depth="0.1" data-rotate="0.02">
+                                <img src="./static/PXL_20251116_062127714.PORTRAIT.jpg" alt="Background Profile"
+                                    class="w-full h-full object-cover color-reveal-img">
+                            </div>
+
+                            <!-- Cutout Layer (Trimming applied, now BW by default) -->
+                            <div class="absolute inset-0 z-20 parallax-item pointer-events-none" data-depth="0.3"
+                                data-rotate="0.04">
+                                <img src="./static/PXL_20251116_062127714.PORTRAIT_BGremoved.png" alt="Profile Cutout"
+                                    class="w-full h-full object-cover scale-105 cutout-reveal">
+                            </div>
                         </div>
 
-                        <!-- Layer 3: Floating Badges -->
-                        <div class="absolute -top-4 -right-4 md:top-10 md:-right-10 bg-black/90 backdrop-blur-md p-3 md:p-4 border border-primary/30 flex items-center gap-3 parallax-item shadow-xl z-20 interactable rounded-lg" data-depth="0.6" data-rotate="0.2">
-                            <div class="w-8 h-8 md:w-10 md:h-10 bg-primary/20 flex items-center justify-center border border-primary/50 rounded">
+                        <!-- Mini Randomize Button -->
+                        <button class="btn-random interactable" id="randomize-shape" title="Randomize Module Shape">
+                            <i class="fas fa-shuffle"></i>
+                        </button>
+
+                        <!-- Info Badges (Floating outside the mask) -->
+                        <div class="absolute -top-4 -right-4 md:top-10 md:-right-8 bg-black/90 backdrop-blur-md p-3 md:p-4 border border-primary/30 flex items-center gap-3 parallax-item shadow-xl z-30 interactable rounded-xl"
+                            data-depth="0.7" data-rotate="0.15">
+                            <div
+                                class="w-8 h-8 md:w-10 md:h-10 bg-primary/20 flex items-center justify-center border border-primary/50 rounded-lg">
                                 <i class="fas fa-brain text-primary text-sm md:text-xl"></i>
                             </div>
                             <div>
@@ -277,8 +372,10 @@
                             </div>
                         </div>
 
-                        <div class="absolute -bottom-4 -left-4 md:bottom-10 md:-left-10 bg-black/90 backdrop-blur-md p-3 md:p-4 border border-primary/30 flex items-center gap-3 parallax-item shadow-xl z-20 interactable rounded-lg" data-depth="0.9" data-rotate="0.3">
-                            <div class="w-8 h-8 md:w-10 md:h-10 bg-primary/20 flex items-center justify-center border border-primary/50 rounded">
+                        <div class="absolute -bottom-4 -left-4 md:bottom-12 md:-left-8 bg-black/90 backdrop-blur-md p-3 md:p-4 border border-primary/30 flex items-center gap-3 parallax-item shadow-xl z-30 interactable rounded-xl"
+                            data-depth="1.0" data-rotate="0.25">
+                            <div
+                                class="w-8 h-8 md:w-10 md:h-10 bg-primary/20 flex items-center justify-center border border-primary/50 rounded-lg">
                                 <i class="fas fa-eye text-primary text-sm md:text-xl"></i>
                             </div>
                             <div>
@@ -288,6 +385,7 @@
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </section>
@@ -299,14 +397,17 @@
                 Execution <span class="text-primary">Log</span>
             </h2>
 
-            <div class="space-y-8 md:space-y-12 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-px before:bg-gradient-to-b before:from-transparent before:via-primary/30 before:to-transparent">
+            <div
+                class="space-y-8 md:space-y-12 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-px before:bg-gradient-to-b before:from-transparent before:via-primary/30 before:to-transparent">
 
                 <!-- Job 1 -->
                 <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-                    <div class="flex items-center justify-center w-10 h-10 rounded-none border border-primary bg-black shadow-[0_0_15px_rgba(163,230,53,0.3)] shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                    <div
+                        class="flex items-center justify-center w-10 h-10 rounded-none border border-primary bg-black shadow-[0_0_15px_rgba(163,230,53,0.3)] shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
                         <i class="fas fa-user-tie text-primary text-sm"></i>
                     </div>
-                    <div class="w-[calc(100%-3.5rem)] md:w-[calc(50%-2.5rem)] glass-card p-6 md:p-8 md:order-1 hover:border-primary/50 border-l-4 border-l-primary/0 hover:border-l-primary transition-all interactable">
+                    <div
+                        class="w-[calc(100%-3.5rem)] md:w-[calc(50%-2.5rem)] glass-card p-6 md:p-8 md:order-1 hover:border-primary/50 border-l-4 border-l-primary/0 hover:border-l-primary transition-all interactable">
                         <div class="flex flex-col mb-4">
                             <h3 class="font-bold text-lg md:text-xl text-white font-display">Data Science Manager</h3>
                             <div class="text-primary text-xs md:text-sm font-mono mb-1">HDFC Bank</div>
@@ -323,10 +424,12 @@
 
                 <!-- Job 2 -->
                 <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-                    <div class="flex items-center justify-center w-10 h-10 rounded-none border border-gray-700 bg-black shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 group-hover:border-primary transition-colors">
+                    <div
+                        class="flex items-center justify-center w-10 h-10 rounded-none border border-gray-700 bg-black shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 group-hover:border-primary transition-colors">
                         <i class="fas fa-code-branch text-gray-400 group-hover:text-primary text-sm"></i>
                     </div>
-                    <div class="w-[calc(100%-3.5rem)] md:w-[calc(50%-2.5rem)] glass-card p-6 md:p-8 md:order-1 hover:border-primary/50 transition-all interactable">
+                    <div
+                        class="w-[calc(100%-3.5rem)] md:w-[calc(50%-2.5rem)] glass-card p-6 md:p-8 md:order-1 hover:border-primary/50 transition-all interactable">
                         <div class="flex flex-col mb-4">
                             <h3 class="font-bold text-lg md:text-xl text-white font-display">Sr. ML Engineer</h3>
                             <div class="text-primary text-xs md:text-sm font-mono mb-1">Quantiphi</div>
@@ -343,10 +446,12 @@
 
                 <!-- Job 3 -->
                 <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-                    <div class="flex items-center justify-center w-10 h-10 rounded-none border border-gray-700 bg-black shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 group-hover:border-primary transition-colors">
+                    <div
+                        class="flex items-center justify-center w-10 h-10 rounded-none border border-gray-700 bg-black shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 group-hover:border-primary transition-colors">
                         <i class="fas fa-robot text-gray-400 group-hover:text-primary text-sm"></i>
                     </div>
-                    <div class="w-[calc(100%-3.5rem)] md:w-[calc(50%-2.5rem)] glass-card p-6 md:p-8 md:order-1 hover:border-primary/50 transition-all interactable">
+                    <div
+                        class="w-[calc(100%-3.5rem)] md:w-[calc(50%-2.5rem)] glass-card p-6 md:p-8 md:order-1 hover:border-primary/50 transition-all interactable">
                         <div class="flex flex-col mb-4">
                             <h3 class="font-bold text-lg md:text-xl text-white font-display">Software Engineer</h3>
                             <div class="text-primary text-xs md:text-sm font-mono mb-1">Alphadroid India</div>
@@ -367,10 +472,12 @@
 
                 <!-- Job 4 -->
                 <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-                    <div class="flex items-center justify-center w-10 h-10 rounded-none border border-gray-700 bg-black shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 group-hover:border-primary transition-colors">
+                    <div
+                        class="flex items-center justify-center w-10 h-10 rounded-none border border-gray-700 bg-black shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 group-hover:border-primary transition-colors">
                         <i class="fas fa-university text-gray-400 group-hover:text-primary text-sm"></i>
                     </div>
-                    <div class="w-[calc(100%-3.5rem)] md:w-[calc(50%-2.5rem)] glass-card p-6 md:p-8 md:order-1 hover:border-primary/50 transition-all interactable">
+                    <div
+                        class="w-[calc(100%-3.5rem)] md:w-[calc(50%-2.5rem)] glass-card p-6 md:p-8 md:order-1 hover:border-primary/50 transition-all interactable">
                         <div class="flex flex-col mb-4">
                             <h3 class="font-bold text-lg md:text-xl text-white font-display">Research Fellow</h3>
                             <div class="text-primary text-xs md:text-sm font-mono mb-1">IIT Guwahati (TIDF)</div>
@@ -402,52 +509,81 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <!-- Project 1 -->
-                <div class="glass-card group border border-white/5 hover:border-primary/50 transition-all duration-300 interactable">
-                    <div class="h-40 md:h-48 bg-black flex items-center justify-center relative overflow-hidden border-b border-white/5">
-                        <div class="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(163,230,53,0.05)_50%,transparent_75%,transparent_100%)] bg-[length:250%_250%,100%_100%] animate-[shimmer_2s_linear_infinite]"></div>
-                        <i class="fas fa-file-contract text-4xl md:text-5xl text-gray-700 group-hover:text-primary transition-colors duration-300"></i>
+                <div
+                    class="glass-card group border border-white/5 hover:border-primary/50 transition-all duration-300 interactable">
+                    <div
+                        class="h-40 md:h-48 bg-black flex items-center justify-center relative overflow-hidden border-b border-white/5">
+                        <div
+                            class="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(163,230,53,0.05)_50%,transparent_75%,transparent_100%)] bg-[length:250%_250%,100%_100%] animate-[shimmer_2s_linear_infinite]">
+                        </div>
+                        <i
+                            class="fas fa-file-contract text-4xl md:text-5xl text-gray-700 group-hover:text-primary transition-colors duration-300"></i>
                     </div>
                     <div class="p-6">
                         <h3 class="text-xl font-bold mb-2 font-display text-white">Resume JD Matcher</h3>
-                        <p class="text-gray-400 text-xs mb-4 font-mono leading-relaxed">AI-powered job matching tool. Features dynamic skill extraction, match scoring, and radar charts. Uses TF-IDF for relevance scoring.</p>
+                        <p class="text-gray-400 text-xs mb-4 font-mono leading-relaxed">AI-powered job matching tool.
+                            Features dynamic skill extraction, match scoring, and radar charts. Uses TF-IDF for
+                            relevance scoring.</p>
                         <div class="flex flex-wrap gap-2">
-                            <span class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">LangChain</span>
-                            <span class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">Gemini</span>
-                            <span class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">Streamlit</span>
+                            <span
+                                class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">LangChain</span>
+                            <span
+                                class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">Gemini</span>
+                            <span
+                                class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">Streamlit</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Project 2 -->
-                <div class="glass-card group border border-white/5 hover:border-primary/50 transition-all duration-300 interactable">
-                    <div class="h-40 md:h-48 bg-black flex items-center justify-center relative overflow-hidden border-b border-white/5">
-                        <div class="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(163,230,53,0.05)_50%,transparent_75%,transparent_100%)] bg-[length:250%_250%,100%_100%] animate-[shimmer_2s_linear_infinite]"></div>
-                        <i class="fab fa-ethereum text-4xl md:text-5xl text-gray-700 group-hover:text-primary transition-colors duration-300"></i>
+                <div
+                    class="glass-card group border border-white/5 hover:border-primary/50 transition-all duration-300 interactable">
+                    <div
+                        class="h-40 md:h-48 bg-black flex items-center justify-center relative overflow-hidden border-b border-white/5">
+                        <div
+                            class="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(163,230,53,0.05)_50%,transparent_75%,transparent_100%)] bg-[length:250%_250%,100%_100%] animate-[shimmer_2s_linear_infinite]">
+                        </div>
+                        <i
+                            class="fab fa-ethereum text-4xl md:text-5xl text-gray-700 group-hover:text-primary transition-colors duration-300"></i>
                     </div>
                     <div class="p-6">
                         <h3 class="text-xl font-bold mb-2 font-display text-white">cryptoTracker</h3>
-                        <p class="text-gray-400 text-xs mb-4 font-mono leading-relaxed">Real-time crypto wallet dashboard with LSTM price forecasting and WebSocket integration. Tracks tokens and provides account summaries.</p>
+                        <p class="text-gray-400 text-xs mb-4 font-mono leading-relaxed">Real-time crypto wallet
+                            dashboard with LSTM price forecasting and WebSocket integration. Tracks tokens and provides
+                            account summaries.</p>
                         <div class="flex flex-wrap gap-2">
-                            <span class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">Flask</span>
-                            <span class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">LSTM</span>
-                            <span class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">WebSockets</span>
+                            <span
+                                class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">Flask</span>
+                            <span
+                                class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">LSTM</span>
+                            <span
+                                class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">WebSockets</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Project 3 -->
-                <div class="glass-card group border border-white/5 hover:border-primary/50 transition-all duration-300 interactable">
-                    <div class="h-40 md:h-48 bg-black flex items-center justify-center relative overflow-hidden border-b border-white/5">
-                        <div class="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(163,230,53,0.05)_50%,transparent_75%,transparent_100%)] bg-[length:250%_250%,100%_100%] animate-[shimmer_2s_linear_infinite]"></div>
-                        <i class="fas fa-comments text-4xl md:text-5xl text-gray-700 group-hover:text-primary transition-colors duration-300"></i>
+                <div
+                    class="glass-card group border border-white/5 hover:border-primary/50 transition-all duration-300 interactable">
+                    <div
+                        class="h-40 md:h-48 bg-black flex items-center justify-center relative overflow-hidden border-b border-white/5">
+                        <div
+                            class="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(163,230,53,0.05)_50%,transparent_75%,transparent_100%)] bg-[length:250%_250%,100%_100%] animate-[shimmer_2s_linear_infinite]">
+                        </div>
+                        <i
+                            class="fas fa-comments text-4xl md:text-5xl text-gray-700 group-hover:text-primary transition-colors duration-300"></i>
                     </div>
                     <div class="p-6">
                         <h3 class="text-xl font-bold mb-2 font-display text-white">Langchain One</h3>
-                        <p class="text-gray-400 text-xs mb-4 font-mono leading-relaxed">Multimodal chatbot using LlamaIndex for image-based data extraction. Features hybrid RAG pipelines.</p>
+                        <p class="text-gray-400 text-xs mb-4 font-mono leading-relaxed">Multimodal chatbot using
+                            LlamaIndex for image-based data extraction. Features hybrid RAG pipelines.</p>
                         <div class="flex flex-wrap gap-2">
-                            <span class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">LlamaIndex</span>
-                            <span class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">YOLOv8</span>
-                            <span class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">EasyOCR</span>
+                            <span
+                                class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">LlamaIndex</span>
+                            <span
+                                class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">YOLOv8</span>
+                            <span
+                                class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">EasyOCR</span>
                         </div>
                     </div>
                 </div>
@@ -470,12 +606,18 @@
                         <i class="fas fa-brain text-primary"></i> AI & GenAI
                     </h3>
                     <div class="flex flex-wrap gap-2">
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">LangChain</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">LlamaIndex</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">AgnoAI</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">CrewAI</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">YOLO</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">PyTorch</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">LangChain</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">LlamaIndex</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">AgnoAI</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">CrewAI</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">YOLO</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">PyTorch</span>
                     </div>
                 </div>
 
@@ -485,11 +627,16 @@
                         <i class="fas fa-cloud text-primary"></i> Cloud & MLOps
                     </h3>
                     <div class="flex flex-wrap gap-2">
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">AWS</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Docker</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Kubernetes</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">MLFlow</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Vault</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">AWS</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Docker</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Kubernetes</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">MLFlow</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Vault</span>
                     </div>
                 </div>
 
@@ -499,10 +646,15 @@
                         <i class="fas fa-robot text-primary"></i> IoT & Robotics
                     </h3>
                     <div class="flex flex-wrap gap-2">
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">MQTT</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Raspberry Pi</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Arduino</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">C/C++</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">MQTT</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Raspberry
+                            Pi</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Arduino</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">C/C++</span>
                     </div>
                 </div>
 
@@ -512,11 +664,16 @@
                         <i class="fas fa-globe text-primary"></i> Web & Mobile
                     </h3>
                     <div class="flex flex-wrap gap-2">
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">FastAPI</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Flask</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">React</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Flutter</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Node.js</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">FastAPI</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Flask</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">React</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Flutter</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Node.js</span>
                     </div>
                 </div>
 
@@ -526,11 +683,16 @@
                         <i class="fas fa-code text-primary"></i> Languages
                     </h3>
                     <div class="flex flex-wrap gap-2">
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Python</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">SQL</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">C/C++</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">JavaScript</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Dart</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Python</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">SQL</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">C/C++</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">JavaScript</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Dart</span>
                     </div>
                 </div>
 
@@ -540,11 +702,16 @@
                         <i class="fas fa-database text-primary"></i> Tools & DBs
                     </h3>
                     <div class="flex flex-wrap gap-2">
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">MongoDB</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">PostgreSQL</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Redis</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">ChromaDB</span>
-                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Git</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">MongoDB</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">PostgreSQL</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Redis</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">ChromaDB</span>
+                        <span
+                            class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Git</span>
                     </div>
                 </div>
             </div>
@@ -556,17 +723,21 @@
         <div class="max-w-7xl mx-auto px-4 text-center">
             <h2 class="text-2xl md:text-3xl font-bold mb-8 md:mb-10 font-display text-white">Initialize Connection</h2>
             <div class="flex justify-center gap-6 mb-8 md:mb-12">
-                <a href="mailto:abhimanyus1997@gmail.com" class="w-12 h-12 flex items-center justify-center border border-gray-800 hover:border-primary hover:text-primary text-gray-400 transition-all interactable">
+                <a href="mailto:abhimanyus1997@gmail.com"
+                    class="w-12 h-12 flex items-center justify-center border border-gray-800 hover:border-primary hover:text-primary text-gray-400 transition-all interactable">
                     <i class="fas fa-envelope text-xl"></i>
                 </a>
-                <a href="https://linkedin.com/in/abhimanyus1997" target="_blank" class="w-12 h-12 flex items-center justify-center border border-gray-800 hover:border-primary hover:text-primary text-gray-400 transition-all interactable">
+                <a href="https://linkedin.com/in/abhimanyus1997" target="_blank"
+                    class="w-12 h-12 flex items-center justify-center border border-gray-800 hover:border-primary hover:text-primary text-gray-400 transition-all interactable">
                     <i class="fab fa-linkedin-in text-xl"></i>
                 </a>
-                <a href="https://github.com/abhimanyus1997" target="_blank" class="w-12 h-12 flex items-center justify-center border border-gray-800 hover:border-primary hover:text-primary text-gray-400 transition-all interactable">
+                <a href="https://github.com/abhimanyus1997" target="_blank"
+                    class="w-12 h-12 flex items-center justify-center border border-gray-800 hover:border-primary hover:text-primary text-gray-400 transition-all interactable">
                     <i class="fab fa-github text-xl"></i>
                 </a>
             </div>
-            <p class="text-gray-600 text-[10px] md:text-xs font-mono">&copy; 2024 Abhimanyu Singh. Powered by WebLLM.</p>
+            <p class="text-gray-600 text-[10px] md:text-xs font-mono">&copy; 2024 Abhimanyu Singh. Powered by WebLLM.
+            </p>
         </div>
     </footer>
 
@@ -574,16 +745,19 @@
     <div id="chat-widget" class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
 
         <!-- Chat Interface -->
-        <div id="chat-container" class="hidden w-[90vw] md:w-96 h-[80vh] md:h-[600px] bg-black border border-primary/30 rounded-lg flex flex-col shadow-[0_0_40px_-10px_rgba(163,230,53,0.3)] overflow-hidden transition-all origin-bottom-right">
+        <div id="chat-container"
+            class="hidden w-[90vw] md:w-96 h-[80vh] md:h-[600px] bg-black border border-primary/30 rounded-lg flex flex-col shadow-[0_0_40px_-10px_rgba(163,230,53,0.3)] overflow-hidden transition-all origin-bottom-right">
 
             <!-- Chat Header -->
             <div class="p-3 bg-gray-900 border-b border-primary/20 flex justify-between items-center shrink-0">
                 <div class="flex items-center gap-3">
                     <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
-                    <span class="font-mono text-primary text-xs font-bold uppercase tracking-wider">AI Assistant v2.5</span>
+                    <span class="font-mono text-primary text-xs font-bold uppercase tracking-wider">AI Assistant
+                        v2.5</span>
                 </div>
                 <div class="flex gap-2">
-                    <button id="settings-btn" class="text-gray-500 hover:text-white transition-colors interactable" title="Settings">
+                    <button id="settings-btn" class="text-gray-500 hover:text-white transition-colors interactable"
+                        title="Settings">
                         <i class="fas fa-cog"></i>
                     </button>
                     <button id="close-chat" class="text-gray-500 hover:text-white transition-colors interactable">
@@ -598,33 +772,40 @@
 
                 <!-- Model Select -->
                 <div>
-                    <label class="text-[10px] text-primary font-bold font-mono mb-2 block uppercase">Model Architecture</label>
-                    <select id="model-select" class="w-full bg-gray-900 border border-gray-700 text-gray-300 text-xs p-2 focus:outline-none focus:border-primary transition-colors font-mono rounded">
+                    <label class="text-[10px] text-primary font-bold font-mono mb-2 block uppercase">Model
+                        Architecture</label>
+                    <select id="model-select"
+                        class="w-full bg-gray-900 border border-gray-700 text-gray-300 text-xs p-2 focus:outline-none focus:border-primary transition-colors font-mono rounded">
                         <!-- Options populated by JS -->
                     </select>
                 </div>
 
                 <!-- Temperature -->
                 <div>
-                    <label class="text-[10px] text-primary font-bold font-mono mb-2 block uppercase flex justify-between">
+                    <label
+                        class="text-[10px] text-primary font-bold font-mono mb-2 block uppercase flex justify-between">
                         <span>Creativity (Temp)</span>
                         <span id="temp-value">0.1</span>
                     </label>
-                    <input type="range" id="temp-slider" min="0" max="1" step="0.1" value="0.1" class="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-primary">
+                    <input type="range" id="temp-slider" min="0" max="1" step="0.1" value="0.1"
+                        class="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-primary">
                 </div>
 
                 <!-- Actions -->
                 <div class="pt-4 space-y-2">
-                    <button id="btn-reload" class="w-full py-2 bg-primary/20 border border-primary text-primary font-bold font-mono text-xs hover:bg-primary hover:text-black transition-all rounded">
+                    <button id="btn-reload"
+                        class="w-full py-2 bg-primary/20 border border-primary text-primary font-bold font-mono text-xs hover:bg-primary hover:text-black transition-all rounded">
                         [ RELOAD SYSTEM ]
                     </button>
-                    <button id="btn-clear" class="w-full py-2 bg-red-900/20 border border-red-500/50 text-red-400 font-bold font-mono text-xs hover:bg-red-500 hover:text-black transition-all rounded">
+                    <button id="btn-clear"
+                        class="w-full py-2 bg-red-900/20 border border-red-500/50 text-red-400 font-bold font-mono text-xs hover:bg-red-500 hover:text-black transition-all rounded">
                         [ CLEAR MEMORY ]
                     </button>
                 </div>
 
                 <div class="mt-auto pt-4 border-t border-gray-800">
-                     <button id="btn-close-settings" class="w-full py-2 text-gray-400 text-xs hover:text-white font-mono flex items-center justify-center gap-2">
+                    <button id="btn-close-settings"
+                        class="w-full py-2 text-gray-400 text-xs hover:text-white font-mono flex items-center justify-center gap-2">
                         <i class="fas fa-arrow-left"></i> Return to Terminal
                     </button>
                 </div>
@@ -632,7 +813,8 @@
 
             <!-- Model Loader Status (Hidden by default, shown during auto-load) -->
             <div id="init-panel" class="p-8 flex flex-col items-center justify-center h-full text-center space-y-6">
-                <div class="w-16 h-16 border border-primary/30 rounded-full flex items-center justify-center mb-2 animate-pulse-slow">
+                <div
+                    class="w-16 h-16 border border-primary/30 rounded-full flex items-center justify-center mb-2 animate-pulse-slow">
                     <i class="fas fa-terminal text-2xl text-primary"></i>
                 </div>
 
@@ -643,7 +825,8 @@
 
                 <div class="w-full px-4">
                     <div class="w-full bg-gray-800 h-1 mb-2" id="progress-bar-container">
-                        <div id="progress-bar" class="bg-primary h-1 transition-all duration-300" style="width: 0%"></div>
+                        <div id="progress-bar" class="bg-primary h-1 transition-all duration-300" style="width: 0%">
+                        </div>
                     </div>
                     <p id="status-text" class="text-[10px] text-primary font-mono h-4">Initializing...</p>
                 </div>
@@ -652,12 +835,15 @@
             <!-- Chat Area -->
             <div id="chat-interface" class="hidden flex-1 flex flex-col overflow-hidden bg-black relative">
                 <!-- Grid background for chat -->
-                <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none"></div>
+                <div
+                    class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none">
+                </div>
 
                 <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 chat-messages relative z-10">
                     <!-- Intro Message -->
                     <div class="flex justify-start items-end gap-2">
-                        <div class="w-6 h-6 rounded-sm bg-gray-800 flex items-center justify-center shrink-0 border border-gray-700">
+                        <div
+                            class="w-6 h-6 rounded-sm bg-gray-800 flex items-center justify-center shrink-0 border border-gray-700">
                             <i class="fas fa-robot text-[10px] text-gray-400"></i>
                         </div>
                         <div class="bg-gray-900 border border-gray-800 p-3 max-w-[85%] text-xs text-gray-300 font-mono">
@@ -666,17 +852,21 @@
                     </div>
                 </div>
 
-                <div id="chat-stats" class="px-4 py-1 text-[8px] text-gray-600 text-right font-mono hidden uppercase shrink-0"></div>
+                <div id="chat-stats"
+                    class="px-4 py-1 text-[8px] text-gray-600 text-right font-mono hidden uppercase shrink-0"></div>
 
                 <!-- Disclaimer -->
-                <div class="px-4 py-2 bg-gray-900/50 text-[9px] text-gray-600 text-center font-mono border-t border-gray-800 shrink-0">
+                <div
+                    class="px-4 py-2 bg-gray-900/50 text-[9px] text-gray-600 text-center font-mono border-t border-gray-800 shrink-0">
                     ⚠ RUNNING LOCALLY ON YOUR DEVICE. AI MAY HALLUCINATE.
                 </div>
 
                 <div class="p-3 bg-gray-900 border-t border-primary/20 shrink-0">
                     <div class="relative flex items-center gap-2">
-                        <input type="text" id="user-input" placeholder="Enter command..." class="w-full bg-black border border-gray-700 p-2 text-xs text-primary font-mono focus:outline-none focus:border-primary placeholder-gray-700">
-                        <button id="send-btn" class="p-2 bg-primary/10 border border-primary/30 text-primary hover:bg-primary hover:text-black transition-all interactable">
+                        <input type="text" id="user-input" placeholder="Enter command..."
+                            class="w-full bg-black border border-gray-700 p-2 text-xs text-primary font-mono focus:outline-none focus:border-primary placeholder-gray-700">
+                        <button id="send-btn"
+                            class="p-2 bg-primary/10 border border-primary/30 text-primary hover:bg-primary hover:text-black transition-all interactable">
                             <i class="fas fa-chevron-right text-xs"></i>
                         </button>
                     </div>
@@ -685,7 +875,8 @@
         </div>
 
         <!-- Floating Toggle Button -->
-        <button id="chat-toggle" class="w-14 h-14 bg-black border border-primary text-primary shadow-[0_0_20px_-5px_rgba(163,230,53,0.5)] flex items-center justify-center hover:bg-primary hover:text-black transition-all duration-300 group z-50 interactable">
+        <button id="chat-toggle"
+            class="w-14 h-14 bg-black border border-primary text-primary shadow-[0_0_20px_-5px_rgba(163,230,53,0.5)] flex items-center justify-center hover:bg-primary hover:text-black transition-all duration-300 group z-50 interactable">
             <i class="fas fa-terminal text-xl"></i>
         </button>
     </div>
@@ -832,7 +1023,7 @@
         btnCloseSettings.addEventListener('click', () => {
             settingsPanel.classList.add('hidden');
             // If engine is ready, show chat, otherwise show init
-            if(isEngineReady) {
+            if (isEngineReady) {
                 chatInterface.classList.remove('hidden');
             } else {
                 initPanel.classList.remove('hidden');
@@ -979,10 +1170,10 @@
 
         modelSelect.innerHTML = "";
         if (!availableModels.includes(config.model)) {
-             const option = document.createElement("option");
-             option.value = config.model;
-             option.textContent = config.model + " (Fastest)";
-             modelSelect.appendChild(option);
+            const option = document.createElement("option");
+            option.value = config.model;
+            option.textContent = config.model + " (Fastest)";
+            modelSelect.appendChild(option);
         }
         availableModels.forEach((modelId) => {
             if (modelId !== config.model) {
@@ -1070,7 +1261,7 @@
         });
 
         btnClear.addEventListener('click', async () => {
-            if(engine) await engine.resetChat();
+            if (engine) await engine.resetChat();
             messages = [{ content: RESUME_CONTEXT, role: "system" }];
             localStorage.removeItem(STORAGE_KEY);
 
@@ -1107,7 +1298,7 @@
                 initPanel.classList.add('hidden');
                 chatInterface.classList.remove('hidden');
                 window.isEngineReady = true;
-            } catch(err) {
+            } catch (err) {
                 statusText.textContent = "Error: " + err.message;
                 statusText.classList.add('text-red-500');
             }
@@ -1124,8 +1315,8 @@
                 let contextMessages = messages;
 
                 if (messages.length > MAX_CONTEXT_MSG + 1) {
-                     // Always keep system prompt (index 0)
-                     contextMessages = [messages[0], ...messages.slice(-MAX_CONTEXT_MSG)];
+                    // Always keep system prompt (index 0)
+                    contextMessages = [messages[0], ...messages.slice(-MAX_CONTEXT_MSG)];
                 }
 
                 let curMessage = "";
@@ -1202,9 +1393,8 @@
             rowDiv.className = `flex items-end gap-2 ${role === 'user' ? 'justify-end' : 'justify-start'}`;
 
             const avatar = document.createElement('div');
-            avatar.className = `w-6 h-6 rounded-sm flex items-center justify-center shrink-0 border ${
-                role === 'user' ? 'bg-primary border-primary' : 'bg-gray-800 border-gray-700'
-            }`;
+            avatar.className = `w-6 h-6 rounded-sm flex items-center justify-center shrink-0 border ${role === 'user' ? 'bg-primary border-primary' : 'bg-gray-800 border-gray-700'
+                }`;
             avatar.innerHTML = role === 'user'
                 ? '<i class="fas fa-user text-[10px] text-black"></i>'
                 : '<i class="fas fa-robot text-[10px] text-gray-400"></i>';
@@ -1234,6 +1424,52 @@
         userInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') onMessageSend();
         });
+
+        // Advanced 3D Parallax with Fluid Movement
+        const container = document.getElementById('profile-container');
+        const items = document.querySelectorAll('.parallax-item');
+
+        if (!window.matchMedia("(hover: none)").matches) {
+            container.addEventListener('mousemove', (e) => {
+                const { width, height, left, top } = container.getBoundingClientRect();
+                const xPct = (e.clientX - left) / width - 0.5;
+                const yPct = (e.clientY - top) / height - 0.5;
+
+                items.forEach(item => {
+                    const depth = parseFloat(item.getAttribute('data-depth'));
+                    const rotateFactor = parseFloat(item.getAttribute('data-rotate') || 0);
+                    const moveX = xPct * depth * 60;
+                    const moveY = yPct * depth * 60;
+                    const rotateX = -yPct * rotateFactor * 40;
+                    const rotateY = xPct * rotateFactor * 40;
+                    item.style.transform = `translate3d(${moveX}px, ${moveY}px, 0) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                });
+            });
+
+            container.addEventListener('mouseleave', () => {
+                items.forEach(item => {
+                    item.style.transform = 'translate3d(0, 0, 0) rotateX(0) rotateY(0)';
+                });
+            });
+        }
+
+
+        // Blob Randomization Logic
+        const randomizeBtn = document.getElementById('randomize-shape');
+        const mainBlob = document.getElementById('main-blob');
+
+        function generateRandomBlob() {
+            const r = () => Math.floor(Math.random() * (75 - 25 + 1)) + 25; // Professional range 25-75%
+            const val = `${r()}% ${r()}% ${r()}% ${r()}% / ${r()}% ${r()}% ${r()}% ${r()}%`;
+            mainBlob.style.borderRadius = val;
+            if (typeof sounds !== 'undefined') sounds.playShuffle();
+        }
+
+        randomizeBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Don't trigger parallax reset
+            generateRandomBlob();
+        });
     </script>
 </body>
+
 </html>
