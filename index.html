@@ -92,9 +92,7 @@
             background: transparent;
             border: none;
             transform: translateZ(0);
-            /* Hardware acceleration */
             mask-image: -webkit-radial-gradient(white, black);
-            /* Forced clipping */
         }
 
         /* Hover Color Reveal for Background */
@@ -218,7 +216,6 @@
             transition: all 0.3s;
         }
 
-        /* Randomize Button Style */
         .btn-random {
             position: absolute;
             bottom: 20px;
@@ -244,7 +241,6 @@
             box-shadow: 0 0 20px rgba(163, 230, 53, 0.6);
         }
 
-        /* Mobile Calibration Overlay */
         #mobile-calib {
             display: none;
             position: fixed;
@@ -309,6 +305,25 @@
                 </button>
             </div>
         </div>
+
+        <!-- Mobile Menu Container -->
+        <div id="mobile-menu" class="hidden md:hidden glass-panel border-t border-white/5 absolute w-full">
+            <div class="px-4 pt-2 pb-6 space-y-1">
+                <a href="#about"
+                    class="interactable block px-3 py-4 text-sm font-mono text-gray-300 hover:text-primary border-b border-white/5">>
+                    About</a>
+                <a href="#experience"
+                    class="interactable block px-3 py-4 text-sm font-mono text-gray-300 hover:text-primary border-b border-white/5">>
+                    Experience</a>
+                <a href="#projects"
+                    class="interactable block px-3 py-4 text-sm font-mono text-gray-300 hover:text-primary border-b border-white/5">>
+                    Projects</a>
+                <a href="#skills"
+                    class="interactable block px-3 py-4 text-sm font-mono text-gray-300 hover:text-primary">> Skills</a>
+                <a href="#contact"
+                    class="interactable block px-3 py-4 text-sm font-mono text-primary font-bold mt-4 bg-primary/5 border border-primary/20 text-center">./contact_me</a>
+            </div>
+        </div>
     </nav>
 
     <!-- Hero Section -->
@@ -355,25 +370,20 @@
                     </div>
                 </div>
 
-                <!-- Profile Section with Hybrid Gyroscope Parallax -->
+                <!-- Profile Section -->
                 <div class="order-1 lg:order-2 flex justify-center lg:justify-end relative parallax-container"
                     id="profile-container">
                     <div class="relative w-72 h-72 md:w-[480px] md:h-[480px] flex items-center justify-center">
-
-                        <!-- Ambient Glow -->
                         <div class="absolute inset-0 bg-primary rounded-full blur-[140px] opacity-10 parallax-item"
                             data-depth="-0.2"></div>
 
-                        <!-- Combined Blob Mask Layer (Reduced depth and scale to prevent clipping) -->
                         <div class="blob-mask scale-110 w-full h-full z-10 parallax-item" id="main-blob"
                             data-depth="0.04">
-                            <!-- Background Image (Reduced scale for better coverage) -->
                             <div class="absolute inset-0 parallax-item" data-depth="0.1" data-rotate="0.02">
                                 <img src="./static/PXL_20251116_062127714.PORTRAIT.jpg" alt="Background Profile"
                                     class="w-full h-full object-cover color-reveal-img scale-125">
                             </div>
 
-                            <!-- Cutout Layer (Balanced depth to feel natural without "cutting") -->
                             <div class="absolute inset-0 z-20 parallax-item pointer-events-none" data-depth="0.3"
                                 data-rotate="0.04">
                                 <img src="./static/PXL_20251116_062127714.PORTRAIT_BGremoved.png" alt="Profile Cutout"
@@ -381,12 +391,10 @@
                             </div>
                         </div>
 
-                        <!-- Mini Randomize Button -->
                         <button class="btn-random" id="randomize-shape" title="Randomize Module Shape">
                             <i class="fas fa-shuffle"></i>
                         </button>
 
-                        <!-- Info Badges (Floating outside the mask) -->
                         <div class="absolute -top-4 -right-4 md:top-10 md:-right-8 bg-black/90 backdrop-blur-md p-3 md:p-4 border border-primary/30 flex items-center gap-3 parallax-item shadow-xl z-30 interactable rounded-xl"
                             data-depth="0.6" data-rotate="0.1">
                             <div
