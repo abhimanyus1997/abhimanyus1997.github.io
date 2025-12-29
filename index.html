@@ -1,273 +1,453 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Abhimanyu Singh - GenAI & Computer Vision Engineer</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Abhimanyu Singh | Data Science Manager & AI Engineer</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.globe.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="./static/css/main.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Space Grotesk (Tech) & Inter (Readability) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif'],
+                    },
+                    colors: {
+                        dark: '#000000',       /* Pure Black */
+                        cardDark: '#0a0a0a',   /* Near Black */
+                        primary: '#a3e635',    /* Lime-400 */
+                        primaryHover: '#84cc16', /* Lime-500 */
+                        secondary: '#22c55e',  /* Green-500 */
+                        accent: '#14b8a6',     /* Teal-500 */
+                        glass: 'rgba(10, 10, 10, 0.8)',
+                    },
+                    animation: {
+                        'blob': 'blob 10s infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #000000;
+            color: #e5e5e5;
+            overflow-x: hidden;
+        }
+
+        /* Tech/Cyber Glassmorphism */
+        .glass-panel {
+            background: rgba(5, 5, 5, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(163, 230, 53, 0.1); /* Lime border hint */
+        }
+
+        .glass-card {
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            background: rgba(30, 30, 30, 0.8);
+            border-color: rgba(163, 230, 53, 0.5); /* Lime border on hover */
+            transform: translateY(-5px);
+            box-shadow: 0 0 30px -10px rgba(163, 230, 53, 0.15);
+        }
+
+        /* Lime Gradient Text */
+        .text-gradient {
+            background: linear-gradient(135deg, #a3e635, #22c55e, #14b8a6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Cyber Blobs */
+        .bg-blob {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.25;
+            z-index: -1;
+        }
+        .blob-1 { top: -10%; left: -10%; width: 700px; height: 700px; background: #a3e635; } /* Lime */
+        .blob-2 { bottom: -10%; right: -10%; width: 600px; height: 600px; background: #15803d; animation-delay: 2s; } /* Green */
+        .blob-3 { top: 40%; left: 30%; width: 500px; height: 500px; background: #0d9488; animation-delay: 4s; opacity: 0.15; } /* Teal */
+
+        /* Terminal Cursor */
+        .typing-cursor::after {
+            content: '█';
+            animation: blink 1s step-end infinite;
+            color: #a3e635;
+            margin-left: 4px;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #000000; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a3e635; }
+
+        /* Parallax Container */
+        .parallax-container {
+            perspective: 1000px;
+            transform-style: preserve-3d;
+        }
+        .parallax-item {
+            transition: transform 0.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: transform;
+        }
+
+        /* Sound Control Button */
+        #sound-toggle {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(163, 230, 53, 0.3);
+            color: #a3e635;
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #sound-toggle:hover {
+            background: rgba(163, 230, 53, 0.2);
+            transform: scale(1.1);
+        }
+
+        /* Input Range Style */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #a3e635;
+            cursor: pointer;
+            margin-top: -6px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #333;
+            border-radius: 2px;
+        }
+    </style>
 </head>
-<body class="text-slate-200 gradient-bg">
-    <!-- Canvas for Three.js background -->
-    <div id="vanta-container" class="vanta-container"></div>
+<body class="antialiased selection:bg-primary selection:text-black">
 
-<!-- Navigation -->
-<nav id="main-nav" class="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-            <!-- Logo -->
-            <div class="flex items-center">
-                <div id="pulsing-grid" class="circle-container"></div>
-                <a href="#"
-                    class="text-xl text-white">
-                    Abhimanyu Singh
+    <!-- Background -->
+    <div class="bg-blob blob-1 animate-blob"></div>
+    <div class="bg-blob blob-2 animate-blob"></div>
+    <div class="bg-blob blob-3 animate-blob"></div>
+
+    <!-- Sound Toggle -->
+    <button id="sound-toggle" title="Toggle Sound SFX">
+        <i class="fas fa-volume-high"></i>
+    </button>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 glass-panel">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 md:h-20">
+                <a href="#" class="text-xl md:text-2xl font-display font-bold tracking-tight text-white group interactable">
+                    Abhimanyu<span class="text-primary group-hover:animate-pulse">_</span>
                 </a>
-            </div>
 
-            <!-- Desktop Menu -->
-            <div class="hidden md:flex items-center space-x-8">
-                <a href="#about"
-                    class="text-slate-300 hover:text-purple-400 transition-colors duration-300 font-medium">About</a>
-                <a href="#experience"
-                    class="text-slate-300 hover:text-purple-400 transition-colors duration-300 font-medium">Experience</a>
-                <a href="#skills"
-                    class="text-slate-300 hover:text-purple-400 transition-colors duration-300 font-medium">Skills</a>
-                <a href="#projects"
-                    class="text-slate-300 hover:text-purple-400 transition-colors duration-300 font-medium">Projects</a>
-                <a href="#publications"
-                    class="text-slate-300 hover:text-purple-400 transition-colors duration-300 font-medium">Publications</a>
-                <a href="#contact"
-                    class="px-5 py-2 bg-gradient-to-r from-pink-500 to-pink-600 rounded-md hover:from-pink-400 hover:to-pink-500 transition-all duration-300 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
-                    Contact
+                <div class="hidden md:flex space-x-8">
+                    <a href="#about" class="interactable text-sm font-medium text-gray-400 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">About</a>
+                    <a href="#experience" class="interactable text-sm font-medium text-gray-400 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">Experience</a>
+                    <a href="#projects" class="interactable text-sm font-medium text-gray-400 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">Projects</a>
+                    <a href="#skills" class="interactable text-sm font-medium text-gray-400 hover:text-primary transition-colors uppercase tracking-widest text-[10px]">Skills</a>
+                </div>
+
+                <a href="#contact" class="interactable hidden md:block px-6 py-2 border border-primary/30 rounded-none bg-primary/10 text-primary font-mono text-xs hover:bg-primary hover:text-black transition-all">
+                    ./contact_me
                 </a>
-            </div>
 
-            <!-- Mobile Menu Button -->
-            <div class="md:hidden flex items-center">
-                <button id="menu-toggle" class="text-slate-300 focus:outline-none" aria-label="Toggle menu">
+                <button id="mobile-menu-btn" class="interactable md:hidden text-primary focus:outline-none">
                     <i class="fas fa-bars text-xl"></i>
                 </button>
             </div>
         </div>
 
         <!-- Mobile Menu -->
-        <div id="mobile-menu"
-            class="hidden md:hidden pb-4 pt-2 overflow-hidden transition-all duration-300 ease-in-out">
-            <div class="px-2 pt-2 pb-3 space-y-2 bg-slate-800/50 rounded-lg shadow-inner backdrop-blur-sm">
-                <a href="#about"
-                    class="block px-4 py-2 text-base font-medium text-slate-300 hover:bg-slate-700 hover:text-white rounded-md transition">About</a>
-                <a href="#experience"
-                    class="block px-4 py-2 text-base font-medium text-slate-300 hover:bg-slate-700 hover:text-white rounded-md transition">Experience</a>
-                <a href="#skills"
-                    class="block px-4 py-2 text-base font-medium text-slate-300 hover:bg-slate-700 hover:text-white rounded-md transition">Skills</a>
-                <a href="#projects"
-                    class="block px-4 py-2 text-base font-medium text-slate-300 hover:bg-slate-700 hover:text-white rounded-md transition">Projects</a>
-                <a href="#publications"
-                    class="block px-4 py-2 text-base font-medium text-slate-300 hover:bg-slate-700 hover:text-white rounded-md transition">Publications</a>
-                <a href="#contact"
-                    class="block px-4 py-3 mt-2 text-center bg-gradient-to-r from-purple-600 to-blue-700 rounded-md text-white font-medium hover:from-purple-500 hover:to-blue-600 transition transform hover:-translate-y-0.5 shadow-md">
-                    Contact
-                </a>
+        <div id="mobile-menu" class="hidden md:hidden glass-panel border-t border-white/5 absolute w-full">
+            <div class="px-4 pt-2 pb-4 space-y-1">
+                <a href="#about" class="interactable block px-3 py-3 text-sm font-mono text-gray-300 hover:text-primary">> About</a>
+                <a href="#experience" class="interactable block px-3 py-3 text-sm font-mono text-gray-300 hover:text-primary">> Experience</a>
+                <a href="#projects" class="interactable block px-3 py-3 text-sm font-mono text-gray-300 hover:text-primary">> Projects</a>
+                <a href="#skills" class="interactable block px-3 py-3 text-sm font-mono text-gray-300 hover:text-primary">> Skills</a>
             </div>
         </div>
-    </div>
     </nav>
 
     <!-- Hero Section -->
-    <section class="min-h-screen flex items-center pt-16 hero-section">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                <div>
-                    <h1 class="text-5xl md:text-6xl font-bold leading-tight hi-section" >
-                        Hi, I'm <span class="hi-section-name bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent">Abhimanyu Singh</span>
+    <section id="about" class="min-h-screen flex items-center justify-center pt-20 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+
+                <!-- Text Content -->
+                <div class="order-2 lg:order-1 space-y-6 md:space-y-8 text-center lg:text-left">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 border border-primary/30 bg-primary/5 text-primary text-[10px] font-mono uppercase tracking-wider mx-auto lg:mx-0">
+                        <span class="w-1.5 h-1.5 bg-primary animate-pulse"></span>
+                        System Online
+                    </div>
+
+                    <h1 class="text-4xl md:text-7xl font-display font-bold leading-tight tracking-tight text-white">
+                        Hi, I'm <br>
+                        <span class="text-gradient">Abhimanyu Singh</span>
                     </h1>
-                    <h2 class="text-3xl mt-4 font-medium">
-                        <span id="typed" class="text-purple-400"></span>
-                    </h2>
-                    <p class="mt-6 text-lg text-slate-300 max-w-xl">
-                        I build intelligent systems that see, understand, and interact with the world through computer vision and generative AI.
+
+                    <div class="text-lg md:text-2xl text-gray-400 font-light h-8 flex items-center justify-center lg:justify-start gap-2 font-mono">
+                        > <span id="typed-text" class="text-primary font-medium typing-cursor"></span>
+                    </div>
+
+                    <p class="text-base md:text-lg text-gray-400 max-w-lg leading-relaxed border-l-0 lg:border-l-2 border-primary/20 lg:pl-6 mx-auto lg:mx-0">
+                        I am a <strong>Data Science Manager</strong> & <strong>AI Engineer</strong> building real-world AI solutions. Specializing in
+                        <span class="text-white font-medium">Generative AI</span>,
+                        <span class="text-white font-medium">Robotics/IoT</span>, and
+                        <span class="text-white font-medium">Computer Vision</span>.
                     </p>
-                    <div class="mt-8 flex space-x-4">
-                        <a href="https://linkedin.com/in/abhimanyus1997" target="_blank" class="w-12 h-12 rounded-full bg-slate-800 hover:bg-pink-700 transition flex items-center justify-center">
-                            <i class="fab fa-linkedin-in"></i>
+
+                    <div class="flex flex-wrap gap-4 justify-center lg:justify-start pt-4">
+                        <a href="#projects" class="interactable px-6 py-3 md:px-8 md:py-3.5 bg-primary hover:bg-primaryHover text-black font-bold transition-all shadow-[0_0_20px_-5px_rgba(163,230,53,0.4)] text-sm md:text-base">
+                            View Work
                         </a>
-                        <a href="https://github.com/abhimanyus1997" target="_blank" class="w-12 h-12 rounded-full bg-slate-800 hover:bg-pink-700 transition flex items-center justify-center">
-                            <i class="fab fa-github"></i>
+                        <a href="https://github.com/abhimanyus1997" target="_blank" class="interactable px-6 py-3 md:px-8 md:py-3.5 border border-white/10 hover:border-primary text-white font-medium transition-colors flex items-center gap-2 bg-white/5 text-sm md:text-base">
+                            <i class="fab fa-github"></i> GitHub
                         </a>
                     </div>
                 </div>
-                <!-- <div class="flex justify-center">
-                    <div class="relative">
-                        <div class="absolute inset-0 w-full h-full rounded-full bg-gradient-to-r from-purple-400 to-blue-500 blur-xl animate-pulse"></div>
-                        <div class="relative bg-slate-900 rounded-full p-1 w-64 h-64 overflow-hidden">
-                            <img src="https://avatars.githubusercontent.com/u/583231?v=4" alt="Abhimanyu Singh" class="w-full h-full rounded-full object-cover">
+
+                <!-- Advanced Parallax Image Section -->
+                <div class="order-1 lg:order-2 flex justify-center lg:justify-end relative parallax-container" id="profile-container">
+                    <div class="relative w-64 h-64 md:w-[450px] md:h-[450px]">
+
+                        <!-- Layer 1: Glow -->
+                        <div class="absolute inset-0 bg-primary rounded-full blur-[100px] opacity-20 parallax-item" data-depth="-0.2" data-rotate="0"></div>
+
+                        <!-- Layer 2: Main Image -->
+                        <div class="relative w-full h-full rounded-2xl overflow-hidden border border-white/10 shadow-2xl parallax-item bg-cardDark z-10" data-depth="0.1" data-rotate="0.05">
+                            <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+CjxwYXRoIGQ9Ik0wIDBoNDB2NDBIMHoiIGZpbGw9Im5vbmUiLz4KPHBhdGggZD0iTTAgNDBoNDBNNDAgMHY0MCIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMDMpIiBzdHJva2Utd2lkdGg9IjEiLz4KPC9zdmc+')] opacity-20 z-10 pointer-events-none"></div>
+                            <img src="./static/PXL_20251118_095147921.PORTRAIT.jpg" alt="Abhimanyu Singh" class="w-full h-full object-cover filter grayscale hover:grayscale-0 transition-all duration-700">
+                        </div>
+
+                        <!-- Layer 3: Floating Badges -->
+                        <div class="absolute -top-4 -right-4 md:top-10 md:-right-10 bg-black/90 backdrop-blur-md p-3 md:p-4 border border-primary/30 flex items-center gap-3 parallax-item shadow-xl z-20 interactable rounded-lg" data-depth="0.6" data-rotate="0.2">
+                            <div class="w-8 h-8 md:w-10 md:h-10 bg-primary/20 flex items-center justify-center border border-primary/50 rounded">
+                                <i class="fas fa-brain text-primary text-sm md:text-xl"></i>
+                            </div>
+                            <div>
+                                <div class="text-[8px] md:text-[10px] text-gray-400 font-mono uppercase">Status</div>
+                                <div class="font-bold text-xs md:text-sm text-white">Agentic AI</div>
+                            </div>
+                        </div>
+
+                        <div class="absolute -bottom-4 -left-4 md:bottom-10 md:-left-10 bg-black/90 backdrop-blur-md p-3 md:p-4 border border-primary/30 flex items-center gap-3 parallax-item shadow-xl z-20 interactable rounded-lg" data-depth="0.9" data-rotate="0.3">
+                            <div class="w-8 h-8 md:w-10 md:h-10 bg-primary/20 flex items-center justify-center border border-primary/50 rounded">
+                                <i class="fas fa-eye text-primary text-sm md:text-xl"></i>
+                            </div>
+                            <div>
+                                <div class="text-[8px] md:text-[10px] text-gray-400 font-mono uppercase">Module</div>
+                                <div class="font-bold text-xs md:text-sm text-white">Computer Vision</div>
+                            </div>
                         </div>
                     </div>
-                </div> -->
-            </div>
-        </div>
-    </section>
-
-    <!-- About Section -->
-    <section id="about" class="py-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-4xl font-bold mb-12 section-title">About Me</h2>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="card p-6 rounded-xl">
-                    <div class="w-14 h-14 bg-slate-800 rounded-full flex items-center justify-center mb-6">
-                        <i class="fas fa-user-graduate text-2xl text-purple-400"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Education</h3>
-                    <ul class="space-y-4">
-                        <li>
-                            <h4 class="font-medium text-purple-400">M.Tech - Automation & Robotics Engineering</h4>
-                            <p class="text-sm text-slate-400">Defence Institute Of Advanced Technology (DIAT), DRDO</p>
-                            <p class="text-sm text-slate-400">CGPA: 8.47</p>
-                        </li>
-                        <li>
-                            <h4 class="font-medium text-purple-400">B.Tech - Mechanical Engineering</h4>
-                            <p class="text-sm text-slate-400">LNM Institute Of Information Technology</p>
-                            <p class="text-sm text-slate-400">CGPA: 8.16</p>
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="card p-6 rounded-xl">
-                    <div class="w-14 h-14 bg-slate-800 rounded-full flex items-center justify-center mb-6">
-                        <i class="fas fa-brain text-2xl text-purple-400"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Specialization</h3>
-                    <p class="mb-4">Highly skilled in building systems that combine Generative AI with Computer Vision:</p>
-                    <ul class="space-y-2">
-                        <li class="flex items-start">
-                            <i class="fas fa-arrow-right text-purple-400 mt-1 mr-2"></i>
-                            <span>Multimodal AI Architectures</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-arrow-right text-purple-400 mt-1 mr-2"></i>
-                            <span>Real-time Inference Systems</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-arrow-right text-purple-400 mt-1 mr-2"></i>
-                            <span>Robust Vision Pipelines</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-arrow-right text-purple-400 mt-1 mr-2"></i>
-                            <span>End-to-end Data Systems</span>
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="card p-6 rounded-xl">
-                    <div class="w-14 h-14 bg-slate-800 rounded-full flex items-center justify-center mb-6">
-                        <i class="fas fa-rocket text-2xl text-purple-400"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Professional Summary</h3>
-                    <p class="mb-4">Software Engineer & Data Scientist with expertise in:</p>
-                    <ul class="space-y-2">
-                        <li class="flex items-start">
-                            <i class="fas fa-check-circle text-emerald-400 mt-1 mr-2"></i>
-                            <span>Designing and implementing data pipelines</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-check-circle text-emerald-400 mt-1 mr-2"></i>
-                            <span>Developing conversational AI systems</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-check-circle text-emerald-400 mt-1 mr-2"></i>
-                            <span>Building vision-based analytics</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-check-circle text-emerald-400 mt-1 mr-2"></i>
-                            <span>Optimizing AI performance on edge devices</span>
-                        </li>
-                    </ul>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Experience Section -->
-    <section id="experience" class="py-20 bg-slate-900/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-4xl font-bold mb-12 section-title">Professional Experience</h2>
+    <section id="experience" class="py-16 md:py-24 relative bg-black">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl md:text-5xl font-display font-bold mb-12 md:mb-16 text-center text-white">
+                Execution <span class="text-primary">Log</span>
+            </h2>
 
-            <div class="relative pl-8 timeline">
-                <!-- Experience Item 1 -->
-                <div class="relative mb-12">
-                    <div class="absolute -left-9 top-2 w-6 h-6 rounded-full bg-purple-500"></div>
-                    <div class="card p-6 rounded-xl ml-2">
-                        <div class="flex justify-between flex-wrap gap-4">
-                            <h3 class="text-xl font-bold">Software Engineer (Gen AI & Data Science)</h3>
-                            <span class="px-3 py-1 bg-purple-900/40 rounded-full text-sm">06/2024 – Present</span>
+            <div class="space-y-8 md:space-y-12 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-px before:bg-gradient-to-b before:from-transparent before:via-primary/30 before:to-transparent">
+
+                <!-- Job 1 -->
+                <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-none border border-primary bg-black shadow-[0_0_15px_rgba(163,230,53,0.3)] shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
+                        <i class="fas fa-user-tie text-primary text-sm"></i>
+                    </div>
+                    <div class="w-[calc(100%-3.5rem)] md:w-[calc(50%-2.5rem)] glass-card p-6 md:p-8 md:order-1 hover:border-primary/50 border-l-4 border-l-primary/0 hover:border-l-primary transition-all interactable">
+                        <div class="flex flex-col mb-4">
+                            <h3 class="font-bold text-lg md:text-xl text-white font-display">Data Science Manager</h3>
+                            <div class="text-primary text-xs md:text-sm font-mono mb-1">HDFC Bank</div>
+                            <time class="text-[10px] md:text-xs text-gray-500 font-mono">Dec 2025 – Present</time>
                         </div>
-                        <p class="text-purple-400 mt-1">Alphadroid India Ltd, Noida</p>
-                        <ul class="mt-4 space-y-3">
-                            <li class="flex items-start">
-                                <i class="fas fa-circle text-xs mt-2 mr-2 text-purple-400"></i>
-                                <span>Designed data pipelines using FastAPI, SQL, and NoSQL for analytics from autonomous robots</span>
-                            </li>
-                            <li class="flex items-start">
-                                <i class="fas fa-circle text-xs mt-2 mr-2 text-purple-400"></i>
-                                <span>Developed multilingual conversational AI systems with LangChain and Llama3.2 on AWS</span>
-                            </li>
-                            <li class="flex items-start">
-                                <i class="fas fa-circle text-xs mt-2 mr-2 text-purple-400"></i>
-                                <span>Built vision-based data acquisition app for Beam Suntory using Flask and OpenCV</span>
-                            </li>
-                            <li class="flex items-start">
-                                <i class="fas fa-circle text-xs mt-2 mr-2 text-purple-400"></i>
-                                <span>Implemented facial recognition using MediaPipe and TFLite with efficient vector search</span>
+                        <ul class="text-gray-400 text-xs md:text-sm space-y-2 list-none font-mono">
+                            <li class="flex items-start gap-2">
+                                <span class="text-primary">></span>
+                                <span>Managing Data Science strategies & driving AI adoption.</span>
                             </li>
                         </ul>
-                        <div class="mt-4 flex flex-wrap gap-2">
-                            <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">FastAPI</span>
-                            <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">AWS</span>
-                            <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">LangChain</span>
-                            <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">OpenCV</span>
-                            <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">MongoDB</span>
+                    </div>
+                </div>
+
+                <!-- Job 2 -->
+                <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-none border border-gray-700 bg-black shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 group-hover:border-primary transition-colors">
+                        <i class="fas fa-code-branch text-gray-400 group-hover:text-primary text-sm"></i>
+                    </div>
+                    <div class="w-[calc(100%-3.5rem)] md:w-[calc(50%-2.5rem)] glass-card p-6 md:p-8 md:order-1 hover:border-primary/50 transition-all interactable">
+                        <div class="flex flex-col mb-4">
+                            <h3 class="font-bold text-lg md:text-xl text-white font-display">Sr. ML Engineer</h3>
+                            <div class="text-primary text-xs md:text-sm font-mono mb-1">Quantiphi</div>
+                            <time class="text-[10px] md:text-xs text-gray-500 font-mono">Sep 2025 – Nov 2025</time>
+                        </div>
+                        <ul class="text-gray-400 text-xs md:text-sm space-y-2 list-none font-mono">
+                            <li class="flex items-start gap-2">
+                                <span class="text-primary">></span>
+                                <span>GenAI solutions for Enterprise PE clients.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Job 3 -->
+                <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-none border border-gray-700 bg-black shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 group-hover:border-primary transition-colors">
+                        <i class="fas fa-robot text-gray-400 group-hover:text-primary text-sm"></i>
+                    </div>
+                    <div class="w-[calc(100%-3.5rem)] md:w-[calc(50%-2.5rem)] glass-card p-6 md:p-8 md:order-1 hover:border-primary/50 transition-all interactable">
+                        <div class="flex flex-col mb-4">
+                            <h3 class="font-bold text-lg md:text-xl text-white font-display">Software Engineer</h3>
+                            <div class="text-primary text-xs md:text-sm font-mono mb-1">Alphadroid India</div>
+                            <time class="text-[10px] md:text-xs text-gray-500 font-mono">06/2024 – 08/2025</time>
+                        </div>
+                        <ul class="text-gray-400 text-xs md:text-sm space-y-2 list-none font-mono">
+                            <li class="flex items-start gap-2">
+                                <span class="text-primary">></span>
+                                <span>Agentic AI avatar using <strong>RAG</strong>.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-primary">></span>
+                                <span>Vision-based reporting (Flask, OpenCV).</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Job 4 -->
+                <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+                    <div class="flex items-center justify-center w-10 h-10 rounded-none border border-gray-700 bg-black shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 group-hover:border-primary transition-colors">
+                        <i class="fas fa-university text-gray-400 group-hover:text-primary text-sm"></i>
+                    </div>
+                    <div class="w-[calc(100%-3.5rem)] md:w-[calc(50%-2.5rem)] glass-card p-6 md:p-8 md:order-1 hover:border-primary/50 transition-all interactable">
+                        <div class="flex flex-col mb-4">
+                            <h3 class="font-bold text-lg md:text-xl text-white font-display">Research Fellow</h3>
+                            <div class="text-primary text-xs md:text-sm font-mono mb-1">IIT Guwahati (TIDF)</div>
+                            <time class="text-[10px] md:text-xs text-gray-500 font-mono">06/2023 – 06/2024</time>
+                        </div>
+                        <ul class="text-gray-400 text-xs md:text-sm space-y-2 list-none font-mono">
+                            <li class="flex items-start gap-2">
+                                <span class="text-primary">></span>
+                                <span>Annotation pipelines w/ <strong>GroundingDINO</strong>.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-primary">></span>
+                                <span>Optimized with <strong>ONNX Runtime</strong>.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section id="projects" class="py-16 md:py-24 bg-cardDark">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl md:text-5xl font-display font-bold mb-12 md:mb-16 text-center text-white">
+                System <span class="text-primary">Modules</span>
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Project 1 -->
+                <div class="glass-card group border border-white/5 hover:border-primary/50 transition-all duration-300 interactable">
+                    <div class="h-40 md:h-48 bg-black flex items-center justify-center relative overflow-hidden border-b border-white/5">
+                        <div class="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(163,230,53,0.05)_50%,transparent_75%,transparent_100%)] bg-[length:250%_250%,100%_100%] animate-[shimmer_2s_linear_infinite]"></div>
+                        <i class="fas fa-file-contract text-4xl md:text-5xl text-gray-700 group-hover:text-primary transition-colors duration-300"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 font-display text-white">Resume JD Matcher</h3>
+                        <p class="text-gray-400 text-xs mb-4 font-mono leading-relaxed">AI-powered job matching tool. Features dynamic skill extraction, match scoring, and radar charts. Uses TF-IDF for relevance scoring.</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">LangChain</span>
+                            <span class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">Gemini</span>
+                            <span class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">Streamlit</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Experience Item 2 -->
-                <div class="relative mb-12">
-                    <div class="absolute -left-9 top-2 w-6 h-6 rounded-full bg-purple-500"></div>
-                    <div class="card p-6 rounded-xl ml-2">
-                        <div class="flex justify-between flex-wrap gap-4">
-                            <h3 class="text-xl font-bold">Research Fellow (AI & Computer Vision)</h3>
-                            <span class="px-3 py-1 bg-purple-900/40 rounded-full text-sm">06/2023 – 06/2024</span>
+                <!-- Project 2 -->
+                <div class="glass-card group border border-white/5 hover:border-primary/50 transition-all duration-300 interactable">
+                    <div class="h-40 md:h-48 bg-black flex items-center justify-center relative overflow-hidden border-b border-white/5">
+                        <div class="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(163,230,53,0.05)_50%,transparent_75%,transparent_100%)] bg-[length:250%_250%,100%_100%] animate-[shimmer_2s_linear_infinite]"></div>
+                        <i class="fab fa-ethereum text-4xl md:text-5xl text-gray-700 group-hover:text-primary transition-colors duration-300"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 font-display text-white">cryptoTracker</h3>
+                        <p class="text-gray-400 text-xs mb-4 font-mono leading-relaxed">Real-time crypto wallet dashboard with LSTM price forecasting and WebSocket integration. Tracks tokens and provides account summaries.</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">Flask</span>
+                            <span class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">LSTM</span>
+                            <span class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">WebSockets</span>
                         </div>
-                        <p class="text-purple-400 mt-1">Technology Innovation and Development Foundation, IIT Guwahati</p>
-                        <ul class="mt-4 space-y-3">
-                            <li class="flex items-start">
-                                <i class="fas fa-circle text-xs mt-2 mr-2 text-purple-400"></i>
-                                <span>Developed automated data annotation pipelines for underwater surveillance</span>
-                            </li>
-                            <li class="flex items-start">
-                                <i class="fas fa-circle text-xs mt-2 mr-2 text-purple-400"></i>
-                                <span>Created real-time AI training and inference dashboards using FastAPI and D3.js</span>
-                            </li>
-                            <li class="flex items-start">
-                                <i class="fas fa-circle text-xs mt-2 mr-2 text-purple-400"></i>
-                                <span>Optimized end-to-end pipelines with ONNX Runtime and TFLite</span>
-                            </li>
-                            <li class="flex items-start">
-                                <i class="fas fa-circle text-xs mt-2 mr-2 text-purple-400"></i>
-                                <span>Presented research at international conferences on computer vision</span>
-                            </li>
-                        </ul>
-                        <div class="mt-4 flex flex-wrap gap-2">
-                            <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">Computer Vision</span>
-                            <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">FastAPI</span>
-                            <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">ONNX</span>
-                            <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">TFLite</span>
-                            <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">Data Annotation</span>
+                    </div>
+                </div>
+
+                <!-- Project 3 -->
+                <div class="glass-card group border border-white/5 hover:border-primary/50 transition-all duration-300 interactable">
+                    <div class="h-40 md:h-48 bg-black flex items-center justify-center relative overflow-hidden border-b border-white/5">
+                        <div class="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(163,230,53,0.05)_50%,transparent_75%,transparent_100%)] bg-[length:250%_250%,100%_100%] animate-[shimmer_2s_linear_infinite]"></div>
+                        <i class="fas fa-comments text-4xl md:text-5xl text-gray-700 group-hover:text-primary transition-colors duration-300"></i>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 font-display text-white">Langchain One</h3>
+                        <p class="text-gray-400 text-xs mb-4 font-mono leading-relaxed">Multimodal chatbot using LlamaIndex for image-based data extraction. Features hybrid RAG pipelines.</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">LlamaIndex</span>
+                            <span class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">YOLOv8</span>
+                            <span class="text-[10px] uppercase font-bold text-primary border border-primary/20 px-2 py-1">EasyOCR</span>
                         </div>
                     </div>
                 </div>
@@ -276,350 +456,784 @@
     </section>
 
     <!-- Skills Section -->
-    <section id="skills" class="py-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-4xl font-bold mb-12 section-title">Technical Skills</h2>
+    <section id="skills" class="py-16 md:py-24">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl md:text-5xl font-display font-bold mb-12 md:mb-16 text-center text-white">
+                Technical <span class="text-primary">Stack</span>
+            </h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-                <div class="card p-6 rounded-xl">
-                    <h3 class="text-xl font-bold mb-6 flex items-center">
-                        <i class="fas fa-code text-purple-400 mr-3"></i>
-                        Programming Languages
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+
+                <!-- AI & GenAI -->
+                <div class="glass-card p-6 hover:bg-white/5 transition-colors interactable">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-3 font-display text-white">
+                        <i class="fas fa-brain text-primary"></i> AI & GenAI
                     </h3>
                     <div class="flex flex-wrap gap-2">
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">Python</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">JavaScript</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">SQL</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">Dart</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">C++</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">HTML</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">CSS</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">NoSQL</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">C</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">Shell/Bash</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">LangChain</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">LlamaIndex</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">AgnoAI</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">CrewAI</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">YOLO</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">PyTorch</span>
                     </div>
                 </div>
 
-                <div class="card p-6 rounded-xl">
-                    <h3 class="text-xl font-bold mb-6 flex items-center">
-                        <i class="fas fa-layer-group text-purple-400 mr-3"></i>
-                        Technologies & Frameworks
+                <!-- Cloud & MLOps -->
+                <div class="glass-card p-6 hover:bg-white/5 transition-colors interactable">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-3 font-display text-white">
+                        <i class="fas fa-cloud text-primary"></i> Cloud & MLOps
                     </h3>
                     <div class="flex flex-wrap gap-2">
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">FastAPI</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">Flask</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">LangChain</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">OpenCV</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">Transformers</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">YOLO</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">Scikit-learn</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">Pandas</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">Numpy</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">MongoDB</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">PostgreSQL</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">AWS EC2/SageMaker</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">PyTorch</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">TensorFlow</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">ONNX Runtime</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">TFLite</span>
-                        <span class="px-3 py-2 bg-slate-800 hover:bg-purple-600 transition-colors duration-200 rounded-lg text-sm">D3.js</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card p-6 rounded-xl">
-                <h3 class="text-xl font-bold mb-6 flex items-center">
-                    <i class="fas fa-cogs text-purple-400 mr-3"></i>
-                    Technical Expertise
-                </h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="p-4 bg-slate-800/50 rounded-lg">
-                        <h4 class="font-bold text-purple-400 mb-3">Computer Vision</h4>
-                        <ul class="space-y-2">
-                            <li class="flex items-start">
-                                <i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i>
-                                <span>Object Detection/Recognition</span>
-                            </li>
-                            <li class="flex items-start">
-                                <i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i>
-                                <span>Image Enhancement</span>
-                            </li>
-                            <li class="flex items-start">
-                                <i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i>
-                                <span>Facial Recognition</span>
-                            </li>
-                            <li class="flex items-start">
-                                <i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i>
-                                <span>Underwater Vision</span>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="p-4 bg-slate-800/50 rounded-lg">
-                        <h4 class="font-bold text-purple-400 mb-3">Generative AI</h4>
-                        <ul class="space-y-2">
-                            <li class="flex items-start">
-                                <i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i>
-                                <span>Multimodal Models</span>
-                            </li>
-                            <li class="flex items-start">
-                                <i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i>
-                                <span>Conversational AI</span>
-                            </li>
-                            <li class="flex items-start">
-                                <i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i>
-                                <span>LLM Integration</span>
-                            </li>
-                            <li class="flex items-start">
-                                <i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i>
-                                <span>RAG Systems</span>
-                            </li>
-                        </ul>
-                    </div>
-                    <div class="p-4 bg-slate-800/50 rounded-lg">
-                        <h4 class="font-bold text-purple-400 mb-3">Data Engineering</h4>
-                        <ul class="space-y-2">
-                            <li class="flex items-start">
-                                <i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i>
-                                <span>ETL Pipelines</span>
-                            </li>
-                            <li class="flex items-start">
-                                <i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i>
-                                <span>Real-time Analytics</span>
-                            </li>
-                            <li class="flex items-start">
-                                <i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i>
-                                <span>Data Quality Assurance</span>
-                            </li>
-                            <li class="flex items-start">
-                                <i class="fas fa-check-circle text-purple-400 mt-1 mr-2"></i>
-                                <span>Dashboard Creation</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Projects Section -->
-    <section id="projects" class="py-20 bg-slate-900/50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-4xl font-bold mb-12 section-title">Featured Projects</h2>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Project 1 -->
-                <div class="project-card card p-6 rounded-xl transition duration-300">
-                    <div class="text-5xl mb-4 text-purple-400">
-                        <i class="fas fa-file-lines"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Resume JD Matcher</h3>
-                    <p class="text-slate-400 mb-4">AI Job Matching Tool | Python, NLTK, LLMs, Streamlit</p>
-                    <ul class="space-y-2 mb-6">
-                        <li class="flex items-start">
-                            <i class="fas fa-circle text-xs mt-2 mr-2 text-purple-400"></i>
-                            <span>LangChain and Gemini 2.5 for skill extraction</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-circle text-xs mt-2 mr-2 text-purple-400"></i>
-                            <span>TF-IDF scoring for candidate-job relevance</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-circle text-xs mt-2 mr-2 text-purple-400"></i>
-                            <span>Streamlit dashboard with PDF parsing and Plotly visualizations</span>
-                        </li>
-                    </ul>
-                    <div class="mt-4 flex flex-wrap gap-2">
-                        <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">Python</span>
-                        <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">LLMs</span>
-                        <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">Streamlit</span>
-                        <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">NLP</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">AWS</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Docker</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Kubernetes</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">MLFlow</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Vault</span>
                     </div>
                 </div>
 
-                <!-- Project 2 -->
-                <div class="project-card card p-6 rounded-xl transition duration-300">
-                    <div class="text-5xl mb-4 text-purple-400">
-                        <i class="fab fa-ethereum"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">cryptoTracker</h3>
-                    <p class="text-slate-400 mb-4">Wallet Dashboard | Flask, LSTM, SQLite, WebSockets</p>
-                    <ul class="space-y-2 mb-6">
-                        <li class="flex items-start">
-                            <i class="fas fa-circle text-xs mt-2 mr-2 text-purple-400"></i>
-                            <span>Real-time Ethereum wallet dashboard with Flask</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-circle text-xs mt-2 mr-2 text-purple-400"></i>
-                            <span>LSTM models for price trend forecasting</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-circle text-xs mt-2 mr-2 text-purple-400"></i>
-                            <span>WebSocket pipelines for low-latency updates</span>
-                        </li>
-                    </ul>
-                    <div class="mt-4 flex flex-wrap gap-2">
-                        <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">Flask</span>
-                        <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">LSTM</span>
-                        <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">WebSockets</span>
-                        <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">SQLite</span>
+                <!-- IoT & Robotics -->
+                <div class="glass-card p-6 hover:bg-white/5 transition-colors interactable">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-3 font-display text-white">
+                        <i class="fas fa-robot text-primary"></i> IoT & Robotics
+                    </h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">MQTT</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Raspberry Pi</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Arduino</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">C/C++</span>
                     </div>
                 </div>
 
-                <!-- Project 3 -->
-                <div class="project-card card p-6 rounded-xl transition duration-300">
-                    <div class="text-5xl mb-4 text-purple-400">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-2">Langchain One</h3>
-                    <p class="text-slate-400 mb-4">Image Based Chatbot | GenAI, Tabular Data, OCR</p>
-                    <ul class="space-y-2 mb-6">
-                        <li class="flex items-start">
-                            <i class="fas fa-circle text-xs mt-2 mr-2 text-purple-400"></i>
-                            <span>Multimodal GenAI chatbot with LangChain and YOLOv8</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-circle text-xs mt-2 mr-2 text-purple-400"></i>
-                            <span>EasyOCR for tabular data extraction</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i class="fas fa-circle text-xs mt-2 mr-2 text-purple-400"></i>
-                            <span>Hybrid RAG pipeline with Few-Shot Prompting</span>
-                        </li>
-                    </ul>
-                    <div class="mt-4 flex flex-wrap gap-2">
-                        <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">LangChain</span>
-                        <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">YOLOv8</span>
-                        <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">OCR</span>
-                        <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">RAG</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Publications Section -->
-    <section id="publications" class="py-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-4xl font-bold mb-12 section-title">Publications & Presentations</h2>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="card p-6 rounded-xl">
-                    <div class="flex items-center mb-4">
-                        <div class="p-3 bg-slate-800 rounded-lg mr-4">
-                            <i class="fas fa-book text-2xl text-purple-400"></i>
-                        </div>
-                        <h3 class="text-xl font-bold">Article</h3>
-                    </div>
-                    <p class="text-lg mb-2">"The Evolution of Object Detection: YOLO & NAS Revolutionizing Computer Vision"</p>
-                    <p class="text-purple-400">Published on IndiaAI.gov.in</p>
-                    <div class="mt-4">
-                        <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">Object Detection</span>
-                        <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">YOLO</span>
-                        <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">Computer Vision</span>
+                <!-- Web & Mobile -->
+                <div class="glass-card p-6 hover:bg-white/5 transition-colors interactable">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-3 font-display text-white">
+                        <i class="fas fa-globe text-primary"></i> Web & Mobile
+                    </h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">FastAPI</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Flask</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">React</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Flutter</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Node.js</span>
                     </div>
                 </div>
 
-                <div class="card p-6 rounded-xl">
-                    <div class="flex items-center mb-4">
-                        <div class="p-3 bg-slate-800 rounded-lg mr-4">
-                            <i class="fas fa-presentation-screen text-2xl text-purple-400"></i>
-                        </div>
-                        <h3 class="text-xl font-bold">Conference Presentation</h3>
-                    </div>
-                    <p class="text-lg mb-2">"Subaqueous Crack Detection using Fusion-Based Image Enhancement for Dam Structure"</p>
-                    <p class="text-purple-400">4th International Conference on River Corridor Research and Management (RCRM) 2024</p>
-                    <div class="mt-4">
-                        <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">Underwater Vision</span>
-                        <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">Crack Detection</span>
-                        <span class="px-3 py-1 bg-slate-800 rounded-full text-sm">Image Enhancement</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Contact Section -->
-    <section id="contact" class="py-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 class="text-4xl font-bold mb-12 section-title">Let's Connect</h2>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
-                <div>
-                    <p class="text-lg mb-8">
-                        Have an interesting project or want to discuss AI opportunities? Feel free to reach out!
-                    </p>
-
-                    <div class="space-y-6">
-                        <div class="flex items-start">
-                            <div class="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center mr-4">
-                                <i class="fas fa-envelope text-xl text-pink-400"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-medium">Email</h3>
-                                <a href="mailto:abhimanyu@example.com" class="text-pink-400">abhimanyus1997@gmail.com</a>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start">
-                            <div class="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center mr-4">
-                                <i class="fab fa-linkedin-in text-xl text-pink-400"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-medium">LinkedIn</h3>
-                                <a href="https://linkedin.com/in/abhimanyus1997" target="_blank" class="text-pink-400">linkedin.com/in/abhimanyus1997</a>
-                            </div>
-                        </div>
-
-                        <div class="flex items-start">
-                            <div class="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center mr-4">
-                                <i class="fab fa-github text-xl text-pink-400"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-medium">GitHub</h3>
-                                <a href="https://github.com/abhimanyus1997" target="_blank" class="text-pink-400">github.com/abhimanyus1997</a>
-                            </div>
-                        </div>
+                <!-- Languages -->
+                <div class="glass-card p-6 hover:bg-white/5 transition-colors interactable">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-3 font-display text-white">
+                        <i class="fas fa-code text-primary"></i> Languages
+                    </h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Python</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">SQL</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">C/C++</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">JavaScript</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Dart</span>
                     </div>
                 </div>
 
-                <div class="card p-8 rounded-xl">
-                    <form class="space-y-4">
-                        <div>
-                            <label for="name" class="block mb-2">Name</label>
-                            <input type="text" id="name" class="w-full bg-slate-800 border border-slate-700 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500">
-                        </div>
-                        <div>
-                            <label for="email" class="block mb-2">Email</label>
-                            <input type="email" id="email" class="w-full bg-slate-800 border border-slate-700 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500">
-                        </div>
-                        <div>
-                            <label for="message" class="block mb-2">Message</label>
-                            <textarea id="message" rows="4" class="w-full bg-slate-800 border border-slate-700 rounded px-4 py-3 focus:outline-none focus:ring-2 focus:ring-pink-500"></textarea>
-                        </div>
-                        <button type="submit" class="w-full py-3 bg-gradient-to-r from-pink-600 to-blue-700 rounded-md hover:from-pink-500 hover:to-blue-600 transition font-medium">
-                            Send Message
-                        </button>
-                    </form>
+                <!-- Tools & Databases -->
+                <div class="glass-card p-6 hover:bg-white/5 transition-colors interactable">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-3 font-display text-white">
+                        <i class="fas fa-database text-primary"></i> Tools & DBs
+                    </h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">MongoDB</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">PostgreSQL</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Redis</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">ChromaDB</span>
+                        <span class="px-3 py-1 bg-black border border-gray-800 text-xs text-gray-300 font-mono hover:border-primary hover:text-primary">Git</span>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="py-8 border-t border-slate-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <p>&copy; 2024 Abhimanyu Singh. All Rights Reserved.</p>
-            <div class="flex justify-center space-x-4 mt-4">
-                <a href="https://linkedin.com/in/abhimanyus1997" target="_blank" class="text-slate-400 hover:text-pink-400 transition">
-                    <i class="fab fa-linkedin-in"></i>
+    <footer id="contact" class="py-16 border-t border-white/5 bg-black relative">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <h2 class="text-2xl md:text-3xl font-bold mb-8 md:mb-10 font-display text-white">Initialize Connection</h2>
+            <div class="flex justify-center gap-6 mb-8 md:mb-12">
+                <a href="mailto:abhimanyus1997@gmail.com" class="w-12 h-12 flex items-center justify-center border border-gray-800 hover:border-primary hover:text-primary text-gray-400 transition-all interactable">
+                    <i class="fas fa-envelope text-xl"></i>
                 </a>
-                <a href="https://github.com/abhimanyus1997" target="_blank" class="text-slate-400 hover:text-pink-400 transition">
-                    <i class="fab fa-github"></i>
+                <a href="https://linkedin.com/in/abhimanyus1997" target="_blank" class="w-12 h-12 flex items-center justify-center border border-gray-800 hover:border-primary hover:text-primary text-gray-400 transition-all interactable">
+                    <i class="fab fa-linkedin-in text-xl"></i>
+                </a>
+                <a href="https://github.com/abhimanyus1997" target="_blank" class="w-12 h-12 flex items-center justify-center border border-gray-800 hover:border-primary hover:text-primary text-gray-400 transition-all interactable">
+                    <i class="fab fa-github text-xl"></i>
                 </a>
             </div>
+            <p class="text-gray-600 text-[10px] md:text-xs font-mono">&copy; 2024 Abhimanyu Singh. Powered by WebLLM.</p>
         </div>
     </footer>
-    <script src="./static/js/main.js"></script>
 
+    <!-- WebLLM Chat Widget -->
+    <div id="chat-widget" class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
+
+        <!-- Chat Interface -->
+        <div id="chat-container" class="hidden w-[90vw] md:w-96 h-[80vh] md:h-[600px] bg-black border border-primary/30 rounded-lg flex flex-col shadow-[0_0_40px_-10px_rgba(163,230,53,0.3)] overflow-hidden transition-all origin-bottom-right">
+
+            <!-- Chat Header -->
+            <div class="p-3 bg-gray-900 border-b border-primary/20 flex justify-between items-center shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                    <span class="font-mono text-primary text-xs font-bold uppercase tracking-wider">AI Assistant v2.5</span>
+                </div>
+                <div class="flex gap-2">
+                    <button id="settings-btn" class="text-gray-500 hover:text-white transition-colors interactable" title="Settings">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <button id="close-chat" class="text-gray-500 hover:text-white transition-colors interactable">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Settings Panel -->
+            <div id="settings-panel" class="hidden flex-1 flex flex-col p-6 bg-black space-y-4 overflow-y-auto">
+                <h3 class="text-white font-bold font-display text-sm uppercase">Configuration</h3>
+
+                <!-- Model Select -->
+                <div>
+                    <label class="text-[10px] text-primary font-bold font-mono mb-2 block uppercase">Model Architecture</label>
+                    <select id="model-select" class="w-full bg-gray-900 border border-gray-700 text-gray-300 text-xs p-2 focus:outline-none focus:border-primary transition-colors font-mono rounded">
+                        <!-- Options populated by JS -->
+                    </select>
+                </div>
+
+                <!-- Temperature -->
+                <div>
+                    <label class="text-[10px] text-primary font-bold font-mono mb-2 block uppercase flex justify-between">
+                        <span>Creativity (Temp)</span>
+                        <span id="temp-value">0.1</span>
+                    </label>
+                    <input type="range" id="temp-slider" min="0" max="1" step="0.1" value="0.1" class="w-full h-1 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-primary">
+                </div>
+
+                <!-- Actions -->
+                <div class="pt-4 space-y-2">
+                    <button id="btn-reload" class="w-full py-2 bg-primary/20 border border-primary text-primary font-bold font-mono text-xs hover:bg-primary hover:text-black transition-all rounded">
+                        [ RELOAD SYSTEM ]
+                    </button>
+                    <button id="btn-clear" class="w-full py-2 bg-red-900/20 border border-red-500/50 text-red-400 font-bold font-mono text-xs hover:bg-red-500 hover:text-black transition-all rounded">
+                        [ CLEAR MEMORY ]
+                    </button>
+                </div>
+
+                <div class="mt-auto pt-4 border-t border-gray-800">
+                     <button id="btn-close-settings" class="w-full py-2 text-gray-400 text-xs hover:text-white font-mono flex items-center justify-center gap-2">
+                        <i class="fas fa-arrow-left"></i> Return to Terminal
+                    </button>
+                </div>
+            </div>
+
+            <!-- Model Loader Status (Hidden by default, shown during auto-load) -->
+            <div id="init-panel" class="p-8 flex flex-col items-center justify-center h-full text-center space-y-6">
+                <div class="w-16 h-16 border border-primary/30 rounded-full flex items-center justify-center mb-2 animate-pulse-slow">
+                    <i class="fas fa-terminal text-2xl text-primary"></i>
+                </div>
+
+                <div>
+                    <h3 class="font-bold text-white text-lg font-display mb-1">System Init</h3>
+                    <p class="text-[10px] text-gray-500 font-mono">Auto-loading local LLM engine...</p>
+                </div>
+
+                <div class="w-full px-4">
+                    <div class="w-full bg-gray-800 h-1 mb-2" id="progress-bar-container">
+                        <div id="progress-bar" class="bg-primary h-1 transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <p id="status-text" class="text-[10px] text-primary font-mono h-4">Initializing...</p>
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div id="chat-interface" class="hidden flex-1 flex flex-col overflow-hidden bg-black relative">
+                <!-- Grid background for chat -->
+                <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none"></div>
+
+                <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 chat-messages relative z-10">
+                    <!-- Intro Message -->
+                    <div class="flex justify-start items-end gap-2">
+                        <div class="w-6 h-6 rounded-sm bg-gray-800 flex items-center justify-center shrink-0 border border-gray-700">
+                            <i class="fas fa-robot text-[10px] text-gray-400"></i>
+                        </div>
+                        <div class="bg-gray-900 border border-gray-800 p-3 max-w-[85%] text-xs text-gray-300 font-mono">
+                            <p>System ready. Ask me about Abhimanyu's experience.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="chat-stats" class="px-4 py-1 text-[8px] text-gray-600 text-right font-mono hidden uppercase shrink-0"></div>
+
+                <!-- Disclaimer -->
+                <div class="px-4 py-2 bg-gray-900/50 text-[9px] text-gray-600 text-center font-mono border-t border-gray-800 shrink-0">
+                    ⚠ RUNNING LOCALLY ON YOUR DEVICE. AI MAY HALLUCINATE.
+                </div>
+
+                <div class="p-3 bg-gray-900 border-t border-primary/20 shrink-0">
+                    <div class="relative flex items-center gap-2">
+                        <input type="text" id="user-input" placeholder="Enter command..." class="w-full bg-black border border-gray-700 p-2 text-xs text-primary font-mono focus:outline-none focus:border-primary placeholder-gray-700">
+                        <button id="send-btn" class="p-2 bg-primary/10 border border-primary/30 text-primary hover:bg-primary hover:text-black transition-all interactable">
+                            <i class="fas fa-chevron-right text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Toggle Button -->
+        <button id="chat-toggle" class="w-14 h-14 bg-black border border-primary text-primary shadow-[0_0_20px_-5px_rgba(163,230,53,0.5)] flex items-center justify-center hover:bg-primary hover:text-black transition-all duration-300 group z-50 interactable">
+            <i class="fas fa-terminal text-xl"></i>
+        </button>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // --- Sound Controller ---
+        class SoundController {
+            constructor() {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.enabled = true;
+                this.gainNode = this.ctx.createGain();
+                this.gainNode.connect(this.ctx.destination);
+                this.gainNode.gain.value = 0.1;
+            }
+
+            toggle() {
+                this.enabled = !this.enabled;
+                return this.enabled;
+            }
+
+            resume() {
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playTone(freq, type, duration, vol = 0.1) {
+                if (!this.enabled) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            }
+
+            playHover() { this.playTone(800, 'sine', 0.05, 0.05); }
+            playClick() { this.playTone(300, 'square', 0.05, 0.05); }
+            playMessageSent() {
+                this.playTone(400, 'sine', 0.1);
+                setTimeout(() => this.playTone(600, 'sine', 0.1), 50);
+            }
+            playStartup() {
+                this.playTone(200, 'sine', 0.5, 0.2);
+                setTimeout(() => this.playTone(400, 'sine', 0.5, 0.2), 200);
+                setTimeout(() => this.playTone(800, 'sine', 1.0, 0.2), 400);
+            }
+            playChatOpen() { this.playTone(600, 'sawtooth', 0.2, 0.05); }
+            playChatClose() { this.playTone(300, 'sawtooth', 0.2, 0.05); }
+            playTyping() { this.playTone(1200, 'square', 0.02, 0.01); }
+        }
+
+        const sounds = new SoundController();
+
+        document.addEventListener('click', () => {
+            sounds.resume();
+        }, { once: true });
+
+        const soundBtn = document.getElementById('sound-toggle');
+        soundBtn.addEventListener('click', () => {
+            const enabled = sounds.toggle();
+            soundBtn.innerHTML = enabled ? '<i class="fas fa-volume-high"></i>' : '<i class="fas fa-volume-mute"></i>';
+            soundBtn.style.color = enabled ? '#a3e635' : '#ef4444';
+        });
+
+        document.querySelectorAll('.interactable, button, a').forEach(el => {
+            el.addEventListener('mouseenter', () => sounds.playHover());
+            el.addEventListener('click', () => sounds.playClick());
+        });
+
+
+        // --- Typing Effect ---
+        const roles = ["Data Science Manager", "AI Engineer", "Robotics Specialist", "Computer Vision Researcher"];
+        let roleIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        const typedTextSpan = document.getElementById("typed-text");
+
+        function type() {
+            const currentRole = roles[roleIndex];
+            if (isDeleting) {
+                typedTextSpan.textContent = currentRole.substring(0, charIndex - 1);
+                charIndex--;
+            } else {
+                typedTextSpan.textContent = currentRole.substring(0, charIndex + 1);
+                charIndex++;
+            }
+
+            if (!isDeleting && charIndex === currentRole.length) {
+                setTimeout(() => isDeleting = true, 2000);
+            } else if (isDeleting && charIndex === 0) {
+                isDeleting = false;
+                roleIndex = (roleIndex + 1) % roles.length;
+            }
+
+            const speed = isDeleting ? 50 : 100;
+            setTimeout(type, speed);
+        }
+        document.addEventListener('DOMContentLoaded', type);
+
+        // --- Mobile Menu ---
+        const btn = document.getElementById('mobile-menu-btn');
+        const menu = document.getElementById('mobile-menu');
+        btn.addEventListener('click', () => menu.classList.toggle('hidden'));
+
+        // --- Chat Widget UI Logic ---
+        const chatToggle = document.getElementById('chat-toggle');
+        const chatContainer = document.getElementById('chat-container');
+        const closeChat = document.getElementById('close-chat');
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsPanel = document.getElementById('settings-panel');
+        const chatInterface = document.getElementById('chat-interface');
+        const btnCloseSettings = document.getElementById('btn-close-settings');
+        const initPanel = document.getElementById('init-panel');
+
+        chatToggle.addEventListener('click', () => {
+            chatContainer.classList.remove('hidden');
+            chatToggle.classList.add('hidden');
+            sounds.playChatOpen();
+        });
+
+        closeChat.addEventListener('click', () => {
+            chatContainer.classList.add('hidden');
+            chatToggle.classList.remove('hidden');
+            sounds.playChatClose();
+        });
+
+        settingsBtn.addEventListener('click', () => {
+            settingsPanel.classList.remove('hidden');
+            chatInterface.classList.add('hidden');
+            initPanel.classList.add('hidden'); // Ensure init is hidden
+        });
+
+        btnCloseSettings.addEventListener('click', () => {
+            settingsPanel.classList.add('hidden');
+            // If engine is ready, show chat, otherwise show init
+            if(isEngineReady) {
+                chatInterface.classList.remove('hidden');
+            } else {
+                initPanel.classList.remove('hidden');
+            }
+        });
+
+        // --- Advanced 3D Parallax (Desktop Only) ---
+        const container = document.getElementById('profile-container');
+        const items = document.querySelectorAll('.parallax-item');
+
+        if (!window.matchMedia("(hover: none)").matches) {
+            container.addEventListener('mousemove', (e) => {
+                const { width, height, left, top } = container.getBoundingClientRect();
+                const x = e.clientX - left;
+                const y = e.clientY - top;
+
+                const xPct = (x / width) - 0.5;
+                const yPct = (y / height) - 0.5;
+
+                items.forEach(item => {
+                    const depth = parseFloat(item.getAttribute('data-depth'));
+                    const rotateFactor = parseFloat(item.getAttribute('data-rotate') || 0);
+
+                    const moveX = xPct * depth * 100;
+                    const moveY = yPct * depth * 100;
+
+                    const rotateX = -yPct * rotateFactor * 30;
+                    const rotateY = xPct * rotateFactor * 30;
+
+                    item.style.transform = `translate(${moveX}px, ${moveY}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+                });
+            });
+
+            container.addEventListener('mouseleave', () => {
+                items.forEach(item => {
+                    item.style.transform = 'translate(0, 0) rotateX(0) rotateY(0)';
+                });
+            });
+        }
+    </script>
+
+    <!-- WebLLM Logic -->
+    <script type="module">
+        import * as webllm from "https://esm.run/@mlc-ai/web-llm";
+
+        const RESUME_CONTEXT = `
+        You are an AI assistant representing Abhimanyu Singh. Answer questions strictly based on his resume below. Keep answers concise, professional, and friendly.
+
+        RESUME:
+        Name: Abhimanyu Singh
+        Role: Data Science Manager | AI Engineer | Robotics & GenAI Specialist
+        Contact: +91-8118838215, abhimanyus1997@gmail.com
+        Location: India
+
+        SUMMARY:
+        Highly skilled and innovative AI Engineer, Software Developer, and Data Scientist with 5+ years of industrial experience in designing, developing, and deploying robust data pipelines, advanced analytics, and reporting solutions. Possesses an additional 2+ years of dedicated research experience in AI and Computer Vision. Proficient in Python, SQL, NoSQL, and specialized visualization tools to deliver actionable insights and build intelligent systems. Adept at automation, stakeholder management, and ensuring high data quality and operational efficiency.
+
+        EXPERIENCE:
+        1. Data Science Manager at HDFC Bank (Dec 2025 - Present):
+           - Location: Noida, Uttar Pradesh (Hybrid).
+           - Managing Data Science strategies and driving AI adoption in banking.
+
+        2. Senior Machine Learning Engineer at Quantiphi (Sep 2025 - Nov 2025):
+           - Location: Bengaluru, Karnataka (Remote).
+           - Creating Generative AI solutions for enterprise Private Equity (PE) clients in the FSI Sector.
+
+        3. Software Engineer (Gen AI & Data Science) at Alphadroid India Ltd (06/2024 - 08/2025):
+           - Developed multilingual conversational Agentic AI avatar using TF-IDF and RAG (ChromaDB) for intent recognition.
+           - Robot Data for Marketing Analytics: Developed and optimized a Flutter-based mobile quiz app running on robots for Reliance Retail.
+           - Built vision-based reporting app for Beam Suntory (Flask, OpenCV, MongoDB).
+           - Implemented facial biometric system using MediaPipe and TFLite for edge devices.
+           - Managed robot deployment via MQTT and AWS ECR/HashiCorp Vault.
+
+        4. Research Fellow (AI & Computer Vision) at IIT Guwahati (06/2023 - 06/2024):
+           - Automated data annotation pipelines for underwater surveillance using GroundingDINO (35% quality improvement).
+           - Built real-time AI dashboards with FastAPI, D3.js & Chart.js.
+           - Optimized pipelines using ONNX Runtime & TFLite, reducing latency by 3-4 seconds.
+
+        5. Data Scientist at Health View (2019 - 2021):
+           - Scraped news using BeautifulSoup and performed NLP sentiment analysis.
+           - Analyzed user engagement using Pandas/NumPy.
+           - Built interactive dashboards using D3.js and Matplotlib.
+
+        EDUCATION:
+        - M.Tech Automation & Robotics, DIAT (DRDO), CGPA 8.47.
+        - B.Tech Mechanical Engineering, LNMIIT, CGPA 8.16.
+
+        SKILLS:
+        - AI/ML & Agent Frameworks: LangChain, LlamaIndex, LangGraph, AgnoAI, CrewAI, Hugging Face (SmolAgents), Agentic AI, PyTorch, TensorFlow, Scikit-learn, OpenCV, YOLO.
+        - Cloud & DevOps: AWS (EC2, IAM, SageMaker, ECR), Docker, HashiCorp Vault, MQTT, Kubernetes, Vercel, Firebase, GitHub Actions.
+        - Web & Mobile: FastAPI, Flask, React, Next.js, Node.js, Django, Tailwind, D3.js, Flutter, Android Studio.
+        - MLOps & Data Engineering: MLFlow, DVC, Data Acquisition, Data Transformation, Data Quality Assurance, RAG Pipelines.
+        - Languages: Python, C, C++, SQL, JavaScript, Dart, Bash, LaTeX.
+        - Databases: MongoDB, MySQL, PostgreSQL, SQLite, Redis, ChromaDB.
+        - Tools: VS Code, PyCharm, Jupyter, Git, Linux, Postman, Selenium, Arduino, Raspberry Pi, Matlab, Blender.
+
+        PROJECTS:
+        - Resume JD Matcher (2025): AI job matching tool using Python, NLTK, LangChain, Gemini 2.5 Flash, Streamlit, and Plotly.
+        - CryptoTracker (2023): Real-time crypto wallet dashboard using Flask, LSTM, SQLite, WebSockets, and Chart.js.
+        - LangChain One (2023): Multimodal chatbot using LlamaIndex, LangChain, EasyOCR, and YOLOv8.
+
+        PUBLICATIONS:
+        - Article on "Evolution of Object Detection" on IndiaAI.gov.in.
+        - Paper on "Subaqueous Crack Detection" at RCRM 2024.
+        `;
+
+        let messages = [
+            { content: RESUME_CONTEXT, role: "system" }
+        ];
+
+        let engine = null;
+        window.isEngineReady = false;
+
+        const initPanel = document.getElementById('init-panel');
+        const chatInterface = document.getElementById('chat-interface');
+        const progressBar = document.getElementById('progress-bar');
+        const progressContainer = document.getElementById('progress-bar-container');
+        const statusText = document.getElementById('status-text');
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const chatStats = document.getElementById('chat-stats');
+
+        // Settings Elements
+        const modelSelect = document.getElementById('model-select');
+        const tempSlider = document.getElementById('temp-slider');
+        const tempValue = document.getElementById('temp-value');
+        const btnReload = document.getElementById('btn-reload');
+        const btnClear = document.getElementById('btn-clear');
+        const btnCloseSettings = document.getElementById('btn-close-settings');
+        const settingsPanel = document.getElementById('settings-panel');
+
+        const STORAGE_KEY = 'abhimanyu_portfolio_chat_history';
+
+        // Config State
+        let config = {
+            temperature: 0.1,
+            top_p: 0.9,
+            model: "SmolLM2-135M-Instruct-q0f16-MLC"
+        };
+
+        // Populate Models
+        const availableModels = webllm.prebuiltAppConfig.model_list.map(m => m.model_id);
+
+        modelSelect.innerHTML = "";
+        if (!availableModels.includes(config.model)) {
+             const option = document.createElement("option");
+             option.value = config.model;
+             option.textContent = config.model + " (Fastest)";
+             modelSelect.appendChild(option);
+        }
+        availableModels.forEach((modelId) => {
+            if (modelId !== config.model) {
+                const option = document.createElement("option");
+                option.value = modelId;
+                option.textContent = modelId;
+                modelSelect.appendChild(option);
+            }
+        });
+        modelSelect.value = config.model;
+
+        // History Logic
+        function saveHistory() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+            } catch (e) {
+                console.warn("Failed to save chat history", e);
+            }
+        }
+
+        function loadHistory() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.length > 0 && parsed[0].role === 'system') {
+                        // Refresh resume context
+                        parsed[0].content = RESUME_CONTEXT;
+                        messages = parsed;
+
+                        messages.forEach(msg => {
+                            if (msg.role !== 'system') {
+                                appendMessage(msg.content, msg.role);
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error("Error loading history", e);
+                }
+            }
+        }
+
+        const autoLoadModel = async () => {
+            initPanel.classList.remove('hidden');
+            chatInterface.classList.add('hidden');
+
+            // Load history before engine init
+            loadHistory();
+
+            try {
+                engine = new webllm.MLCEngine();
+
+                engine.setInitProgressCallback((report) => {
+                    let width = 0;
+                    if (report.progress) width = report.progress * 100;
+                    progressBar.style.width = width + "%";
+                    statusText.textContent = report.text;
+                });
+
+                await engine.reload(config.model, {
+                    temperature: config.temperature,
+                    top_p: config.top_p
+                });
+
+                initPanel.classList.add('hidden');
+                chatInterface.classList.remove('hidden');
+                window.isEngineReady = true;
+
+                if (typeof sounds !== 'undefined') sounds.playStartup();
+
+            } catch (err) {
+                console.error(err);
+                statusText.textContent = "Auto-load failed. Reload page to retry.";
+                statusText.classList.add('text-red-500');
+            }
+        };
+
+        window.addEventListener('load', autoLoadModel);
+
+        // --- Settings Logic ---
+
+        tempSlider.addEventListener('input', (e) => {
+            config.temperature = parseFloat(e.target.value);
+            tempValue.textContent = config.temperature;
+        });
+
+        btnClear.addEventListener('click', async () => {
+            if(engine) await engine.resetChat();
+            messages = [{ content: RESUME_CONTEXT, role: "system" }];
+            localStorage.removeItem(STORAGE_KEY);
+
+            chatBox.innerHTML = `
+                <div class="flex justify-start items-end gap-2">
+                    <div class="w-6 h-6 rounded-sm bg-gray-800 flex items-center justify-center shrink-0 border border-gray-700">
+                        <i class="fas fa-robot text-[10px] text-gray-400"></i>
+                    </div>
+                    <div class="bg-gray-900 border border-gray-800 p-3 max-w-[85%] text-xs text-gray-300 font-mono">
+                        <p>Memory cleared. System ready.</p>
+                    </div>
+                </div>
+            `;
+            settingsPanel.classList.add('hidden');
+            chatInterface.classList.remove('hidden');
+        });
+
+        btnReload.addEventListener('click', async () => {
+            config.model = modelSelect.value;
+            settingsPanel.classList.add('hidden');
+            window.isEngineReady = false;
+
+            initPanel.classList.remove('hidden');
+            chatInterface.classList.add('hidden');
+            progressBar.style.width = "0%";
+            statusText.textContent = "Reloading Engine...";
+            statusText.classList.remove('text-red-500');
+
+            try {
+                await engine.reload(config.model, {
+                    temperature: config.temperature,
+                    top_p: config.top_p
+                });
+                initPanel.classList.add('hidden');
+                chatInterface.classList.remove('hidden');
+                window.isEngineReady = true;
+            } catch(err) {
+                statusText.textContent = "Error: " + err.message;
+                statusText.classList.add('text-red-500');
+            }
+        });
+
+
+        // --- Chat Logic ---
+
+        async function streamingGenerating(messages, onUpdate, onFinish, onError) {
+            try {
+                // Optimization: Keep system prompt + last 10 messages for faster processing
+                // Note: MLCEngine manages KV cache automatically, but limiting input context helps initial processing.
+                const MAX_CONTEXT_MSG = 10;
+                let contextMessages = messages;
+
+                if (messages.length > MAX_CONTEXT_MSG + 1) {
+                     // Always keep system prompt (index 0)
+                     contextMessages = [messages[0], ...messages.slice(-MAX_CONTEXT_MSG)];
+                }
+
+                let curMessage = "";
+                const completion = await engine.chat.completions.create({
+                    stream: true,
+                    messages: contextMessages,
+                    temperature: config.temperature,
+                    top_p: config.top_p
+                });
+                for await (const chunk of completion) {
+                    const curDelta = chunk.choices[0].delta.content;
+                    if (curDelta) {
+                        curMessage += curDelta;
+                        if (Math.random() > 0.7 && typeof sounds !== 'undefined') sounds.playTyping();
+                    }
+                    onUpdate(curMessage);
+                }
+                const finalMessage = await engine.getMessage();
+                onFinish(finalMessage);
+            } catch (err) { onError(err); }
+        }
+
+        async function onMessageSend() {
+            const input = userInput.value.trim();
+            if (input.length === 0) return;
+
+            if (typeof sounds !== 'undefined') sounds.playMessageSent();
+
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+            userInput.value = "";
+            userInput.setAttribute("placeholder", "Processing...");
+
+            const message = { content: input, role: "user" };
+            messages.push(message);
+            saveHistory(); // Save immediately
+            appendMessage(input, "user");
+
+            const aiMsgId = appendMessage("Thinking...", "assistant");
+            const aiMsgElem = document.getElementById(aiMsgId);
+
+            const onUpdate = (curMessage) => {
+                aiMsgElem.textContent = curMessage;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            };
+
+            const onFinish = async (finalMessage) => {
+                aiMsgElem.textContent = finalMessage;
+                messages.push({ role: "assistant", content: finalMessage });
+                saveHistory(); // Save after response
+
+                userInput.disabled = false;
+                sendBtn.disabled = false;
+                userInput.setAttribute("placeholder", "Enter command...");
+                userInput.focus();
+                const stats = await engine.runtimeStatsText();
+                chatStats.textContent = stats;
+                chatStats.classList.remove('hidden');
+            };
+
+            const onError = (err) => {
+                aiMsgElem.textContent = "Error: " + err.message;
+                aiMsgElem.classList.add('text-red-400');
+                userInput.disabled = false;
+                sendBtn.disabled = false;
+            };
+
+            streamingGenerating(messages, onUpdate, onFinish, onError);
+        }
+
+        function appendMessage(text, role) {
+            const id = 'msg-' + Date.now() + Math.random();
+            const rowDiv = document.createElement('div');
+            rowDiv.className = `flex items-end gap-2 ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+
+            const avatar = document.createElement('div');
+            avatar.className = `w-6 h-6 rounded-sm flex items-center justify-center shrink-0 border ${
+                role === 'user' ? 'bg-primary border-primary' : 'bg-gray-800 border-gray-700'
+            }`;
+            avatar.innerHTML = role === 'user'
+                ? '<i class="fas fa-user text-[10px] text-black"></i>'
+                : '<i class="fas fa-robot text-[10px] text-gray-400"></i>';
+
+            const bubble = document.createElement('div');
+            bubble.id = role === 'assistant' ? id : '';
+            bubble.className = role === 'user'
+                ? 'bg-primary text-black p-3 max-w-[85%] text-xs font-mono font-bold'
+                : 'bg-gray-900 border border-gray-800 p-3 max-w-[85%] text-xs text-gray-300 font-mono';
+
+            bubble.textContent = text;
+
+            if (role === 'user') {
+                rowDiv.appendChild(bubble);
+                rowDiv.appendChild(avatar);
+            } else {
+                rowDiv.appendChild(avatar);
+                rowDiv.appendChild(bubble);
+            }
+
+            chatBox.appendChild(rowDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return id;
+        }
+
+        sendBtn.addEventListener('click', onMessageSend);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') onMessageSend();
+        });
+    </script>
 </body>
 </html>
