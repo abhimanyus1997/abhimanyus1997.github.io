@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoTracker | Boost Your Finance Potential</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #263238;
+            --accent: #9ef01a;
+            --accent-glow: rgba(158, 240, 26, 0.4);
+            --gradient-start: #9ef01a;
+            --gradient-end: #263238;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        /* Ambient Background Glow */
+        .ambient-light {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(158, 240, 26, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: -1;
+            filter: blur(80px);
+        }
+
+        .ambient-light-2 {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(158, 240, 26, 0.1) 0%, rgba(0, 0, 0, 0) 70%);
+            bottom: -100px;
+            right: -100px;
+            z-index: -1;
+            filter: blur(80px);
+        }
+
+        /* Glassmorphism */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+        }
+
+        .hero-text {
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(158, 240, 26, 0.3);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #1e293b;
+            padding: 12px 32px;
+            border-radius: 12px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(158, 240, 26, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(158, 240, 26, 0.4);
+        }
+
+        .btn-outline {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline:hover {
+            border-color: white;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .nav-link {
+            position: relative;
+            color: #94a3b8;
+            transition: color 0.3s;
+        }
+
+        .nav-link:hover {
+            color: white;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 1px;
+            bottom: -4px;
+            left: 0;
+            background-color: white;
+            transition: width 0.3s;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body class="antialiased min-h-screen flex flex-col">
+
+    <div class="ambient-light"></div>
+    <div class="ambient-light-2"></div>
+
+    <!-- Navigation -->
+    <nav class="w-full py-6 px-6 md:px-12 flex justify-between items-center z-50">
+        <div class="flex items-center gap-2">
+            <i class="fa-brands fa-bitcoin text-accent text-2xl"></i>
+            <span class="font-bold text-xl tracking-tight text-white">CryptoTracker</span>
+        </div>
+        <div class="hidden md:flex gap-8 text-sm font-medium">
+            <a href="#" class="nav-link">Markets</a>
+            <a href="#" class="nav-link">Exchange</a>
+            <a href="#" class="nav-link">Features</a>
+            <a href="#" class="nav-link">Learn</a>
+        </div>
+        <div class="flex gap-4">
+            <div class="flex gap-4">
+                <a href="./dashboard.html"
+                    class="px-5 py-2 text-sm font-semibold text-gray-900 bg-accent hover:bg-opacity-90 rounded-lg transition shadow-lg shadow-accent/20">
+                    <i class="fas fa-rocket mr-2"></i>Launch App (Lite)
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <main class="flex-1 flex flex-col justify-center items-center text-center px-4 relative z-10 pt-20 pb-32">
+        <div
+            class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/10 border border-accent/20 text-xs text-accent font-medium mb-8 fade-in">
+            <i class="fas fa-sparkles text-accent"></i> New AI Prediction Engine Live
+        </div>
+
+        <h1
+            class="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight max-w-4xl mx-auto fade-in-up stagger-1">
+            Boost Your Finance <br>
+            <span class="hero-text">Potential with AI</span>
+        </h1>
+
+        <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed fade-in-up stagger-2">
+            Focus on growth while our advanced AI takes care of market formatting,
+            liquidity analysis, and portfolio optimization.
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-4 w-full justify-center fade-in-up stagger-3">
+            <a href="./dashboard.html" class="btn-primary text-center">
+                Open Dashboard <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+            <a href="#" class="btn-outline text-center">
+                Explore Features
+            </a>
+        </div>
+
+        <!-- Preview Card Carousel (Static Representation) -->
+        <!-- Preview Card Carousel (Static Representation) -->
+        <div class="mt-20 w-full max-w-6xl grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+            <!-- Card 1 -->
+            <div
+                class="glass-card p-6 hover:bg-white/5 transition duration-300 group cursor-pointer border-transparent hover:border-accent/30 hover:shadow-lg hover:shadow-accent/10">
+                <div
+                    class="feature-icon bg-accent/10 text-accent group-hover:bg-accent group-hover:text-gray-900 transition">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2 text-white">Smart Portfolio</h3>
+                <p class="text-gray-400 text-sm">Track your assets in real-time with our privacy-focused local portfolio
+                    manager.</p>
+            </div>
+
+            <!-- Card 2 -->
+            <div
+                class="glass-card p-6 hover:bg-white/5 transition duration-300 group cursor-pointer border-accent/30 shadow-lg shadow-accent/10">
+                <div
+                    class="feature-icon bg-accent/20 text-accent group-hover:bg-accent group-hover:text-gray-900 transition">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2 text-white">AI Analyst</h3>
+                <p class="text-gray-400 text-sm">Get instant market insights and predictions using Gemini 2.5 or Groq.
+                </p>
+            </div>
+
+            <!-- Card 3 -->
+            <div
+                class="glass-card p-6 hover:bg-white/5 transition duration-300 group cursor-pointer border-transparent hover:border-accent/30 hover:shadow-lg hover:shadow-accent/10">
+                <div
+                    class="feature-icon bg-accent/10 text-accent group-hover:bg-accent group-hover:text-gray-900 transition">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2 text-white">Secure & Private</h3>
+                <p class="text-gray-400 text-sm">Local-first architecture. Your keys are stored in your browser, not our
+                    servers.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="py-10 text-center text-gray-400 text-sm">
+        <p class="mb-3">&copy; 2026 CryptoTracker Lite. Open Source.</p>
+        <div class="flex justify-center gap-6 text-xl mb-4">
+            <a href="https://github.com/abhimanyus1997" target="_blank"
+                class="text-gray-500 hover:text-white transition"><i class="fab fa-github"></i></a>
+            <a href="https://www.linkedin.com/in/abhimanyus1997/" target="_blank"
+                class="text-gray-500 hover:text-white transition"><i class="fab fa-linkedin"></i></a>
+        </div>
+        <p class="text-xs text-gray-600">Created by <span class="text-accent">abhimanyus1997</span></p>
+    </footer>
+
+</body>
+
+</html>
