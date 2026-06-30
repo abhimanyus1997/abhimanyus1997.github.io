@@ -28,6 +28,7 @@ async function initThree(){
     ring1.rotation.x=1.08;group.add(ring1);
     const ring2=ring1.clone();ring2.scale.setScalar(1.22);ring2.rotation.set(.4,.8,0);group.add(ring2);
     const carRig=new THREE.Group();carRig.visible=false;scene.add(carRig);let mixer=null;
+    let gearAction=null;let gearOpen=true;
     const shadow=new THREE.Mesh(new THREE.CircleGeometry(1,48),new THREE.MeshBasicMaterial({color:0x11130f,transparent:true,opacity:.13,depthWrite:false}));shadow.scale.set(2.2,.42,1);shadow.rotation.x=-Math.PI/2;scene.add(shadow);
     scene.add(new THREE.HemisphereLight(0xdde7f0,0x171915,1.15));const key=new THREE.DirectionalLight(0xffffff,2.6);key.position.set(-4,5,6);scene.add(key);const rim=new THREE.PointLight(0xffa31a,5.5,12);rim.position.set(3,-1,3);scene.add(rim);
     const carStatus=document.querySelector('#car-status');
@@ -37,173 +38,183 @@ async function initThree(){
       car.traverse(node=>{if(node.isMesh){node.frustumCulled=false;const mats=Array.isArray(node.material)?node.material:[node.material];mats.forEach(m=>{if(!m)return;const name=(m.name||'').toLowerCase();const tone=name.includes('body')?0x34383d:name.includes('metal')?0x202326:name.includes('plastic')?0x111315:null;if(tone!==null){if(m.color)m.color.setHex(tone);if(m.uniforms?.diffuse?.value)m.uniforms.diffuse.value.setHex(tone)}if(m.map)m.map.encoding=THREE.sRGBEncoding;if(m.emissiveMap)m.emissiveMap.encoding=THREE.sRGBEncoding;m.side=THREE.DoubleSide;m.needsUpdate=true})}});
       carRig.add(car);carRig.visible=true;
       carStatus.classList.add('ready');carStatus.textContent='HOVERCAR ONLINE';
-      if(gltf.animations?.length){mixer=new THREE.AnimationMixer(car);mixer.clipAction(gltf.animations[0]).play()}
+      
+      if(gltf.animations?.length){
+        mixer=new THREE.AnimationMixer(car);
+        // Play hover animation (clip 0) continuously
+        const hoverAction = mixer.clipAction(gltf.animations[0]);
+        hoverAction.play();
+        
+        // Find gear animation
+        const gearClip = gltf.animations.find(clip => {
+          const name = clip.name.toLowerCase();
+          return name.includes('gear') || name.includes('land') || name.includes('close') || name.includes('open') || name.includes('retract');
+        }) || (gltf.animations.length > 1 ? gltf.animations[1] : null);
+        
+        if (gearClip) {
+          gearAction = mixer.clipAction(gearClip);
+          gearAction.setLoop(THREE.LoopOnce);
+          gearAction.clampWhenFinished = true;
+          gearAction.time = gearClip.duration;
+          gearAction.paused = true;
+          gearAction.play();
+        }
+      }
       modelLoaded = true;
     },xhr=>{if(xhr.total){const pct=Math.round(xhr.loaded/xhr.total*100);modelLoadPercent = pct;if(carStatus.lastChild)carStatus.lastChild.textContent=` LOADING HOVERCAR · ${pct}%`}},err=>{carStatus.classList.add('error');carStatus.textContent='3D MODEL UNAVAILABLE';console.warn('Hovercar could not load',err);modelFailed = true;});
     let mx=0,my=0,manualYaw=0,manualPitch=0,manualRoll=0,userScale=1.1,autoRotate=false,boostUntil=0;
     addEventListener('pointermove',e=>{mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5},{passive:true});
     const controlDock=document.querySelector('#flight-controls'),sizeControl=document.querySelector('#flight-size');
-    function fly(action,target){if(action==='yaw-left')manualYaw-=.3;if(action==='yaw-right')manualYaw+=.3;if(action==='pitch-up')manualPitch=Math.min(.55,manualPitch+.14);if(action==='pitch-down')manualPitch=Math.max(-.55,manualPitch-.14);if(action==='roll-left')manualRoll=Math.max(-.65,manualRoll-.15);if(action==='roll-right')manualRoll=Math.min(.65,manualRoll+.15);if(action==='boost')boostUntil=performance.now()+900;if(action==='auto'){autoRotate=!autoRotate;target?.setAttribute('aria-pressed',String(autoRotate))}if(action==='reset'){manualYaw=0;manualPitch=0;manualRoll=0;userScale=1.1;sizeControl.value=110;autoRotate=false;controlDock.querySelector('[data-flight="auto"]').setAttribute('aria-pressed','false')}}
-    controlDock.addEventListener('click',e=>{const button=e.target.closest('button'),action=button?.dataset.flight;if(action)fly(action,button)});
-    addEventListener('keydown',e=>{if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;const action={a:'yaw-left',ArrowLeft:'yaw-left',d:'yaw-right',ArrowRight:'yaw-right',w:'pitch-up',ArrowUp:'pitch-up',s:'pitch-down',ArrowDown:'pitch-down',q:'roll-left',e:'roll-right',' ':'boost',r:'reset'}[e.key];if(action){e.preventDefault();fly(action)}});
-    sizeControl.addEventListener('input',()=>{userScale=Number(sizeControl.value)/100});
-    function resize(){const r=canvas.getBoundingClientRect();renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix()}
-    addEventListener('resize',resize);resize();
-    const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,clock=new THREE.Clock();
-    const lerp=(a,b,t)=>a+(b-a)*t;let last=0,previousX=0;
-    function render(ms=0){
-      requestAnimationFrame(render);
-      if(ms-last<33)return;
-      const delta=Math.min((ms-last)/1000,.05);
-      last=ms;
-      const t=clock.getElapsedTime(),
-            boost=Math.max(0,(boostUntil-ms)/900),
-            entry=entryStart?Math.max(0,Math.min(1,(ms-entryStart)/1800)):0,
-            ease=1-Math.pow(1-entry,3);
-      
-      const isMobile=window.innerWidth<=800;
-      const baseX=isMobile?0:1.75;
-      const baseY=isMobile?0.08:-.02;
-      const baseScale=isMobile?0.54:0.78;
-      
-      const x=baseX+(1-ease)*(isMobile?0:4.8)+mx*.24;
-      const y=baseY+(1-ease)*(isMobile?0:.65)-my*.12+Math.sin(boost*Math.PI)*.28;
-      const z=-.2+(1-ease)*(isMobile?0:-1.5)+boost*.45;
-      const s=baseScale*userScale*(.35+.65*ease)*(1+Math.sin(boost*Math.PI)*.08);
-      
-      carRig.position.set(x,y+(!reduce?Math.sin(t*1.2)*.055:0),z);
-      carRig.scale.setScalar(s);
-      carRig.rotation.y=THREE.MathUtils.lerp(carRig.rotation.y,manualYaw+mx*.35+(autoRotate?t*.5:0)+(1-ease)*-1.15,.08);
-      carRig.rotation.z=THREE.MathUtils.lerp(carRig.rotation.z,manualRoll+(x-previousX)*-.18+Math.sin(t*.7)*.014,.08);
-      carRig.rotation.x=THREE.MathUtils.lerp(carRig.rotation.x,manualPitch-my*.14-boost*.12+(1-ease)*.12,.08);
-      previousX=x;
-      
-      shadow.position.set(x,y-(isMobile?.44:.62),z-.15);
-      shadow.scale.set(1.9*s*(1+boost*.25),.34*s,1);
-      shadow.material.opacity=.12*ease*(1-boost*.4);
-      
-      group.visible=true;
-      group.rotation.y=t*.05;
-      group.position.set(isMobile?0:1.8,isMobile?.1:.1,isMobile?-1.5:-1.5);
-      group.scale.setScalar(isMobile?.42:.58);
-      
-      if(mixer)mixer.update(delta);
-      renderer.render(scene,camera);
+    
+    function toggleGear() {
+      if (!gearAction) return;
+      gearOpen = !gearOpen;
+      const label = gearOpen ? 'GEAR: DOWN' : 'GEAR: UP';
+      const desktopBtn = document.querySelector('[data-flight="gear"]');
+      const mobileBtn = document.getElementById('mobile-gear-btn');
+      if (desktopBtn) desktopBtn.textContent = label;
+      if (mobileBtn) mobileBtn.textContent = label;
+      gearAction.paused = false;
+      gearAction.timeScale = gearOpen ? 1 : -1; // Play forward to extend, backward to retract
+      gearAction.play();
     }
-    render();
-  }catch(err){modelFailed=true;canvas.hidden=true;console.warn('3D scene unavailable',err)}
-}
-initThree();
 
-// Mobile Gamepad & Gyroscope Controls
-(function() {
-  const joystickBase = document.getElementById('joystick-base');
-  const joystickStick = document.getElementById('joystick-stick');
-  const gyroBtn = document.getElementById('gyro-btn');
-  const boostBtn = document.getElementById('boost-btn');
-  
-  if (joystickBase && joystickStick) {
-    let active = false;
-    let startX = 0, startY = 0;
-    const maxDistance = 30;
-    
-    function onStart(e) {
-      active = true;
-      const t = e.touches ? e.touches[0] : e;
-      startX = t.clientX;
-      startY = t.clientY;
-      joystickStick.style.transition = 'none';
+    function fly(action,target){
+      if(action==='yaw-left')manualYaw-=.3;
+      if(action==='yaw-right')manualYaw+=.3;
+      if(action==='pitch-up')manualPitch=Math.min(.55,manualPitch+.14);
+      if(action==='pitch-down')manualPitch=Math.max(-.55,manualPitch-.14);
+      if(action==='roll-left')manualRoll=Math.max(-.65,manualRoll-.15);
+      if(action==='roll-right')manualRoll=Math.min(.65,manualRoll+.15);
+      if(action==='boost')boostUntil=performance.now()+900;
+      if(action==='gear')toggleGear();
+      if(action==='auto'){autoRotate=!autoRotate;target?.setAttribute('aria-pressed',String(autoRotate))}
+      if(action==='reset'){
+        manualYaw=0;manualPitch=0;manualRoll=0;userScale=1.1;sizeControl.value=110;autoRotate=false;
+        controlDock.querySelector('[data-flight="auto"]').setAttribute('aria-pressed','false');
+        if (gearAction && !gearOpen) toggleGear();
+      }
     }
+    controlDock.addEventListener('click',e=>{const button=e.target.closest('button'),action=button?.dataset.flight;if(action)fly(action,button)});
+    addEventListener('keydown',e=>{if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;const action={a:'yaw-left',ArrowLeft:'yaw-left',d:'yaw-right',ArrowRight:'yaw-right',w:'pitch-up',ArrowUp:'pitch-up',s:'pitch-down',ArrowDown:'pitch-down',q:'roll-left',e:'roll-right',' ':'boost',r:'reset',g:'gear'}[e.key];if(action){e.preventDefault();fly(action)}});
+    sizeControl.addEventListener('input',()=>{userScale=Number(sizeControl.value)/100});
     
-    function onMove(e) {
-      if (!active) return;
-      const t = e.touches ? e.touches[0] : e;
-      const dx = t.clientX - startX;
-      const dy = t.clientY - startY;
-      const dist = Math.min(Math.sqrt(dx*dx + dy*dy), maxDistance);
-      const angle = Math.atan2(dy, dx);
+    // Mobile Gamepad & Gyroscope Controls
+    (function() {
+      const joystickBase = document.getElementById('joystick-base');
+      const joystickStick = document.getElementById('joystick-stick');
+      const gyroBtn = document.getElementById('gyro-btn');
+      const boostBtn = document.getElementById('boost-btn');
+      const mobileGearBtn = document.getElementById('mobile-gear-btn');
       
-      const px = Math.cos(angle) * dist;
-      const py = Math.sin(angle) * dist;
+      if (joystickBase && joystickStick) {
+        let active = false;
+        let startX = 0, startY = 0;
+        const maxDistance = 30;
+        
+        function onStart(e) {
+          active = true;
+          const t = e.touches ? e.touches[0] : e;
+          startX = t.clientX;
+          startY = t.clientY;
+          joystickStick.style.transition = 'none';
+        }
+        
+        function onMove(e) {
+          if (!active) return;
+          const t = e.touches ? e.touches[0] : e;
+          const dx = t.clientX - startX;
+          const dy = t.clientY - startY;
+          const dist = Math.min(Math.sqrt(dx*dx + dy*dy), maxDistance);
+          const angle = Math.atan2(dy, dx);
+          
+          const px = Math.cos(angle) * dist;
+          const py = Math.sin(angle) * dist;
+          
+          joystickStick.style.transform = `translate(${px}px, ${py}px)`;
+          
+          mx = px / maxDistance;
+          my = py / maxDistance;
+        }
+        
+        function onEnd() {
+          if (!active) return;
+          active = false;
+          joystickStick.style.transition = 'transform 0.2s ease';
+          joystickStick.style.transform = 'translate(0px,0px)';
+          mx = 0;
+          my = 0;
+        }
+        
+        joystickBase.addEventListener('touchstart', onStart, {passive: true});
+        addEventListener('touchmove', onMove, {passive: false});
+        addEventListener('touchend', onEnd);
+      }
       
-      joystickStick.style.transform = `translate(${px}px, ${py}px)`;
-      
-      mx = px / maxDistance;
-      my = py / maxDistance;
-    }
-    
-    function onEnd() {
-      if (!active) return;
-      active = false;
-      joystickStick.style.transition = 'transform 0.2s ease';
-      joystickStick.style.transform = 'translate(0px,0px)';
-      mx = 0;
-      my = 0;
-    }
-    
-    joystickBase.addEventListener('touchstart', onStart, {passive: true});
-    addEventListener('touchmove', onMove, {passive: false});
-    addEventListener('touchend', onEnd);
-  }
-  
-  let gyroActive = false;
-  function onOrientation(e) {
-    if (!gyroActive) return;
-    if (e.beta !== null && e.gamma !== null) {
-      const pitch = (e.beta - 48) / 22; // 48 degrees is a comfortable holding angle
-      const roll = e.gamma / 22;
-      mx = Math.max(-1, Math.min(1, roll));
-      my = Math.max(-1, Math.min(1, pitch));
-    }
-  }
-  
-  if (gyroBtn) {
-    gyroBtn.addEventListener('click', async () => {
-      if (gyroActive) {
-        gyroActive = false;
-        gyroBtn.textContent = 'GYRO: OFF';
-        gyroBtn.classList.remove('active');
-        removeEventListener('deviceorientation', onOrientation);
-        mx = 0;
-        my = 0;
-      } else {
-        try {
-          if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            const res = await DeviceOrientationEvent.requestPermission();
-            if (res === 'granted') {
-              enableGyro();
-            } else {
-              alert('Gyroscope access denied');
-            }
-          } else {
-            enableGyro();
-          }
-        } catch (err) {
-          console.warn('Gyro error', err);
-          enableGyro();
+      let gyroActive = false;
+      function onOrientation(e) {
+        if (!gyroActive) return;
+        if (e.beta !== null && e.gamma !== null) {
+          const pitch = (e.beta - 48) / 22;
+          const roll = e.gamma / 22;
+          mx = Math.max(-1, Math.min(1, roll));
+          my = Math.max(-1, Math.min(1, pitch));
         }
       }
-    });
-    
-    function enableGyro() {
-      gyroActive = true;
-      gyroBtn.textContent = 'GYRO: ON';
-      gyroBtn.classList.add('active');
-      addEventListener('deviceorientation', onOrientation);
-    }
-  }
-  
-  if (boostBtn) {
-    boostBtn.addEventListener('touchstart', e => {
-      e.preventDefault();
-      boostUntil = performance.now() + 900;
-      boostBtn.classList.add('active');
-    });
-    boostBtn.addEventListener('touchend', () => {
-      boostBtn.classList.remove('active');
-    });
-  }
-})();
+      
+      if (gyroBtn) {
+        gyroBtn.addEventListener('click', async () => {
+          if (gyroActive) {
+            gyroActive = false;
+            gyroBtn.textContent = 'GYRO: OFF';
+            gyroBtn.classList.remove('active');
+            removeEventListener('deviceorientation', onOrientation);
+            mx = 0;
+            my = 0;
+          } else {
+            try {
+              if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                const res = await DeviceOrientationEvent.requestPermission();
+                if (res === 'granted') {
+                  enableGyro();
+                } else {
+                  alert('Gyroscope access denied');
+                }
+              } else {
+                enableGyro();
+              }
+            } catch (err) {
+              console.warn('Gyro error', err);
+              enableGyro();
+            }
+          }
+        });
+        
+        function enableGyro() {
+          gyroActive = true;
+          gyroBtn.textContent = 'GYRO: ON';
+          gyroBtn.classList.add('active');
+          addEventListener('deviceorientation', onOrientation);
+        }
+      }
+      
+      if (boostBtn) {
+        boostBtn.addEventListener('touchstart', e => {
+          e.preventDefault();
+          boostUntil = performance.now() + 900;
+          boostBtn.classList.add('active');
+        });
+        boostBtn.addEventListener('touchend', () => {
+          boostBtn.classList.remove('active');
+        });
+      }
+      
+      if (mobileGearBtn) {
+        mobileGearBtn.addEventListener('click', () => {
+          fly('gear', mobileGearBtn);
+        });
+      }
+    })();
 
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.animate([{opacity:0,transform:'translateY(28px)'},{opacity:1,transform:'none'}],{duration:700,easing:'cubic-bezier(.2,.8,.2,1)',fill:'both'})}),{threshold:.12});
 document.querySelectorAll('.project,.timeline article').forEach(e=>io.observe(e));
