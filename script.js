@@ -340,6 +340,10 @@ async function runBootSequence() {
   
   if (skipBtn) {
     skipBtn.addEventListener('click', finishIntro);
+    skipBtn.addEventListener('touchstart', e => {
+      e.preventDefault();
+      finishIntro();
+    }, {passive: false});
   }
   
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
