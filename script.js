@@ -414,8 +414,25 @@ async function initThree(){
       function onOrientation(e) {
         if (!gyroActive) return;
         if (e.beta !== null && e.gamma !== null) {
-          const pitch = (e.beta - 48) / 22;
-          const roll = e.gamma / 22;
+          let pitch = 0;
+          let roll = 0;
+          
+          const orientation = window.orientation || (window.screen && window.screen.orientation && window.screen.orientation.angle) || 0;
+          
+          if (orientation === 90) {
+            pitch = e.gamma / 22;
+            roll = -e.beta / 22;
+          } else if (orientation === -90 || orientation === 270) {
+            pitch = -e.gamma / 22;
+            roll = e.beta / 22;
+          } else if (orientation === 180) {
+            pitch = -(e.beta - 48) / 22;
+            roll = -e.gamma / 22;
+          } else {
+            pitch = (e.beta - 48) / 22;
+            roll = e.gamma / 22;
+          }
+          
           mx = Math.max(-1, Math.min(1, roll));
           my = Math.max(-1, Math.min(1, pitch));
         }
