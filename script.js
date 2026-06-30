@@ -314,8 +314,8 @@ async function runBootSequence() {
     if (sequenceFinished) return;
     sequenceFinished = true;
     document.body.classList.add('cinematic-ready');
-    entryStart = performance.now() + 250;
-    setTimeout(startScrambleAnimations, 350);
+    entryStart = performance.now() + 1800;
+    setTimeout(startScrambleAnimations, 1800);
   }
   
   if (skipBtn) {
@@ -439,3 +439,38 @@ addEventListener('appinstalled', () => {
   console.log('PWA installed successfully');
   if (installBtn) installBtn.style.display = 'none';
 });
+
+// Custom Cursor Logic
+(function() {
+  const dot = document.getElementById('cursor-dot');
+  const ring = document.getElementById('cursor-ring');
+  if (!dot || !ring) return;
+  
+  let mouseX = -100, mouseY = -100;
+  let ringX = -100, ringY = -100;
+  
+  addEventListener('mousemove', e => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    dot.style.left = `${mouseX}px`;
+    dot.style.top = `${mouseY}px`;
+  });
+  
+  function tick() {
+    ringX += (mouseX - ringX) * 0.15;
+    ringY += (mouseY - ringY) * 0.15;
+    ring.style.left = `${ringX}px`;
+    ring.style.top = `${ringY}px`;
+    requestAnimationFrame(tick);
+  }
+  tick();
+  
+  const interactives = 'a, button, input, textarea, [data-flight], .project, .chat-launch';
+  addEventListener('mouseover', e => {
+    if (e.target.closest(interactives)) {
+      document.body.classList.add('cursor-hover');
+    } else {
+      document.body.classList.remove('cursor-hover');
+    }
+  });
+})();
