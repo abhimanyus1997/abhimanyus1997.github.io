@@ -877,4 +877,62 @@ addEventListener('appinstalled', () => {
       }
     });
   });
+
+  // Scroll-Driven Interactive Progress, Active Roles & Parallax
+  const timeline = document.querySelector('.timeline');
+  const progressLine = document.querySelector('.timeline-progress-line');
+  const timelineArticles = document.querySelectorAll('.timeline article');
+  
+  function handleScroll() {
+    // 1. Timeline progress and active state tracking
+    if (timeline && progressLine) {
+      const rect = timeline.getBoundingClientRect();
+      const timelineHeight = rect.height;
+      const startActiveY = window.innerHeight * 0.65;
+      const passed = Math.max(0, Math.min(timelineHeight, startActiveY - rect.top));
+      const percent = (passed / timelineHeight) * 100;
+      progressLine.style.height = `${percent}%`;
+      
+      let currentActive = null;
+      timelineArticles.forEach(article => {
+        const artRect = article.getBoundingClientRect();
+        if (artRect.top < startActiveY) {
+          currentActive = article;
+        }
+      });
+      
+      timelineArticles.forEach(article => {
+        if (article === currentActive) {
+          article.classList.add('active-role');
+        } else {
+          article.classList.remove('active-role');
+        }
+      });
+    }
+    
+    // 2. Hero 3D spaceship scroll parallax
+    const canvas = document.getElementById('field');
+    const hero = document.querySelector('.hero');
+    if (canvas && hero) {
+      const heroRect = hero.getBoundingClientRect();
+      if (heroRect.bottom > 0) {
+        const progress = 1 - (heroRect.bottom / window.innerHeight);
+        canvas.style.transform = `translateY(${progress * 120}px)`;
+        canvas.style.opacity = `${1 - progress * 1.25}`;
+      }
+    }
+    
+    // 3. Project card & about-visual scroll parallax
+    document.querySelectorAll('.project, .about-visual').forEach(el => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        const speed = el.classList.contains('about-visual') ? 0.06 : 0.04;
+        const yOffset = (rect.top - window.innerHeight / 2) * speed;
+        el.style.transform = `translateY(${yOffset}px)`;
+      }
+    });
+  }
+  
+  addEventListener('scroll', handleScroll, {passive: true});
+  handleScroll(); // Initial run on load
 })();
