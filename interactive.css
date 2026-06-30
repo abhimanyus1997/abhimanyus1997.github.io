@@ -267,28 +267,80 @@ a:hover .ui-arrow[style*="rotate(90deg)"], button:hover .ui-arrow[style*="rotate
 }
 
 /* Animations for Cosmic Project SVGs */
-.galaxy-spin, .orbit-rotate, .radar-sweep {
+.galaxy-spin, .orbit-rotate, .radar-sweep, .reticle-spin {
   transform-origin: 50px 50px;
 }
 
-.project:hover .galactic-svg .galaxy-spin {
-  animation: spin 8s infinite linear;
+/* MicroClaw: Claw Gripper Animation */
+@keyframes clawGrab {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+.project:hover .claw-gripper {
+  animation: clawGrab 2s infinite ease-in-out;
 }
 
-.project:hover .cosmic-heart-svg {
-  animation: heartBeat 1.2s infinite ease-in-out;
+/* HealthBuddy: EKG Heart Pulse & Neural Nodes */
+.ekg-line {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+}
+.project:hover .ekg-line {
+  animation: ekgPulse 2s infinite linear;
+}
+@keyframes ekgPulse {
+  to {
+    stroke-dashoffset: -200;
+  }
 }
 
-.project:hover .planetary-svg .orbit-rotate {
-  animation: spin 10s infinite linear;
+/* Langchain One: OCR Laser Scanning & Data Flow */
+@keyframes laserScan {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(22px);
+  }
+}
+.project:hover .ocr-laser {
+  animation: laserScan 2.5s infinite ease-in-out;
 }
 
-.project:hover .portal-svg .portal-ring {
-  animation: pulsePortal 1.5s infinite alternate ease-in-out;
+@keyframes dataStream {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+.project:hover .data-flow {
+  animation: dataStream 1s infinite linear;
 }
 
-.project:hover .portal-svg .radar-sweep {
-  animation: spin 4s infinite linear;
+.project:hover .reticle-spin {
+  animation: spin 6s infinite linear;
+}
+
+/* Resume JD Matcher: Radar Sweep & Radar Poly Pulse */
+.project:hover .matcher-detailed-svg .radar-sweep {
+  animation: spin 3.5s infinite linear;
+}
+
+@keyframes pulseRadarPoly {
+  0%, 100% {
+    fill: rgba(201, 255, 54, 0.18);
+    stroke-width: 2.2;
+  }
+  50% {
+    fill: rgba(201, 255, 54, 0.3);
+    stroke-width: 3;
+  }
+}
+.project:hover .radar-poly {
+  animation: pulseRadarPoly 2s infinite ease-in-out;
 }
 
 @keyframes spin {
