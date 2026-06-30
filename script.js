@@ -257,8 +257,8 @@ async function initThree(){
     camera.position.set(0,0,7);
     const group=new THREE.Group();
     scene.add(group);
-    const core=new THREE.Mesh(new THREE.IcosahedronGeometry(1.38,2),new THREE.MeshBasicMaterial({color:0xc9ff36,wireframe:true,transparent:true,opacity:.28}));
-    const wire=new THREE.Mesh(new THREE.IcosahedronGeometry(1.55,1),new THREE.MeshBasicMaterial({color:0xc9ff36,wireframe:true,transparent:true,opacity:.45}));
+    const core=new THREE.Mesh(new THREE.IcosahedronGeometry(1.38,2),new THREE.MeshBasicMaterial({color:0xc9ff36,wireframe:true,transparent:true,opacity:.1}));
+    const wire=new THREE.Mesh(new THREE.IcosahedronGeometry(1.55,1),new THREE.MeshBasicMaterial({color:0x26301d,wireframe:true,transparent:true,opacity:.28}));
     core.position.z=-1.8;wire.position.z=-1.7;group.add(core,wire);
     
     // Glowing green starfield
@@ -270,19 +270,17 @@ async function initThree(){
       particleData.push(r*Math.sin(b)*Math.cos(a),r*Math.cos(b)*.65,r*Math.sin(b)*Math.sin(a));
     }
     const particleGeo=new THREE.BufferGeometry();particleGeo.setAttribute('position',new THREE.Float32BufferAttribute(particleData,3));
-    const orbit=new THREE.Points(particleGeo,new THREE.PointsMaterial({color:0xc9ff36,size:.08,transparent:true,opacity:0.8}));group.add(orbit);
+    const orbit=new THREE.Points(particleGeo,new THREE.PointsMaterial({color:0x242920,size:.045,transparent:true,opacity:0.5}));group.add(orbit);
     
-    const ring1=new THREE.Mesh(new THREE.TorusGeometry(2.15,.028,3,72),new THREE.MeshBasicMaterial({color:0xc9ff36,transparent:true,opacity:.75}));
+    const ring1=new THREE.Mesh(new THREE.TorusGeometry(2.15,.008,3,72),new THREE.MeshBasicMaterial({color:0x536146,transparent:true,opacity:.45}));
     ring1.rotation.x=1.08;group.add(ring1);
     const ring2=ring1.clone();ring2.scale.setScalar(1.22);ring2.rotation.set(.4,.8,0);group.add(ring2);
     const carRig=new THREE.Group();carRig.visible=false;scene.add(carRig);let mixer=null;
     let gearAction=null;let gearOpen=true;
     const shadow=new THREE.Mesh(new THREE.CircleGeometry(1,48),new THREE.MeshBasicMaterial({color:0x11130f,transparent:true,opacity:.13,depthWrite:false}));shadow.scale.set(2.2,.42,1);shadow.rotation.x=-Math.PI/2;scene.add(shadow);
-    scene.add(new THREE.HemisphereLight(0xdde7f0,0x171915,1.2));
-    const key=new THREE.DirectionalLight(0xffffff,3.2);key.position.set(-4,5,6);scene.add(key);
-    const fill=new THREE.DirectionalLight(0x90b900,1.2);fill.position.set(4,-3,3);scene.add(fill);
-    const rim=new THREE.PointLight(0xc9ff36,7.5,12);rim.position.set(3,1,-3);scene.add(rim);
-    const accent=new THREE.PointLight(0xffa31a,4.5,12);accent.position.set(-3,-1.5,-2);scene.add(accent);
+    scene.add(new THREE.HemisphereLight(0xdde7f0,0x171915,1.15));
+    const key=new THREE.DirectionalLight(0xffffff,2.6);key.position.set(-4,5,6);scene.add(key);
+    const rim=new THREE.PointLight(0xffa31a,5.5,12);rim.position.set(3,-1,3);scene.add(rim);
     const carStatus=document.querySelector('#car-status');
     new THREE.GLTFLoader().load('./static/models/hovercar.glb',gltf=>{
       const car=gltf.scene;const box=new THREE.Box3().setFromObject(car),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
@@ -655,6 +653,7 @@ async function runBootSequence() {
   function finishIntro() {
     if (sequenceFinished) return;
     sequenceFinished = true;
+    window.scrollTo(0, 0);
     document.body.classList.add('cinematic-ready');
     entryStart = performance.now() + 1800;
     setTimeout(startScrambleAnimations, 1800);
