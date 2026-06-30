@@ -6,6 +6,117 @@ let modelLoaded = false;
 let modelFailed = false;
 let modelLoadPercent = 0;
 
+// Web Audio API Sound Synthesizer (100% offline, zero-latency, synthesized dynamically)
+const Sfx = {
+  ctx: null,
+  init() {
+    if (this.ctx) return;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) this.ctx = new AudioContext();
+  },
+  playClick() {
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1000, now);
+    osc.frequency.exponentialRampToValueAtTime(150, now + 0.08);
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.08);
+  },
+  playHover() {
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(460, now);
+    osc.frequency.setValueAtTime(580, now + 0.02);
+    gain.gain.setValueAtTime(0.02, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.05);
+  },
+  playScramble() {
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(1500 + Math.random() * 2000, now);
+    gain.gain.setValueAtTime(0.003, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.015);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.015);
+  },
+  playSlide() {
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(120, now);
+    osc.frequency.exponentialRampToValueAtTime(700, now + 0.4);
+    gain.gain.setValueAtTime(0.04, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.4);
+  },
+  playBoost() {
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(75, now);
+    osc.frequency.linearRampToValueAtTime(220, now + 0.65);
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(250, now);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.7);
+  },
+  playGear(isOpen) {
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'square';
+    const startFreq = isOpen ? 500 : 250;
+    const endFreq = isOpen ? 250 : 500;
+    osc.frequency.setValueAtTime(startFreq, now);
+    osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.22);
+    gain.gain.setValueAtTime(0.03, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.22);
+  }
+};
+
 async function initThree(){
   try{
     const THREE=window.THREE;
@@ -77,6 +188,7 @@ async function initThree(){
       gearAction.paused = false;
       gearAction.timeScale = gearOpen ? 1 : -1; // Play forward to extend, backward to retract
       gearAction.play();
+      Sfx.playGear(gearOpen);
     }
 
     function fly(action,target){
@@ -86,7 +198,10 @@ async function initThree(){
       if(action==='pitch-down')manualPitch=Math.max(-.55,manualPitch-.14);
       if(action==='roll-left')manualRoll=Math.max(-.65,manualRoll-.15);
       if(action==='roll-right')manualRoll=Math.min(.65,manualRoll+.15);
-      if(action==='boost')boostUntil=performance.now()+900;
+      if(action==='boost') {
+        boostUntil=performance.now()+900;
+        Sfx.playBoost();
+      }
       if(action==='gear')toggleGear();
       if(action==='auto'){autoRotate=!autoRotate;target?.setAttribute('aria-pressed',String(autoRotate))}
       if(action==='reset'){
@@ -224,6 +339,58 @@ async function initThree(){
         });
       }
     })();
+
+    const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,clock=new THREE.Clock();
+    let last=0,previousX=0;
+    function render(ms=0){
+      requestAnimationFrame(render);
+      if(ms-last<33)return;
+      const delta=Math.min((ms-last)/1000,.05);
+      last=ms;
+      const t=clock.getElapsedTime(),
+            boost=Math.max(0,(boostUntil-ms)/900),
+            entry=entryStart?Math.max(0,Math.min(1,(ms-entryStart)/1800)):0,
+            ease=1-Math.pow(1-entry,3);
+      
+      const isMobile=window.innerWidth<=800;
+      const baseX=isMobile?0:1.75;
+      const baseY=isMobile?0.08:-.02;
+      const baseScale=isMobile?0.54:0.78;
+      
+      const x=baseX+(1-ease)*(isMobile?0:4.8)+mx*.24;
+      const y=baseY+(1-ease)*(isMobile?0:.65)-my*.12+Math.sin(boost*Math.PI)*.28;
+      const z=-.2+(1-ease)*(isMobile?0:-1.5)+boost*.45;
+      const s=baseScale*userScale*(.35+.65*ease)*(1+Math.sin(boost*Math.PI)*.08);
+      
+      carRig.position.set(x,y+(!reduce?Math.sin(t*1.2)*.055:0),z);
+      carRig.scale.setScalar(s);
+      carRig.rotation.y=THREE.MathUtils.lerp(carRig.rotation.y,manualYaw+mx*.35+(autoRotate?t*.5:0)+(1-ease)*-1.15,.08);
+      carRig.rotation.z=THREE.MathUtils.lerp(carRig.rotation.z,manualRoll+(x-previousX)*-.18+Math.sin(t*.7)*.014,.08);
+      carRig.rotation.x=THREE.MathUtils.lerp(carRig.rotation.x,manualPitch-my*.14-boost*.12+(1-ease)*.12,.08);
+      previousX=x;
+      
+      if (modelFailed) {
+        shadow.visible = false;
+        group.visible = true;
+        group.rotation.y = t * 0.05;
+        group.position.set(0, 0, -1.5);
+        group.scale.setScalar(isMobile ? 0.65 : 0.95);
+      } else {
+        shadow.visible = true;
+        shadow.position.set(x,y-(isMobile?.44:.62),z-.15);
+        shadow.scale.set(1.9*s*(1+boost*.25),.34*s,1);
+        shadow.material.opacity=.12*ease*(1-boost*.4);
+        
+        group.visible=true;
+        group.rotation.y=t*.05;
+        group.position.set(isMobile?0:1.8,isMobile?.1:.1,isMobile?-1.5:-1.5);
+        group.scale.setScalar(isMobile?.42:.58);
+      }
+      
+      if(mixer)mixer.update(delta);
+      renderer.render(scene,camera);
+    }
+    render();
   }catch(err){modelFailed=true;canvas.hidden=true;console.warn('3D scene unavailable',err)}
 }
 initThree();
@@ -299,6 +466,7 @@ function scrambleText(element, duration = 1400) {
     element.innerHTML = output;
     if (complete < queue.length && frame < totalFrames + 20) {
       frame++;
+      if (Math.random() < 0.12) Sfx.playScramble();
       requestAnimationFrame(update);
     } else {
       element.innerHTML = originalHTML;
@@ -387,6 +555,7 @@ async function runBootSequence() {
     
     slides.forEach(s => s.classList.remove('active'));
     slides[currentSlideIdx].classList.add('active');
+    Sfx.playSlide();
     
     await sleep(slideDuration);
     currentSlideIdx++;
@@ -516,9 +685,19 @@ addEventListener('appinstalled', () => {
   const interactives = 'a, button, input, textarea, [data-flight], .project, .chat-launch';
   addEventListener('mouseover', e => {
     if (e.target.closest(interactives)) {
+      if (!document.body.classList.contains('cursor-hover')) {
+        Sfx.playHover();
+      }
       document.body.classList.add('cursor-hover');
     } else {
       document.body.classList.remove('cursor-hover');
+    }
+  });
+  
+  // Global click sound effect
+  addEventListener('click', e => {
+    if (e.target.closest(interactives)) {
+      Sfx.playClick();
     }
   });
 })();

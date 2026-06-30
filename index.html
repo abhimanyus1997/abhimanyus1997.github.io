@@ -2,18 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <script>
-    window.onerror = function(msg, url, line, col, error) {
-      alert("JS ERROR:\n" + msg + "\nLine: " + line + "\nURL: " + url);
-      return false;
-    };
-    if (location.search.includes('debug=true')) {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/eruda';
-      document.write(script.outerHTML);
-      document.write('<script>eruda.init();<\/script>');
-    }
-  </script>
   <title>Abhimanyu Singh — AI Engineer & Data Scientist</title>
   <meta name="description" content="Abhimanyu Singh builds production AI systems across generative AI, computer vision and robotics.">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
