@@ -240,8 +240,9 @@
 }
 
 .proj-svg {
-  width: 220px !important;
-  height: 220px !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
   transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
@@ -602,10 +603,11 @@ a:hover .ui-arrow[style*="rotate(90deg)"], button:hover .ui-arrow[style*="rotate
   }
   .project-art {
     height: 220px !important;
+    padding: 0 !important;
   }
   .proj-svg {
-    width: 180px !important;
-    height: 180px !important;
+    width: 100% !important;
+    height: 100% !important;
   }
 }
 
