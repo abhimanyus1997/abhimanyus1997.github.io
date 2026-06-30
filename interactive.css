@@ -167,3 +167,42 @@
 @media(max-width:800px){
   .cursor-dot,.cursor-ring{display:none !important}
 }
+
+/* Project SVG Icons & Animations */
+.proj-svg {
+  width: 100%;
+  height: 100%;
+  max-width: 80px;
+  max-height: 80px;
+  display: block;
+  color: var(--ink);
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), color 0.3s;
+}
+
+.project:hover .proj-svg {
+  transform: scale(1.06) rotate(2deg);
+  color: var(--acid);
+}
+
+.project:hover .glow-orb {
+  animation: orbGlow 1.2s infinite alternate ease-in-out;
+}
+
+.project:hover .pulse-line {
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  animation: pulseDraw 1.5s infinite linear;
+}
+
+@keyframes orbGlow {
+  to {
+    opacity: 0.3;
+    transform: scale(1.15);
+  }
+}
+
+@keyframes pulseDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
