@@ -316,3 +316,183 @@
   width: 20px;
   height: 20px;
 }
+
+/* Premium Interactive Timeline */
+.timeline {
+  position: relative;
+  margin-left: 29.5%;
+  border-left: 1px solid rgba(201, 255, 54, 0.15);
+  border-top: none;
+  padding-left: 32px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -1px;
+  width: 1px;
+  background: linear-gradient(to bottom, var(--acid), transparent);
+}
+
+.timeline article {
+  display: block;
+  position: relative;
+  padding: 24px 0;
+  border-bottom: 1px solid rgba(201, 255, 54, 0.1);
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.3s;
+}
+
+/* Timeline Dot */
+.timeline article::before {
+  content: '';
+  position: absolute;
+  left: -37px;
+  top: 32px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #3a3c36;
+  border: 2px solid var(--ink);
+  transition: background 0.3s, box-shadow 0.3s;
+  z-index: 2;
+}
+
+.timeline article.active-role::before {
+  background: var(--acid);
+  box-shadow: 0 0 0 4px rgba(201, 255, 54, 0.2), 0 0 10px var(--acid);
+  animation: model-pulse 1.5s infinite;
+}
+
+.timeline article:hover::before {
+  background: var(--acid);
+  box-shadow: 0 0 10px var(--acid);
+}
+
+.timeline article:hover {
+  transform: translateX(12px);
+}
+
+.timeline time {
+  font: 9px var(--mono);
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  display: block;
+  margin-bottom: 8px;
+  transition: color 0.3s;
+}
+
+.timeline article:hover time {
+  color: var(--acid);
+}
+
+.timeline h3 {
+  font-size: 24px;
+  letter-spacing: -0.03em;
+  margin: 0 0 4px;
+}
+
+.timeline .company {
+  font: 11px var(--mono);
+  color: var(--acid);
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timeline .company span {
+  color: var(--muted);
+}
+
+.timeline .role-summary {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #aeb1a7;
+  margin: 0 0 12px;
+}
+
+/* Expandable Technical Log */
+.timeline .tech-log-toggle {
+  font: 8px var(--mono);
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 8px;
+  transition: color 0.2s;
+}
+
+.timeline article:hover .tech-log-toggle {
+  color: var(--acid);
+}
+
+.timeline .tech-log {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s;
+  opacity: 0;
+  margin-top: 0;
+}
+
+.timeline article.expanded .tech-log {
+  max-height: 300px;
+  opacity: 1;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed rgba(201, 255, 54, 0.15);
+}
+
+.timeline .tech-log ul {
+  margin: 0;
+  padding-left: 16px;
+  color: #c9cbbe;
+}
+
+.timeline .tech-log li {
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 8px;
+  position: relative;
+  list-style-type: none;
+}
+
+.timeline .tech-log li::before {
+  content: '>';
+  position: absolute;
+  left: -16px;
+  color: var(--acid);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+/* Tech Badges inside Log */
+.timeline .role-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.timeline .role-badges span {
+  font: 8px var(--mono);
+  background: rgba(201, 255, 54, 0.05);
+  border: 1px solid rgba(201, 255, 54, 0.15);
+  color: var(--acid);
+  padding: 4px 8px;
+  border-radius: 2px;
+}
+
+@media(max-width:800px) {
+  .timeline {
+    margin-left: 12px;
+    padding-left: 20px;
+  }
+  .timeline article::before {
+    left: -25px;
+  }
+}
