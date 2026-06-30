@@ -129,13 +129,22 @@ async function initThree(){
     camera.position.set(0,0,7);
     const group=new THREE.Group();
     scene.add(group);
-    const core=new THREE.Mesh(new THREE.IcosahedronGeometry(1.38,2),new THREE.MeshBasicMaterial({color:0xc9ff36,wireframe:true,transparent:true,opacity:.12}));
-    const wire=new THREE.Mesh(new THREE.IcosahedronGeometry(1.55,1),new THREE.MeshBasicMaterial({color:0x26301d,wireframe:true,transparent:true,opacity:.28}));
+    const core=new THREE.Mesh(new THREE.IcosahedronGeometry(1.38,2),new THREE.MeshBasicMaterial({color:0xc9ff36,wireframe:true,transparent:true,opacity:.08}));
+    const wire=new THREE.Mesh(new THREE.IcosahedronGeometry(1.55,1),new THREE.MeshBasicMaterial({color:0xc9ff36,wireframe:true,transparent:true,opacity:.15}));
     core.position.z=-1.8;wire.position.z=-1.7;group.add(core,wire);
-    const particleData=[];for(let i=0;i<34;i++){const a=Math.random()*Math.PI*2,b=Math.acos(2*Math.random()-1),r=2+Math.random()*.85;particleData.push(r*Math.sin(b)*Math.cos(a),r*Math.cos(b)*.65,r*Math.sin(b)*Math.sin(a))}
+    
+    // Glowing green starfield
+    const particleData=[];
+    for(let i=0;i<150;i++){
+      const a=Math.random()*Math.PI*2;
+      const b=Math.acos(2*Math.random()-1);
+      const r=3+Math.random()*6.5;
+      particleData.push(r*Math.sin(b)*Math.cos(a),r*Math.cos(b)*.65,r*Math.sin(b)*Math.sin(a));
+    }
     const particleGeo=new THREE.BufferGeometry();particleGeo.setAttribute('position',new THREE.Float32BufferAttribute(particleData,3));
-    const orbit=new THREE.Points(particleGeo,new THREE.PointsMaterial({color:0x242920,size:.045}));group.add(orbit);
-    const ring1=new THREE.Mesh(new THREE.TorusGeometry(2.15,.008,3,72),new THREE.MeshBasicMaterial({color:0x536146,transparent:true,opacity:.45}));
+    const orbit=new THREE.Points(particleGeo,new THREE.PointsMaterial({color:0xc9ff36,size:.05,transparent:true,opacity:0.5}));group.add(orbit);
+    
+    const ring1=new THREE.Mesh(new THREE.TorusGeometry(2.15,.012,3,72),new THREE.MeshBasicMaterial({color:0xc9ff36,transparent:true,opacity:.35}));
     ring1.rotation.x=1.08;group.add(ring1);
     const ring2=ring1.clone();ring2.scale.setScalar(1.22);ring2.rotation.set(.4,.8,0);group.add(ring2);
     const carRig=new THREE.Group();carRig.visible=false;scene.add(carRig);let mixer=null;
@@ -173,9 +182,13 @@ async function initThree(){
       }
       modelLoaded = true;
     },xhr=>{if(xhr.total){const pct=Math.round(xhr.loaded/xhr.total*100);modelLoadPercent = pct;if(carStatus.lastChild)carStatus.lastChild.textContent=` LOADING HOVERCAR · ${pct}%`}},err=>{carStatus.classList.add('error');carStatus.textContent='3D MODEL UNAVAILABLE';console.warn('Hovercar could not load',err);modelFailed = true;});
-    let mx=0,my=0,manualYaw=0,manualPitch=0,manualRoll=0,userScale=1.1,autoRotate=false,boostUntil=0;
+    let mx=0,my=0,manualYaw=0,manualPitch=0,manualRoll=0,userScale=1.1,autoRotate=true,boostUntil=0;
     addEventListener('pointermove',e=>{mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5},{passive:true});
     const controlDock=document.querySelector('#flight-controls'),sizeControl=document.querySelector('#flight-size');
+    if (controlDock) {
+      const autoBtn = controlDock.querySelector('[data-flight="auto"]');
+      if (autoBtn) autoBtn.setAttribute('aria-pressed', 'true');
+    }
     
     function toggleGear() {
       if (!gearAction) return;
@@ -373,6 +386,7 @@ async function initThree(){
         shadow.visible = false;
         group.visible = true;
         group.rotation.y = t * 0.05;
+        orbit.rotation.y = -t * 0.08;
         group.position.set(0, 0, -1.5);
         group.scale.setScalar(isMobile ? 0.65 : 0.95);
       } else {
@@ -383,6 +397,7 @@ async function initThree(){
         
         group.visible=true;
         group.rotation.y=t*.05;
+        orbit.rotation.y=-t*.08;
         group.position.set(isMobile?0:1.8,isMobile?.1:.1,isMobile?-1.5:-1.5);
         group.scale.setScalar(isMobile?.42:.58);
       }
