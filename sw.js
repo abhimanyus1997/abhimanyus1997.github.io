@@ -1,4 +1,4 @@
-const CACHE_NAME = 'as-portfolio-v5';
+const CACHE_NAME = 'as-portfolio-v6';
 const ASSETS = [
   './',
   './index.html',
@@ -11,8 +11,7 @@ const ASSETS = [
   './static/images/pilot_sync.png',
   './static/images/pilot_sync.svg',
   './static/vendor/three-legacy.min.js',
-  './static/vendor/GLTFLoader-legacy.js',
-  './static/models/hovercar.glb'
+  './static/vendor/GLTFLoader-legacy.js'
 ];
 
 self.addEventListener('install', e => {
@@ -40,8 +39,11 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   
-  // Skip caching ESM imports or external CDN models (like WebLLM model files which are large)
-  if (e.request.url.includes('esm.run') || e.request.url.includes('huggingface.co')) {
+  const isRange = e.request.headers.has('range');
+  const isGlb = e.request.url.endsWith('.glb');
+  
+  // Skip caching ESM imports, external CDN models, and large binary models/range requests
+  if (e.request.url.includes('esm.run') || e.request.url.includes('huggingface.co') || isRange || isGlb) {
     return;
   }
 
