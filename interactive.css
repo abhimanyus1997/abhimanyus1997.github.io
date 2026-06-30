@@ -320,17 +320,17 @@
 /* Premium Interactive Timeline */
 .timeline {
   position: relative;
-  margin-left: 29.5%;
-  padding-left: 32px;
+  margin-left: 0 !important; /* Full width so date and card split left-right */
+  padding-left: 0;
 }
 
-/* Gray track line */
+/* Gray track line - centered between date and card */
 .timeline::after {
   content: '';
   position: absolute;
   top: 0;
   bottom: 0;
-  left: -1px;
+  left: calc(29.5% + 24px);
   width: 1px;
   background: rgba(201, 255, 54, 0.12);
   z-index: 1;
@@ -340,7 +340,7 @@
 .timeline-progress-line {
   position: absolute;
   top: 0;
-  left: -1px;
+  left: calc(29.5% + 24px);
   width: 1px;
   height: 0%;
   background: linear-gradient(to bottom, var(--acid), #90b900);
@@ -350,10 +350,12 @@
 }
 
 .timeline article {
-  display: block;
+  display: grid;
+  grid-template-columns: 29.5% 1fr;
+  gap: 48px;
   position: relative;
-  padding: 24px 0;
-  border-bottom: 1px solid rgba(201, 255, 54, 0.1);
+  padding: 32px 0;
+  border-bottom: 1px solid rgba(201, 255, 54, 0.08);
   cursor: pointer;
   transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.3s;
 }
@@ -362,8 +364,8 @@
 .timeline article::before {
   content: '';
   position: absolute;
-  left: -36.5px;
-  top: 28px;
+  left: calc(29.5% + 20px); /* Centered in the 48px gap (24px - 4.5px) */
+  top: 38px;
   width: 9px;
   height: 9px;
   border-radius: 50%;
@@ -389,11 +391,13 @@
 }
 
 .timeline time {
-  font: 9px var(--mono);
+  font: 11px var(--mono);
   color: var(--muted);
   letter-spacing: 0.08em;
+  text-align: right;
+  padding-right: 12px;
   display: block;
-  margin-bottom: 8px;
+  margin-top: 6px;
   transition: color 0.3s;
 }
 
@@ -502,12 +506,26 @@
 
 @media(max-width:800px) {
   .timeline {
-    margin-left: 12px;
-    padding-left: 20px;
+    margin-left: 16px !important;
+    padding-left: 24px !important;
+  }
+  .timeline::after, .timeline-progress-line {
+    left: 0 !important;
+  }
+  .timeline article {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 24px 0;
   }
   .timeline article::before {
-    left: -24.5px;
-    top: 28px;
+    left: -28.5px !important; /* centered on the 0px line */
+    top: 24px;
+  }
+  .timeline time {
+    text-align: left;
+    padding-right: 0;
+    margin-top: 0;
+    margin-bottom: 4px;
   }
 }
 
