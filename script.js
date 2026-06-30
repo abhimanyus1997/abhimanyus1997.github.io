@@ -356,8 +356,14 @@ async function runBootSequence() {
       
       const statusEl = slides[currentSlideIdx].querySelector('.intro-status');
       if (statusEl) {
+        const startTime = performance.now();
         while (!modelLoaded && !modelFailed) {
           statusEl.innerHTML = `LOADING HOVERCAR TELEMETRY [${modelLoadPercent}%]...`;
+          if (performance.now() - startTime > 8000) {
+            console.warn('Hovercar loading timed out. Proceeding in 2D mode.');
+            modelFailed = true;
+            break;
+          }
           await sleep(100);
         }
         if (modelFailed) {
