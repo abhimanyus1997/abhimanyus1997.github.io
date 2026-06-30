@@ -96,6 +96,15 @@ async function initThree(){
       }
     }
     controlDock.addEventListener('click',e=>{const button=e.target.closest('button'),action=button?.dataset.flight;if(action)fly(action,button)});
+    function resize(){
+      const r=canvas.getBoundingClientRect();
+      if (r.height > 0 && r.width > 0) {
+        renderer.setSize(r.width,r.height,false);
+        camera.aspect=r.width/r.height;
+        camera.updateProjectionMatrix();
+      }
+    }
+    addEventListener('resize',resize);resize();
     addEventListener('keydown',e=>{if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;const action={a:'yaw-left',ArrowLeft:'yaw-left',d:'yaw-right',ArrowRight:'yaw-right',w:'pitch-up',ArrowUp:'pitch-up',s:'pitch-down',ArrowDown:'pitch-down',q:'roll-left',e:'roll-right',' ':'boost',r:'reset',g:'gear'}[e.key];if(action){e.preventDefault();fly(action)}});
     sizeControl.addEventListener('input',()=>{userScale=Number(sizeControl.value)/100});
     

@@ -67,8 +67,8 @@
 
 
 
-@media(min-width:801px){.hero{min-height:max(100svh,650px);padding:112px 3.5vw 32px;grid-template-columns:minmax(0,48%) minmax(0,52%);align-items:center}.hero-copy{align-self:center}.hero h1{font-size:clamp(54px,5.35vw,96px);line-height:.9;margin:18px 0 22px;max-width:780px}.lede{font-size:clamp(14px,1.05vw,18px);line-height:1.5;max-width:650px;margin:0}.actions{margin-top:24px}.visual{height:100%;min-height:0}.flight-controls{right:240px;bottom:18px;max-width:min(650px,48vw);padding:6px}.flight-keys{display:none}.scroll{bottom:20px}.visual-label{top:18px}.model-status{bottom:80px}.metrics p{padding-right:120px}}
-@media(max-width:800px){.hero{min-height:100svh;padding:105px 5vw 120px;display:block}.hero h1{font-size:clamp(48px,14vw,68px);line-height:.88;margin:18px 0 24px;max-width:95%}.hero-copy{position:relative}.lede{font-size:15px;line-height:1.5;max-width:88%}.actions{margin-top:25px;gap:18px}.visual{inset:80px -35% auto 35%;width:100%;height:48vh;opacity:.46}.flight-controls{top:auto;bottom:14px;position:absolute}.cinematic-intro{padding:9vw}.cinematic-intro strong{font-size:15vw}}
+@media(min-width:801px){.hero{min-height:650px;min-height:100vh;min-height:max(100svh,650px);padding:112px 3.5vw 32px;grid-template-columns:minmax(0,48%) minmax(0,52%);align-items:center}.hero-copy{align-self:center}.hero h1{font-size:clamp(54px,5.35vw,96px);line-height:.9;margin:18px 0 22px;max-width:780px}.lede{font-size:clamp(14px,1.05vw,18px);line-height:1.5;max-width:650px;margin:0}.actions{margin-top:24px}.visual{height:100%;min-height:0}.flight-controls{right:240px;bottom:18px;max-width:min(650px,48vw);padding:6px}.flight-keys{display:none}.scroll{bottom:20px}.visual-label{top:18px}.model-status{bottom:80px}.metrics p{padding-right:120px}}
+@media(max-width:800px){.hero{min-height:100vh;min-height:100svh;padding:105px 5vw 120px;display:block}.hero h1{font-size:clamp(48px,14vw,68px);line-height:.88;margin:18px 0 24px;max-width:95%}.hero-copy{position:relative}.lede{font-size:15px;line-height:1.5;max-width:88%}.actions{margin-top:25px;gap:18px}.visual{inset:80px -35% auto 35%;width:100%;height:48vh;opacity:.46}.flight-controls{top:auto;bottom:14px;position:absolute}.cinematic-intro{padding:9vw}.cinematic-intro strong{font-size:15vw}}
 @media(prefers-reduced-motion:reduce){.cinematic-intro{display:none}body:not(.cinematic-ready) .flight-controls{opacity:1}}
 
 .section-subtitle {
@@ -153,7 +153,7 @@
 }
 
 /* Custom Cursor */
-@media(min-width:801px){
+@media(pointer:fine){
   html,body{cursor:none}
   a,button,input,select,textarea,[role="button"],.project,.flight-controls button{cursor:none}
   .cursor-dot{width:6px;height:6px;background:var(--acid);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width .2s,height .2s,background-color .2s}
@@ -164,7 +164,7 @@
   .cursor-hover .cursor-ring{width:52px;height:52px;border-color:var(--acid);background:rgba(201,255,54,0.06);box-shadow:0 0 15px rgba(201,255,54,0.15)}
   .cursor-hover .cursor-ring svg{color:var(--acid)}
 }
-@media(max-width:800px){
+@media(pointer:coarse){
   .cursor-dot,.cursor-ring{display:none !important}
 }
 
