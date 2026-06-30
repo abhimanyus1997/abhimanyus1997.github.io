@@ -178,8 +178,72 @@ const Sfx = {
     
     osc.start(now);
     osc.stop(now + 0.15);
+  },
+  playStartup() {
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    [0, 0.1, 0.2].forEach((delay, idx) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      const pitch = idx === 2 ? 1600 : 1200;
+      osc.frequency.setValueAtTime(pitch, now + delay);
+      gain.gain.setValueAtTime(0.02, now + delay);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.06);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now + delay);
+      osc.stop(now + delay + 0.06);
+    });
+  },
+  playGlitch() {
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(3000 + Math.random() * 2000, now);
+    gain.gain.setValueAtTime(0.008, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.01);
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.01);
+  },
+  playChime() {
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const freqs = [523.25, 659.25, 783.99, 1046.5];
+    freqs.forEach((f, idx) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, now);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.03, now + idx * 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.8 + idx * 0.1);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 1.2 + idx * 0.1);
+    });
   }
 };
+
+// Auto-resume AudioContext on first gesture
+const resumeAudio = () => {
+  Sfx.init();
+  if (Sfx.ctx && Sfx.ctx.state === 'suspended') {
+    Sfx.ctx.resume();
+  }
+  removeEventListener('click', resumeAudio);
+  removeEventListener('touchstart', resumeAudio);
+};
+addEventListener('click', resumeAudio);
+addEventListener('touchstart', resumeAudio);
 
 async function initThree(){
   try{
@@ -610,6 +674,9 @@ async function runBootSequence() {
     return;
   }
   
+  // Play startup triple-beep
+  Sfx.playStartup();
+  
   const slideDuration = 2400; // 2.4s per slide
   
   while (currentSlideIdx < slides.length) {
@@ -620,8 +687,13 @@ async function runBootSequence() {
       const statusEl = slides[currentSlideIdx].querySelector('.intro-status');
       if (statusEl) {
         const startTime = performance.now();
+        let lastPercent = -1;
         while (!modelLoaded && !modelFailed) {
           statusEl.innerHTML = `LOADING HOVERCAR TELEMETRY [${modelLoadPercent}%]...`;
+          if (modelLoadPercent !== lastPercent) {
+            lastPercent = modelLoadPercent;
+            Sfx.playGlitch();
+          }
           if (performance.now() - startTime > 8000) {
             console.warn('Hovercar loading timed out. Proceeding in 2D mode.');
             modelFailed = true;
@@ -633,6 +705,7 @@ async function runBootSequence() {
           statusEl.innerHTML = `HOVERCAR TELEMETRY OFFLINE · 2D MODE`;
         } else {
           statusEl.innerHTML = `HOVERCAR TELEMETRY ONLINE · READY`;
+          Sfx.playChime();
         }
         const container = document.querySelector('.pilot-sync-container');
         if (container) container.classList.add('fully-loaded');
