@@ -136,20 +136,157 @@
 .mobile-gamepad{display:none}
 
 @media(max-width:800px){
-  .model-ready .mobile-gamepad{display:flex;position:absolute;bottom:24px;left:24px;right:24px;justify-content:space-between;align-items:flex-end;z-index:25;pointer-events:none}
+  .hero {
+    display: flex !important;
+    flex-direction: column !important;
+    padding-top: 110px !important;
+    padding-bottom: 40px !important;
+    min-height: auto !important;
+    gap: 24px !important;
+  }
+  .hero-copy {
+    order: 1 !important;
+  }
+  .visual {
+    order: 2 !important;
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: 340px !important;
+    opacity: 1 !important;
+    background: #1c1e1a !important; /* Premium dark background for the 3D model viewport */
+    border: 1px solid rgba(201, 255, 54, 0.08) !important;
+    border-radius: 4px !important;
+    overflow: hidden !important;
+  }
   .visual-label, .model-status {
     display: none !important;
   }
-  .joystick-container,.gamepad-buttons{pointer-events:auto}
-  .joystick-base{width:80px;height:80px;background:rgba(23,25,21,0.6);border:1px solid rgba(201,255,54,0.25);border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;touch-action:none}
-  .joystick-stick{width:36px;height:36px;background:var(--acid);border-radius:50%;position:absolute;box-shadow:0 0 10px var(--acid);transition:transform 0.05s ease}
-  .gamepad-buttons{display:flex;flex-direction:column;gap:12px;align-items:flex-end}
-  .gamepad-btn{background:rgba(23,25,21,0.7);border:1px solid rgba(201,255,54,0.3);color:#fff;font:9px var(--mono);padding:10px 14px;border-radius:4px;letter-spacing:0.05em;cursor:pointer;box-shadow:0 4px 15px rgba(0,0,0,0.2);min-width:70px;text-align:center}
-  .gamepad-btn.active{background:var(--acid);color:#000;border-color:var(--acid);box-shadow:0 0 12px var(--acid)}
-  .gamepad-btn.boost-btn{height:48px;width:48px;border-radius:50%;font-weight:bold;font-size:8px;padding:0;display:flex;align-items:center;justify-content:center}
+  .model-ready .mobile-gamepad {
+    order: 3 !important;
+    display: flex !important;
+    position: relative !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    width: 100% !important;
+    z-index: 10 !important;
+    pointer-events: auto !important;
+    background: #171915 !important; /* Cockpit panel background */
+    border: 1px solid rgba(201, 255, 54, 0.12) !important;
+    border-radius: 4px !important;
+    padding: 16px !important;
+    gap: 20px !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+  
+  .joystick-container {
+    flex: 0 0 80px !important;
+    pointer-events: auto !important;
+  }
+  .joystick-base {
+    width: 80px !important;
+    height: 80px !important;
+    background: #10120e !important;
+    border: 1px dashed rgba(201, 255, 54, 0.3) !important;
+    border-radius: 4px !important; /* Square base! */
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    touch-action: none !important;
+  }
+  /* Crosshairs */
+  .joystick-base::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 10% !important;
+    right: 10% !important;
+    height: 1px !important;
+    background: rgba(201, 255, 54, 0.15) !important;
+  }
+  .joystick-base::after {
+    content: '' !important;
+    position: absolute !important;
+    left: 50% !important;
+    top: 10% !important;
+    bottom: 10% !important;
+    width: 1px !important;
+    background: rgba(201, 255, 54, 0.15) !important;
+  }
+  .joystick-stick {
+    width: 16px !important;
+    height: 16px !important;
+    background: none !important;
+    border: 2px solid var(--acid) !important;
+    border-radius: 2px !important; /* Square cursor! */
+    position: absolute !important;
+    box-shadow: 0 0 6px var(--acid) !important;
+    transition: none !important;
+  }
+  
+  .gamepad-buttons {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    flex: 1 !important;
+    align-items: stretch !important;
+    pointer-events: auto !important;
+  }
+  .gamepad-btn {
+    background: #11130f !important;
+    border: 1px solid rgba(201, 255, 54, 0.2) !important;
+    color: #c9cbbe !important;
+    font: 9px var(--mono) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    padding: 10px 14px !important;
+    border-radius: 2px !important; /* Rectangular! */
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    transition: all 0.2s !important;
+    box-shadow: none !important;
+    min-width: auto !important;
+    text-align: left !important;
+  }
+  /* Status LED dot on the right of the button */
+  .gamepad-btn::after {
+    content: '' !important;
+    display: inline-block !important;
+    width: 5px !important;
+    height: 5px !important;
+    border-radius: 50% !important;
+    background: #3e413b !important;
+    margin-left: 10px !important;
+    transition: background 0.3s, box-shadow 0.3s !important;
+  }
+  /* Active states */
+  .gamepad-btn.gyro-btn.active {
+    border-color: var(--acid) !important;
+    color: #fff !important;
+    background: rgba(201, 255, 54, 0.05) !important;
+  }
+  .gamepad-btn.gyro-btn.active::after {
+    background: var(--acid) !important;
+    box-shadow: 0 0 6px var(--acid) !important;
+  }
+  .gamepad-btn.boost-btn:active, .gamepad-btn.boost-btn.active {
+    border-color: var(--acid) !important;
+    color: #fff !important;
+    background: rgba(201, 255, 54, 0.1) !important;
+  }
+  .gamepad-btn.boost-btn::after {
+    background: #ff5500 !important; /* Thruster orange! */
+  }
+  .gamepad-btn.boost-btn:active::after, .gamepad-btn.boost-btn.active::after {
+    box-shadow: 0 0 6px #ff5500 !important;
+  }
   
   .flight-controls{display:none !important}
-  .visual{inset:80px 0 auto 0;width:100%;height:50vh;opacity:.55}
   .metrics{grid-template-columns:1fr;padding:0 5vw}
   .metrics>div{border-left:0;border-bottom:1px solid var(--line);padding:24px 0}
   .metrics>p{border-left:0;padding:24px 0}
