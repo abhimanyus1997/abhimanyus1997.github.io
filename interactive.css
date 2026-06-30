@@ -240,9 +240,30 @@
 }
 
 .proj-svg {
-  width: 90px;
-  height: 90px;
+  width: 220px !important;
+  height: 220px !important;
   transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Custom UI Vector Arrows (No-Emoji) */
+.ui-arrow {
+  display: inline-block;
+  width: 1.1em;
+  height: 1.1em;
+  vertical-align: middle;
+  margin-left: 6px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+a:hover .ui-arrow, button:hover .ui-arrow {
+  transform: translate(2px, -2px);
+}
+
+a:hover .ui-arrow[style*="rotate(90deg)"], button:hover .ui-arrow[style*="rotate(90deg)"] {
+  transform: rotate(90deg) translate(2px, -2px) !important;
 }
 
 /* Animations for Cosmic Project SVGs */
@@ -526,6 +547,13 @@
     padding-right: 0;
     margin-top: 0;
     margin-bottom: 4px;
+  }
+  .project-art {
+    height: 220px !important;
+  }
+  .proj-svg {
+    width: 180px !important;
+    height: 180px !important;
   }
 }
 
