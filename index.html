@@ -69,6 +69,7 @@
         <button data-flight="pitch-up" aria-label="Tilt car upward">↑</button><button data-flight="pitch-down" aria-label="Tilt car downward">↓</button>
         <button data-flight="roll-left" aria-label="Roll car left">Q</button><button data-flight="roll-right" aria-label="Roll car right">E</button>
         <button data-flight="auto" aria-label="Toggle automatic rotation" aria-pressed="false">AUTO</button>
+        <button data-flight="gear" aria-label="Toggle landing gear">GEAR: DOWN</button>
         <button data-flight="boost" aria-label="Boost hovercar animation">BOOST</button>
         <label>SIZE <input id="flight-size" type="range" min="70" max="145" value="110" aria-label="Car size"></label>
         <button data-flight="reset" aria-label="Reset hovercar controls">RESET</button>
@@ -82,6 +83,7 @@
         </div>
         <div class="gamepad-buttons">
           <button class="gamepad-btn gyro-btn" id="gyro-btn">GYRO: OFF</button>
+          <button class="gamepad-btn gear-btn" id="mobile-gear-btn" data-flight="gear">GEAR: DOWN</button>
           <button class="gamepad-btn boost-btn" id="boost-btn">BOOST</button>
         </div>
       </div>
