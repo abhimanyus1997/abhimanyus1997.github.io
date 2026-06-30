@@ -53,8 +53,8 @@ const Sfx = {
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
     osc.type = 'square';
-    osc.frequency.setValueAtTime(1500 + Math.random() * 2000, now);
-    gain.gain.setValueAtTime(0.003, now);
+    osc.frequency.setValueAtTime(1200 + Math.random() * 1800, now);
+    gain.gain.setValueAtTime(0.016, now);
     gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.015);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
@@ -114,6 +114,70 @@ const Sfx = {
     gain.connect(this.ctx.destination);
     osc.start(now);
     osc.stop(now + 0.22);
+  },
+  playArrival() {
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+    
+    osc1.type = 'sawtooth';
+    osc2.type = 'triangle';
+    
+    osc1.frequency.setValueAtTime(180, now);
+    osc1.frequency.exponentialRampToValueAtTime(65, now + 2.0);
+    
+    osc2.frequency.setValueAtTime(184, now);
+    osc2.frequency.exponentialRampToValueAtTime(67, now + 2.0);
+    
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(400, now);
+    filter.frequency.exponentialRampToValueAtTime(150, now + 2.0);
+    
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.18, now + 0.5);
+    gain.gain.exponentialRampToValueAtTime(0.03, now + 2.0);
+    
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+    
+    osc1.start(now);
+    osc2.start(now);
+    
+    gain.gain.setValueAtTime(0.03, now + 2.0);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 3.0);
+    osc1.stop(now + 3.0);
+    osc2.stop(now + 3.0);
+  },
+  playManeuver() {
+    this.init();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+    
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(90, now);
+    osc.frequency.linearRampToValueAtTime(45, now + 0.15);
+    
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(120, now);
+    
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+    
+    osc.start(now);
+    osc.stop(now + 0.15);
   }
 };
 
@@ -158,14 +222,13 @@ async function initThree(){
       car.traverse(node=>{if(node.isMesh){node.frustumCulled=false;const mats=Array.isArray(node.material)?node.material:[node.material];mats.forEach(m=>{if(!m)return;const name=(m.name||'').toLowerCase();const tone=name.includes('body')?0x34383d:name.includes('metal')?0x202326:name.includes('plastic')?0x111315:null;if(tone!==null){if(m.color)m.color.setHex(tone);if(m.uniforms?.diffuse?.value)m.uniforms.diffuse.value.setHex(tone)}if(m.map)m.map.encoding=THREE.sRGBEncoding;if(m.emissiveMap)m.emissiveMap.encoding=THREE.sRGBEncoding;m.side=THREE.DoubleSide;m.needsUpdate=true})}});
       carRig.add(car);carRig.visible=true;
       carStatus.classList.add('ready');carStatus.textContent='HOVERCAR ONLINE';
+      document.body.classList.add('model-ready');
       
       if(gltf.animations?.length){
         mixer=new THREE.AnimationMixer(car);
-        // Play hover animation (clip 0) continuously
         const hoverAction = mixer.clipAction(gltf.animations[0]);
         hoverAction.play();
         
-        // Find gear animation
         const gearClip = gltf.animations.find(clip => {
           const name = clip.name.toLowerCase();
           return name.includes('gear') || name.includes('land') || name.includes('close') || name.includes('open') || name.includes('retract');
@@ -181,7 +244,14 @@ async function initThree(){
         }
       }
       modelLoaded = true;
-    },xhr=>{if(xhr.total){const pct=Math.round(xhr.loaded/xhr.total*100);modelLoadPercent = pct;if(carStatus.lastChild)carStatus.lastChild.textContent=` LOADING HOVERCAR · ${pct}%`}},err=>{carStatus.classList.add('error');carStatus.textContent='3D MODEL UNAVAILABLE';console.warn('Hovercar could not load',err);modelFailed = true;});
+    },xhr=>{if(xhr.total){const pct=Math.round(xhr.loaded/xhr.total*100);modelLoadPercent = pct;if(carStatus.lastChild)carStatus.lastChild.textContent=` LOADING HOVERCAR · ${pct}%`}},err=>{
+      carStatus.classList.add('error');
+      carStatus.textContent='3D MODEL UNAVAILABLE';
+      console.warn('Hovercar could not load',err);
+      modelFailed = true;
+      const controls = document.getElementById('flight-controls');
+      if (controls) controls.style.display = 'none';
+    });
     let mx=0,my=0,manualYaw=0,manualPitch=0,manualRoll=0,userScale=1.1,autoRotate=true,boostUntil=0;
     addEventListener('pointermove',e=>{mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5},{passive:true});
     const controlDock=document.querySelector('#flight-controls'),sizeControl=document.querySelector('#flight-size');
@@ -189,22 +259,11 @@ async function initThree(){
       const autoBtn = controlDock.querySelector('[data-flight="auto"]');
       if (autoBtn) autoBtn.setAttribute('aria-pressed', 'true');
     }
-    
-    function toggleGear() {
-      if (!gearAction) return;
-      gearOpen = !gearOpen;
-      const label = gearOpen ? 'GEAR: DOWN' : 'GEAR: UP';
-      const desktopBtn = document.querySelector('[data-flight="gear"]');
-      const mobileBtn = document.getElementById('mobile-gear-btn');
-      if (desktopBtn) desktopBtn.textContent = label;
-      if (mobileBtn) mobileBtn.textContent = label;
-      gearAction.paused = false;
-      gearAction.timeScale = gearOpen ? 1 : -1; // Play forward to extend, backward to retract
-      gearAction.play();
-      Sfx.playGear(gearOpen);
-    }
 
     function fly(action,target){
+      if(action==='yaw-left' || action==='yaw-right' || action==='pitch-up' || action==='pitch-down' || action==='roll-left' || action==='roll-right') {
+        Sfx.playManeuver();
+      }
       if(action==='yaw-left')manualYaw-=.3;
       if(action==='yaw-right')manualYaw+=.3;
       if(action==='pitch-up')manualPitch=Math.min(.55,manualPitch+.14);
@@ -215,12 +274,10 @@ async function initThree(){
         boostUntil=performance.now()+900;
         Sfx.playBoost();
       }
-      if(action==='gear')toggleGear();
       if(action==='auto'){autoRotate=!autoRotate;target?.setAttribute('aria-pressed',String(autoRotate))}
       if(action==='reset'){
         manualYaw=0;manualPitch=0;manualRoll=0;userScale=1.1;sizeControl.value=110;autoRotate=false;
         controlDock.querySelector('[data-flight="auto"]').setAttribute('aria-pressed','false');
-        if (gearAction && !gearOpen) toggleGear();
       }
     }
     controlDock.addEventListener('click',e=>{const button=e.target.closest('button'),action=button?.dataset.flight;if(action)fly(action,button)});
@@ -233,7 +290,7 @@ async function initThree(){
       }
     }
     addEventListener('resize',resize);resize();
-    addEventListener('keydown',e=>{if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;const action={a:'yaw-left',ArrowLeft:'yaw-left',d:'yaw-right',ArrowRight:'yaw-right',w:'pitch-up',ArrowUp:'pitch-up',s:'pitch-down',ArrowDown:'pitch-down',q:'roll-left',e:'roll-right',' ':'boost',r:'reset',g:'gear'}[e.key];if(action){e.preventDefault();fly(action)}});
+    addEventListener('keydown',e=>{if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;const action={a:'yaw-left',ArrowLeft:'yaw-left',d:'yaw-right',ArrowRight:'yaw-right',w:'pitch-up',ArrowUp:'pitch-up',s:'pitch-down',ArrowDown:'pitch-down',q:'roll-left',e:'roll-right',' ':'boost',r:'reset'}[e.key];if(action){e.preventDefault();fly(action)}});
     sizeControl.addEventListener('input',()=>{userScale=Number(sizeControl.value)/100});
     
     // Mobile Gamepad & Gyroscope Controls
@@ -242,7 +299,6 @@ async function initThree(){
       const joystickStick = document.getElementById('joystick-stick');
       const gyroBtn = document.getElementById('gyro-btn');
       const boostBtn = document.getElementById('boost-btn');
-      const mobileGearBtn = document.getElementById('mobile-gear-btn');
       
       if (joystickBase && joystickStick) {
         let active = false;
@@ -346,11 +402,6 @@ async function initThree(){
         });
       }
       
-      if (mobileGearBtn) {
-        mobileGearBtn.addEventListener('click', () => {
-          fly('gear', mobileGearBtn);
-        });
-      }
     })();
 
     const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,clock=new THREE.Clock();
@@ -381,6 +432,23 @@ async function initThree(){
       carRig.rotation.z=THREE.MathUtils.lerp(carRig.rotation.z,manualRoll+(x-previousX)*-.18+Math.sin(t*.7)*.014,.08);
       carRig.rotation.x=THREE.MathUtils.lerp(carRig.rotation.x,manualPitch-my*.14-boost*.12+(1-ease)*.12,.08);
       previousX=x;
+      
+      // Automatic Landing Gear based on boost state
+      if (gearAction) {
+        if (boost > 0.45 && gearOpen) {
+          gearOpen = false;
+          gearAction.paused = false;
+          gearAction.timeScale = -1; // Retract
+          gearAction.play();
+          Sfx.playGear(false);
+        } else if (boost === 0 && !gearOpen) {
+          gearOpen = true;
+          gearAction.paused = false;
+          gearAction.timeScale = 1; // Extend
+          gearAction.play();
+          Sfx.playGear(true);
+        }
+      }
       
       if (modelFailed) {
         shadow.visible = false;
@@ -522,6 +590,7 @@ async function runBootSequence() {
     document.body.classList.add('cinematic-ready');
     entryStart = performance.now() + 1800;
     setTimeout(startScrambleAnimations, 1800);
+    Sfx.playArrival();
   }
   
   if (skipBtn) {
