@@ -1,0 +1,34 @@
+# Local virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Node modules (if any)
+node_modules/
+.npm/
+
+# Temp files
+*.tmp
+*.log

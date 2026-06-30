@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Abhimanyu Singh — AI Engineer & Data Scientist</title>
+  <meta name="description" content="Abhimanyu Singh builds production AI systems across generative AI, computer vision and robotics.">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="interactive.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#171915">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="static/images/logo.svg">
+</head>
+<body>
+  <div class="noise"></div>
+  <div class="cinematic-intro" id="cinematic-intro">
+    <div class="intro-scan"></div>
+    
+    <div class="intro-grid">
+      <div class="intro-col-left">
+        <!-- Slide 1: System Init -->
+        <div class="intro-slide active" id="slide-1">
+          <p class="intro-eyebrow">AS / NEURAL FLIGHT SYSTEM</p>
+          <strong class="intro-main">INTELLIGENCE<br>IN MOTION</strong>
+          <span class="intro-status"><i></i> INITIALIZING PHYSICAL AI</span>
+        </div>
+        
+        <!-- Slide 2: Pilot Profile -->
+        <div class="intro-slide" id="slide-2">
+          <p class="intro-eyebrow">PILOT PROFILE / AS.01</p>
+          <strong class="intro-main">ABHIMANYU<br>SINGH</strong>
+          <span class="intro-status">AI ENGINEER &amp; DATA SCIENTIST</span>
+        </div>
+
+        <!-- Slide 3: Shipped Models -->
+        <div class="intro-slide" id="slide-3">
+          <p class="intro-eyebrow">SYSTEM TELEMETRY / AS.02</p>
+          <strong class="intro-main">LEAVING THE<br>RESEARCH LAB</strong>
+          <span class="intro-status">10+ PRODUCTION MODELS DEPLOYED</span>
+        </div>
+      </div>
+      
+      <div class="intro-col-right">
+        <div class="pilot-sync-container">
+          <div class="pilot-hud-overlay"></div>
+          <div class="pilot-sync-svg-container"></div>
+          <img src="./static/images/pilot_sync.png" alt="Pilot Neural Sync" class="pilot-sync-img">
+          <div class="pilot-sync-status">
+            <span class="sync-bar"></span>
+            <span class="sync-label">NEURAL LINK: ESTABLISHED</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Skip Button -->
+    <button class="intro-skip" id="skip-intro" aria-label="Skip introduction">SKIP INTRO <span>→</span></button>
+  </div>
+  <header><a class="mark" href="#top">AS<span>●</span></a><nav><a href="#experience">Experience</a><a href="#work">Projects</a><a href="#about">About</a></nav><a class="available" href="mailto:abhimanyus1997@gmail.com"><i></i> Available to collaborate</a></header>
+  <main id="top">
+    <section class="hero">
+      <canvas id="field" class="flight-canvas" aria-label="Animated 3D cyberpunk hovercar"></canvas>
+      <div class="flight-controls" id="flight-controls" aria-label="Hovercar controls">
+        <span class="flight-controls__title"><i></i> FLIGHT CTRL</span>
+        <button data-flight="yaw-left" aria-label="Rotate car left">↶</button><button data-flight="yaw-right" aria-label="Rotate car right">↷</button>
+        <button data-flight="pitch-up" aria-label="Tilt car upward">↑</button><button data-flight="pitch-down" aria-label="Tilt car downward">↓</button>
+        <button data-flight="roll-left" aria-label="Roll car left">Q</button><button data-flight="roll-right" aria-label="Roll car right">E</button>
+        <button data-flight="auto" aria-label="Toggle automatic rotation" aria-pressed="false">AUTO</button>
+        <button data-flight="boost" aria-label="Boost hovercar animation">BOOST</button>
+        <label>SIZE <input id="flight-size" type="range" min="70" max="145" value="110" aria-label="Car size"></label>
+        <button data-flight="reset" aria-label="Reset hovercar controls">RESET</button>
+        <small class="flight-keys">WASD / ARROWS · Q/E ROLL · SPACE BOOST</small>
+      </div>
+      <div class="hero-copy"><p class="eyebrow scramble-text">AI ENGINEER · DATA SCIENTIST · NOIDA, IN</p><h1 class="scramble-text">I build intelligence<br>that leaves the <em>lab.</em></h1><p class="lede scramble-text">Production-grade AI across language, vision, and physical systems—designed to solve real problems, not just win demos.</p><div class="actions"><a class="primary" href="#experience">Explore experience <span>↘</span></a><a href="./static/resume.pdf" target="_blank">View résumé ↗</a></div></div>
+      <div class="visual" aria-hidden="true"><div class="visual-label"><span>PHYSICAL AI / 01</span><span>MOVE TO PILOT</span></div><div class="model-status" id="car-status"><i></i> INITIALIZING HOVERCAR</div><div class="orb-copy"><b>AI</b><small>INTELLIGENCE // IN MOTION</small></div></div>
+      <div class="scroll">SCROLL TO DISCOVER <span>↓</span></div>
+    </section>
+
+    <section class="metrics"><div><strong>05+</strong><span>Years building<br>applied AI</span></div><div><strong>10+</strong><span>Models shipped<br>to production</span></div><div><strong>03</strong><span>Domains: language,<br>vision & robotics</span></div><p>Currently leading data science initiatives at <b>HDFC Bank</b>.</p></section>
+
+    <section id="experience" class="section dark"><div class="section-head"><p class="scramble-text">01 / EXPERIENCE</p><h2 class="scramble-text">From research<br>to real-world systems.</h2></div><div class="timeline">
+      <article><time>DEC 2025 — NOW</time><div><h3>Data Scientist — Manager</h3><p>HDFC Bank · Noida</p><span>Developing Neev’s Agent Catalogue: a card-based interface that abstracts LiteLLM routing so teams can discover and configure autonomous agents. Built an internal Streamlit MLOps annotation platform for fine-tuning and RAG datasets.</span></div></article>
+      <article><time>SEP — NOV 2025</time><div><h3>Senior Machine Learning Engineer</h3><p>Quantiphi Analytics · Bengaluru</p><span>Executed a large-scale GCP Vertex AI Document OCR proof-of-concept, converting unstructured financial documents into structured JSON for downstream analytics.</span></div></article>
+      <article><time>JUN 2024 — SEP 2025</time><div><h3>Software Engineer — AI & Robotics</h3><p>Alphadroid India · Noida</p><span>Orchestrated autonomous robot workflows with lift PLCs and GeoJSON multi-floor navigation; optimized multilingual RAG on SageMaker; moved MobileFaceNet biometrics to Flutter/TFLite at 99.5% accuracy; scaled robot updates through MQTT, ECR and Vault.</span></div></article>
+      <article><time>JUN 2023 — MAY 2024</time><div><h3>Junior Research Fellow</h3><p>IIT Guwahati · Underwater Vision</p><span>Built GroundingDINO dataset pipelines that improved underwater surveillance data quality by 35%, then reduced real-time tracking latency by 3–4 seconds using ONNX Runtime.</span></div></article>
+      <article><time>JUL 2019 — JUL 2021</time><div><h3>Data Scientist</h3><p>HealthView · Jaipur</p><span>Developed NLP-driven content curation models and D3.js dashboards to improve user engagement.</span></div></article>
+    </div></section>
+
+    <section id="work" class="section"><div class="section-head"><p class="scramble-text">02 / SIDE PROJECTS &amp; EXPERIMENTS</p><div><h2 class="scramble-text">Things I’ve built.</h2><p class="section-subtitle">A collection of side projects and open-source experiments. Many more are available on <a href="https://github.com/abhimanyus1997" target="_blank" rel="noreferrer" class="project-git-link">GitHub ↗</a>.</p></div></div><div class="projects">
+      <article class="project featured"><div class="project-num">01</div><div><p class="tags">PHYSICAL AI · C++ · ESP32</p><h3 class="scramble-text">MicroClaw</h3><p>Agentic firmware that turns a $2 microcontroller into a general-purpose physical AI—capable of reasoning, sensing, and acting in the real world.</p><a href="https://abhimanyus1997.github.io/microclaw/" target="_blank" rel="noreferrer">Launch project ↗</a></div><div class="project-art claw"><span></span><span></span><span></span></div></article>
+      <article class="project"><div class="project-num">02</div><div><p class="tags">HEALTHTECH · FLUTTER · LLM</p><h3 class="scramble-text">HealthBuddy</h3><p>An AI wellness companion combining Android Health Connect data with conversational intelligence.</p><a href="https://abhimanyus1997.github.io/healthbuddy/" target="_blank" rel="noreferrer">Launch project ↗</a></div><div class="project-art pulse">⌁</div></article>
+      <article class="project"><div class="project-num">03</div><div><p class="tags">MULTIMODAL · RAG · OCR</p><h3 class="scramble-text">Langchain One</h3><p>A multimodal assistant for extracting, indexing, and querying visual document data.</p><a href="https://github.com/abhimanyus1997/langchain-one" target="_blank" rel="noreferrer">View source ↗</a></div><div class="project-art rings"></div></article>
+      <article class="project"><div class="project-num">04</div><div><p class="tags">GEMINI 2.5 · LANGCHAIN · STREAMLIT</p><h3 class="scramble-text">Resume JD Matcher</h3><p>An AI recruitment tool that parses PDFs, extracts skills with Gemini, scores matches with TF-IDF, and renders dynamic Plotly radar charts.</p><a href="https://github.com/abhimanyus1997/Resume-Matcher" target="_blank" rel="noreferrer">View source ↗</a></div><div class="project-art pulse">◎</div></article>
+    </div></section>
+
+    <section id="about" class="section about"><div><p class="eyebrow scramble-text">03 / ABOUT</p><h2 class="scramble-text">I like AI most when it has to meet reality.</h2><div class="about-visual"><img src="./static/images/profile_ghibli.png" alt="Abhimanyu Singh" class="about-img"></div></div><div><p>My work sits where generative models, computer vision, and hardware collide. I care about the unglamorous details—latency, reliability, interfaces, and whether people can actually use the thing.</p><div class="skills"><span>Google ADK</span><span>OpenAI SDK</span><span>LangChain</span><span>LlamaIndex</span><span>LangGraph</span><span>LiteLLM</span><span>CrewAI</span><span>RAG / Vertex AI</span><span>Python / SQL / C++</span><span>FastAPI / Flask</span><span>Flutter</span><span>TensorFlow / TFLite</span><span>OpenCV</span><span>AWS / GCP</span><span>Docker / MLflow / Airflow</span><span>ESP32 / FreeRTOS</span><span>IoT / MQTT</span></div></div></section>
+    <section class="section credentials"><div class="section-head"><p class="scramble-text">04 / CREDENTIALS</p><h2 class="scramble-text">Foundation &amp;<br>research.</h2></div><div class="credential-grid"><article><p>2021 — 2023</p><h3>M.Tech · Automation &amp; Robotics</h3><span>Defence Institute of Advanced Technology (DIAT), DRDO · CGPA 8.47</span></article><article><p>2015 — 2019</p><h3>B.Tech · Mechanical Engineering</h3><span>LNMIIT Jaipur · CGPA 8.16</span></article><article><p>PUBLICATION</p><h3>Evolution of Object Detection</h3><span>YOLO &amp; NAS Revolutionizing Computer Vision · IndiaAI.gov.in</span></article><article><p>RCRM 2024</p><h3>Subaqueous Crack Detection</h3><span>Fusion-based image enhancement conference paper</span></article></div></section>
+  </main>
+  <footer><p>Have a hard AI problem?</p><a href="mailto:abhimanyus1997@gmail.com">Let’s make it real. ↗</a><div><span>© 2026 ABHIMANYU SINGH</span><span><button id="pwa-install" style="display:none;background:none;border:none;color:inherit;font:inherit;cursor:pointer;padding:0;margin-right:25px;text-transform:uppercase;letter-spacing:0.05em;transition:color 0.2s;">Install App ↗</button><a href="https://linkedin.com/in/abhimanyus1997" target="_blank" rel="noreferrer">LINKEDIN ↗</a> <a href="https://github.com/abhimanyus1997" target="_blank" rel="noreferrer">GITHUB ↗</a></span></div></footer>
+  <button class="chat-launch" id="chat-launch" aria-expanded="false" aria-controls="chat-panel"><span class="chat-pulse"></span><span>ASK MY LOCAL AI</span><b>↗</b></button>
+  <aside class="chat-panel" id="chat-panel" aria-label="Portfolio AI assistant" aria-hidden="true">
+    <div class="chat-head"><div><span class="chat-pulse"></span><div><b>AS / LOCAL AI</b><small>PRIVATE · RUNS ON YOUR GPU</small></div></div><button id="chat-close" aria-label="Close assistant">×</button></div>
+    <div class="chat-messages" id="chat-messages" aria-live="polite">
+      <div class="message bot"><span>AI</span><p>I can answer questions about Abhimanyu’s work, experience, and technical fit. The model runs privately in this browser.</p></div>
+      <div class="model-gate" id="model-gate"><p>One-time model download: approximately 376 MB. It is cached locally after loading.</p><button id="start-ai">START PRIVATE AI <span>→</span></button><small id="model-status">REQUIRES A WEBGPU-COMPATIBLE BROWSER</small><div class="model-progress"><i id="model-progress"></i></div></div>
+    </div>
+    <div class="suggestions" id="suggestions"><button>What does Abhimanyu build?</button><button>Is he a fit for an AI lead role?</button></div>
+    <form class="chat-form" id="chat-form"><input id="chat-input" aria-label="Message" placeholder="Ask about my work…" autocomplete="off" disabled><button aria-label="Send message" disabled>↑</button></form>
+    <p class="chat-note">ON-DEVICE AI · NO MESSAGES LEAVE YOUR BROWSER</p>
+  </aside>
+  <script src="./static/vendor/three-legacy.min.js"></script>
+  <script src="./static/vendor/GLTFLoader-legacy.js"></script>
+  <script src="script.js"></script>
+</body></html>
