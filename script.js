@@ -224,6 +224,9 @@ async function initThree(){
         });
       }
     })();
+  }catch(err){modelFailed=true;canvas.hidden=true;console.warn('3D scene unavailable',err)}
+}
+initThree();
 
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.animate([{opacity:0,transform:'translateY(28px)'},{opacity:1,transform:'none'}],{duration:700,easing:'cubic-bezier(.2,.8,.2,1)',fill:'both'})}),{threshold:.12});
 document.querySelectorAll('.project,.timeline article').forEach(e=>io.observe(e));
