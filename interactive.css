@@ -321,19 +321,32 @@
 .timeline {
   position: relative;
   margin-left: 29.5%;
-  border-left: 1px solid rgba(201, 255, 54, 0.15);
-  border-top: none;
   padding-left: 32px;
 }
 
-.timeline::before {
+/* Gray track line */
+.timeline::after {
   content: '';
   position: absolute;
   top: 0;
   bottom: 0;
   left: -1px;
   width: 1px;
-  background: linear-gradient(to bottom, var(--acid), transparent);
+  background: rgba(201, 255, 54, 0.12);
+  z-index: 1;
+}
+
+/* Glowing green progress line */
+.timeline-progress-line {
+  position: absolute;
+  top: 0;
+  left: -1px;
+  width: 1px;
+  height: 0%;
+  background: linear-gradient(to bottom, var(--acid), #90b900);
+  box-shadow: 0 0 8px var(--acid);
+  z-index: 2;
+  transition: height 0.1s ease-out;
 }
 
 .timeline article {
@@ -345,19 +358,19 @@
   transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.3s;
 }
 
-/* Timeline Dot */
+/* Timeline Dot - Aligned perfectly with title and vertical line */
 .timeline article::before {
   content: '';
   position: absolute;
-  left: -37px;
-  top: 32px;
+  left: -36.5px;
+  top: 28px;
   width: 9px;
   height: 9px;
   border-radius: 50%;
   background: #3a3c36;
   border: 2px solid var(--ink);
   transition: background 0.3s, box-shadow 0.3s;
-  z-index: 2;
+  z-index: 3;
 }
 
 .timeline article.active-role::before {
@@ -493,6 +506,12 @@
     padding-left: 20px;
   }
   .timeline article::before {
-    left: -25px;
+    left: -24.5px;
+    top: 28px;
   }
+}
+
+/* Smooth Parallax Transitions */
+.project, .about-visual, .flight-canvas {
+  transition: transform 0.15s ease-out, opacity 0.15s ease-out;
 }
