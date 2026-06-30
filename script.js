@@ -419,7 +419,22 @@ form.addEventListener('submit',async e=>{
 if ('serviceWorker' in navigator) {
   addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('Service Worker registered', reg))
+      .then(reg => {
+        console.log('Service Worker registered', reg);
+        reg.onupdatefound = () => {
+          const installingWorker = reg.installing;
+          if (installingWorker) {
+            installingWorker.onstatechange = () => {
+              if (installingWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                  console.log('New content available; reloading...');
+                  location.reload();
+                }
+              }
+            };
+          }
+        };
+      })
       .catch(err => console.warn('Service Worker registration failed', err));
   });
 }
