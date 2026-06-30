@@ -206,3 +206,26 @@
     stroke-dashoffset: 0;
   }
 }
+
+/* Apple PWA Standalone Safe Areas */
+@media (display-mode: standalone) {
+  header, .header {
+    padding-top: env(safe-area-inset-top);
+    height: calc(88px + env(safe-area-inset-top));
+  }
+  .mobile-gamepad {
+    padding-bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+  }
+  .chat-launch {
+    bottom: calc(22px + env(safe-area-inset-bottom));
+  }
+  .chat-panel {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  @media (max-width: 800px) {
+    .chat-launch {
+      bottom: calc(80px + env(safe-area-inset-bottom)) !important;
+    }
+  }
+}

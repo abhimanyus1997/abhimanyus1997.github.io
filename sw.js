@@ -1,4 +1,4 @@
-const CACHE_NAME = 'as-portfolio-v6';
+const CACHE_NAME = 'as-portfolio-v7';
 const ASSETS = [
   './',
   './index.html',
@@ -7,6 +7,8 @@ const ASSETS = [
   './script.js',
   './manifest.json',
   './static/images/logo.svg',
+  './static/images/icon-192.png',
+  './static/images/icon-512.png',
   './static/images/profile_ghibli.png',
   './static/images/pilot_sync.png',
   './static/images/pilot_sync.svg',
