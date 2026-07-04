@@ -20,15 +20,18 @@ export default async function handler(req, res) {
   const ttsUrl = process.env.TTS_BASE_URL || 'http://13.126.102.204:5555/tts';
 
   try {
-    const formData = new FormData();
-    formData.append('text', text);
+    const params = new URLSearchParams();
+    params.append('text', text);
     if (voice_url) {
-      formData.append('voice_url', voice_url);
+      params.append('voice_url', voice_url);
     }
 
     const response = await fetch(ttsUrl, {
       method: 'POST',
-      body: formData
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: params.toString()
     });
 
     if (!response.ok) {

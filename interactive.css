@@ -1117,11 +1117,7 @@ a:hover .ui-arrow[style*="rotate(90deg)"], button:hover .ui-arrow[style*="rotate
   animation: starsTwinkle 10s infinite alternate ease-in-out;
 }
 
-/* Ensure all interactive controls and texts remain clickable and visible on top of cosmic background */
-.hero-copy, .visual, .flight-controls, .mobile-gamepad, .scroll {
-  position: relative;
-  z-index: 3 !important;
-}
+
 
 @keyframes supernovaPulse {
   0% {

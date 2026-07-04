@@ -895,12 +895,13 @@ async function speakText(text, buttonElement) {
     }
 
     if (!response || !response.ok) {
-      const formData = new FormData();
-      formData.append('text', text);
+      const params = new URLSearchParams();
+      params.append('text', text);
       
       response = await fetch('http://13.126.102.204:5555/tts', {
         method: 'POST',
-        body: formData
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
       });
     }
 
