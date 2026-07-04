@@ -812,7 +812,7 @@ const voiceTranscript = document.querySelector('#voice-transcript');
 const switchToTextBtn = document.querySelector('#switch-to-text');
 const toggleVoiceModeBtn = document.querySelector('#toggle-voice-mode');
 
-let isVoiceModeActive = false; // Start text mode; user can switch to voice
+let isVoiceModeActive = true; // Voice mode by default
 let autoListenAfterSpeak = true;
 let autoSpeakResponse = false;
 let recognition = null;
@@ -1077,104 +1077,140 @@ if (switchToTextBtn) {
 }
 
 let currentAudio = null;
+
+function speakNative(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.rate = 1.05; utter.pitch = 1.0; utter.lang = 'en-US';
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v => v.name.includes('Google') || v.name.includes('Daniel') || v.name.includes('Samantha'));
+  if (preferred) utter.voice = preferred;
+  utter.onend = () => {
+    if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getSpeakerIcon(); }
+    if (isVoiceModeActive && autoListenAfterSpeak) startVoiceListening();
+  };
+  utter.onerror = () => {
+    if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getSpeakerIcon(); }
+  };
+  window.speechSynthesis.speak(utter);
+}
+
 async function speakText(text, buttonElement) {
+  // Stop any current playback
   if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-    if (buttonElement) buttonElement.innerHTML = '🔊';
-    if (centralMicBtn) {
-      centralMicBtn.classList.remove('speaking');
-      centralMicBtn.innerHTML = '🎙️';
-    }
+    currentAudio.pause(); currentAudio = null;
+    if (buttonElement) buttonElement.innerHTML = getSpeakerIcon();
+    if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
     return;
   }
-  
-  if (buttonElement) {
-    buttonElement.innerHTML = '⏳';
-    buttonElement.disabled = true;
+  if (window.speechSynthesis && window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+    if (buttonElement) buttonElement.innerHTML = getSpeakerIcon();
+    if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
+    return;
   }
-  if (isVoiceModeActive && centralMicBtn) {
-    centralMicBtn.classList.add('speaking');
-    centralMicBtn.innerHTML = '🔊';
-  }
+
+  if (buttonElement) { buttonElement.innerHTML = '⏳'; buttonElement.disabled = true; }
+  if (isVoiceModeActive && centralMicBtn) { centralMicBtn.classList.add('speaking'); centralMicBtn.innerHTML = getSpeakerIcon(); }
+
+  const cleanText = text.replace(/[*_`#\-]/g, '').trim();
+  const TTS_TIMEOUT_MS = 10000;
 
   try {
-    const cleanText = text.replace(/[*_`#\-]/g, '').trim();
+    // Race: hosted TTS vs timeout fallback
+    const hostedFetch = (async () => {
+      const params = new URLSearchParams(); params.append('text', cleanText);
+      const res = await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() });
+      if (!res.ok) throw new Error('proxy failed');
+      return res;
+    })();
+
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('tts_timeout')), TTS_TIMEOUT_MS));
+
     let response;
     try {
-      const params = new URLSearchParams();
-      params.append('text', cleanText);
-      
-      response = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString()
-      });
-    } catch (e) {
-      console.warn('Backend TTS proxy failed, trying direct...', e);
+      response = await Promise.race([hostedFetch, timeout]);
+    } catch (raceErr) {
+      if (raceErr.message === 'tts_timeout') {
+        console.info('TTS timeout — using browser speech synthesis');
+        if (buttonElement) { buttonElement.innerHTML = getSpeakerIcon(); buttonElement.disabled = false; buttonElement.onclick = () => speakText(text, buttonElement); }
+        speakNative(cleanText);
+        return;
+      }
+      // proxy failed, try direct
+      const params = new URLSearchParams(); params.append('text', cleanText);
+      const directTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('tts_timeout')), TTS_TIMEOUT_MS));
+      try {
+        response = await Promise.race([
+          fetch('http://13.126.102.204:5555/tts', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() }),
+          directTimeout
+        ]);
+      } catch {
+        // Direct also failed/timed out — native fallback
+        if (buttonElement) { buttonElement.innerHTML = getSpeakerIcon(); buttonElement.disabled = false; buttonElement.onclick = () => speakText(text, buttonElement); }
+        speakNative(cleanText);
+        return;
+      }
     }
 
-    if (!response || !response.ok) {
-      const params = new URLSearchParams();
-      params.append('text', cleanText);
-      
-      response = await fetch('http://13.126.102.204:5555/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString()
-      });
-    }
-
-    if (!response.ok) {
-      throw new Error(`TTS request failed with status ${response.status}`);
-    }
+    if (!response || !response.ok) throw new Error('bad response');
 
     const blob = await response.blob();
     const audioUrl = URL.createObjectURL(blob);
     currentAudio = new Audio(audioUrl);
-    
-    if (buttonElement) {
-      buttonElement.innerHTML = '🛑';
-      buttonElement.disabled = false;
-      buttonElement.onclick = () => speakText(text, buttonElement);
-    }
+
+    if (buttonElement) { buttonElement.innerHTML = '⏹'; buttonElement.disabled = false; buttonElement.onclick = () => speakText(text, buttonElement); }
 
     currentAudio.addEventListener('ended', () => {
-      if (buttonElement) {
-        buttonElement.innerHTML = '🔊';
-        buttonElement.onclick = () => speakText(text, buttonElement);
-      }
-      if (centralMicBtn) {
-        centralMicBtn.classList.remove('speaking');
-        centralMicBtn.innerHTML = '🎙️';
-      }
+      if (buttonElement) { buttonElement.innerHTML = getSpeakerIcon(); buttonElement.onclick = () => speakText(text, buttonElement); }
+      if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
       currentAudio = null;
-      
-      // Auto-listen loop after speaking in Voice Mode
-      if (isVoiceModeActive && autoListenAfterSpeak) {
-        startVoiceListening();
-      }
+      if (isVoiceModeActive && autoListenAfterSpeak) startVoiceListening();
     });
-
     await currentAudio.play();
   } catch (error) {
-    console.error('TTS error:', error);
-    if (buttonElement) {
-      buttonElement.innerHTML = '❌';
-      setTimeout(() => {
-        buttonElement.innerHTML = '🔊';
-        buttonElement.disabled = false;
-        buttonElement.onclick = () => speakText(text, buttonElement);
-      }, 2000);
-    }
-    if (centralMicBtn) {
-      centralMicBtn.classList.remove('speaking');
-      centralMicBtn.innerHTML = '🎙️';
-    }
+    console.warn('Hosted TTS error, falling back to native:', error);
+    if (buttonElement) { buttonElement.innerHTML = getSpeakerIcon(); buttonElement.disabled = false; buttonElement.onclick = () => speakText(text, buttonElement); }
+    if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
+    speakNative(cleanText);
   }
 }
 
-function addMessage(text,who='bot'){const row=document.createElement('div');row.className=`message ${who}`;row.style.display='flex';row.style.alignItems='flex-start';row.style.gap='8px';row.style.marginBottom='12px';const badge=document.createElement('span');badge.textContent=who==='bot'?'AI':'YOU';const p=document.createElement('p');p.textContent=text;p.style.flex='1';p.style.margin='0';row.append(badge,p);if(who==='bot'&&text){const ttsBtn=document.createElement('button');ttsBtn.className='tts-btn';ttsBtn.innerHTML='🔊';ttsBtn.title='Speak text';ttsBtn.style.cssText='background:none;border:none;color:var(--acid);cursor:pointer;font-size:12px;padding:2px;opacity:0.6;transition:opacity 0.2s;margin-top:2px;flex-shrink:0;';ttsBtn.addEventListener('mouseenter',()=>ttsBtn.style.opacity='1');ttsBtn.addEventListener('mouseleave',()=>ttsBtn.style.opacity='0.6');ttsBtn.onclick=()=>speakText(text,ttsBtn);row.append(ttsBtn)}messages.append(row);messages.scrollTop=messages.scrollHeight;return p}
+// Helper: return SVG mic icon
+function getMicIcon() {
+  return `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg>`;
+}
+// Helper: return SVG speaker icon
+function getSpeakerIcon() {
+  return `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`;
+}
+
+function addMessage(text,who='bot'){
+  const row=document.createElement('div');
+  row.className=`message ${who}`;
+  row.style.cssText='display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;';
+  const badge=document.createElement('span');
+  badge.textContent=who==='bot'?'AI':'YOU';
+  const p=document.createElement('p');
+  p.style.flex='1';p.style.margin='0';
+  if(text) p.textContent=text;
+  row.append(badge,p);
+  if(who==='bot'&&text){
+    const ttsBtn=document.createElement('button');
+    ttsBtn.className='tts-btn';
+    ttsBtn.innerHTML=getSpeakerIcon();
+    ttsBtn.title='Speak text';
+    ttsBtn.style.cssText='background:none;border:none;color:var(--acid);cursor:pointer;padding:3px;opacity:0.6;transition:opacity 0.2s;margin-top:2px;flex-shrink:0;display:flex;align-items:center;';
+    ttsBtn.addEventListener('mouseenter',()=>ttsBtn.style.opacity='1');
+    ttsBtn.addEventListener('mouseleave',()=>ttsBtn.style.opacity='0.6');
+    ttsBtn.onclick=()=>speakText(text,ttsBtn);
+    row.append(ttsBtn);
+  }
+  messages.append(row);
+  messages.scrollTop=messages.scrollHeight;
+  return p;
+}
 function addTypingIndicator() {
   const row=document.createElement('div');
   row.className=`message bot typing-row`;
@@ -1260,6 +1296,7 @@ form.addEventListener('submit',async e=>{
                 if (!out) {
                   typingRow.remove();
                   out = addMessage('');
+                  out.classList.add('typing-cursor');
                 }
                 answer += deltaContent;
                 out.textContent = answer;
@@ -1271,10 +1308,11 @@ form.addEventListener('submit',async e=>{
       }
       if (typingRow.parentNode) typingRow.remove();
       if (!out) out = addMessage(answer || 'No response.');
+      else out.classList.remove('typing-cursor');
       history.push({role:'assistant',content:answer});
       if (autoSpeakResponse) {
         autoSpeakResponse = false;
-        speakText(answer, null);
+        speakText(answer, null); // fire concurrently, no await
       }
     } catch(err) {
       if (typingRow.parentNode) typingRow.remove();
@@ -1300,6 +1338,7 @@ form.addEventListener('submit',async e=>{
           if (!out) {
             typingRow.remove();
             out = addMessage('');
+            out.classList.add('typing-cursor');
           }
           answer+=deltaContent;
           out.textContent=answer;
@@ -1308,10 +1347,11 @@ form.addEventListener('submit',async e=>{
       }
       if (typingRow.parentNode) typingRow.remove();
       if (!out) out = addMessage(answer || 'No response.');
+      else out.classList.remove('typing-cursor');
       history.push({role:'assistant',content:answer});
       if (autoSpeakResponse) {
         autoSpeakResponse = false;
-        speakText(answer, null);
+        speakText(answer, null); // fire concurrently, no await
       }
     }
     catch(err){

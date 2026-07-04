@@ -1288,3 +1288,32 @@ a:hover .ui-arrow[style*="rotate(90deg)"], button:hover .ui-arrow[style*="rotate
   color: #fff;
   border-color: rgba(255, 255, 255, 0.2);
 }
+
+/* Typing cursor blink — shows on streaming response */
+.typing-cursor::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: var(--acid);
+  margin-left: 3px;
+  vertical-align: middle;
+  border-radius: 1px;
+  animation: cursorBlink 0.7s infinite;
+}
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Mic button in form — center SVG */
+.chat-form .mic-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.central-mic-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

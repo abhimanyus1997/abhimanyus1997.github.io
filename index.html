@@ -269,7 +269,7 @@
         </div>
       </div>
       <select id="model-select" class="model-select" style="background:var(--ink);color:var(--acid);border:1px solid var(--acid);font-family:'DM Mono',monospace;font-size:10px;padding:2px 4px;border-radius:2px;outline:none;cursor:pointer;margin-left:auto;margin-right:10px;display:none;"></select>
-      <button id="toggle-voice-mode" class="header-mode-btn" aria-label="Toggle voice mode" style="background:none;border:none;color:var(--acid);font-size:14px;cursor:pointer;margin-left:auto;margin-right:12px;opacity:0.85;transition:opacity 0.2s;">🎙️</button>
+      <button id="toggle-voice-mode" class="header-mode-btn" aria-label="Toggle voice mode" style="background:none;border:none;color:var(--acid);cursor:pointer;margin-left:auto;margin-right:12px;opacity:0.85;transition:opacity 0.2s;display:flex;align-items:center;padding:4px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg></button>
       <button id="chat-close" aria-label="Close assistant">×</button>
     </div>
     <div class="voice-mode-container" id="voice-mode-container">
@@ -277,7 +277,9 @@
       <div class="voice-visualizer" id="voice-visualizer">
         <div class="pulse-ring ring-1"></div>
         <div class="pulse-ring ring-2"></div>
-        <button type="button" class="central-mic-btn" id="central-mic-btn" aria-label="Talk to AI" disabled>🎙️</button>
+        <button type="button" class="central-mic-btn" id="central-mic-btn" aria-label="Talk to AI" disabled>
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg>
+        </button>
       </div>
       <div class="voice-transcript" id="voice-transcript">"Tap to start speaking"</div>
       <button type="button" class="switch-mode-btn" id="switch-to-text">Switch to Keyboard Mode</button>
@@ -287,7 +289,7 @@
       <div class="model-gate" id="model-gate" style="display:none;"><p>One-time model download: approximately 376 MB. It is cached locally after loading.</p><button id="start-ai">START PRIVATE AI <span><svg class="ui-arrow" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M1 5 h8 M6 2 L9 5 L6 8" stroke="currentColor" stroke-width="1.2" fill="none"/></svg></span></button><small id="model-status">REQUIRES A WEBGPU-COMPATIBLE BROWSER</small><div class="model-progress"><i id="model-progress"></i></div></div>
     </div>
     <div class="suggestions" id="suggestions"><button>What does Abhimanyu build?</button><button>Is he a fit for an AI lead role?</button></div>
-    <form class="chat-form" id="chat-form"><input id="chat-input" aria-label="Message" placeholder="Ask about my work…" autocomplete="off" disabled><button type="button" id="mic-btn" aria-label="Voice input" class="mic-btn" disabled>🎙️</button><button type="submit" aria-label="Send message" disabled><svg class="ui-arrow" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M5 9 v-8 M2 4 L5 1 L8 4" stroke="currentColor" stroke-width="1.2" fill="none"/></svg></button></form>
+    <form class="chat-form" id="chat-form"><input id="chat-input" aria-label="Message" placeholder="Ask about my work…" autocomplete="off" disabled><button type="button" id="mic-btn" aria-label="Voice input" class="mic-btn" disabled><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg></button><button type="submit" aria-label="Send message" disabled><svg class="ui-arrow" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M5 9 v-8 M2 4 L5 1 L8 4" stroke="currentColor" stroke-width="1.2" fill="none"/></svg></button></form>
     <p class="chat-note" id="chat-note">POWERED BY LITELLM</p>
   </aside>
   <div class="cursor-dot" id="cursor-dot"></div>
