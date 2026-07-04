@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -13,7 +14,15 @@ LITELLM_BASE_URL = os.getenv("LITELLM_BASE_URL") or os.getenv("VITE_LITELLM_BASE
 LITELLM_API_KEY = os.getenv("LITELLM_API_KEY") or os.getenv("VITE_LITELLM_API_KEY")
 TTS_BASE_URL = os.getenv("TTS_BASE_URL") or "http://13.126.102.204:5555/tts"
 
-app = FastAPI(title="AS Portfolio Backend API")
+# Async HTTP Client for httpx
+client = httpx.AsyncClient()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    await client.aclose()
+
+app = FastAPI(title="AS Portfolio Backend API", lifespan=lifespan)
 
 # Enable CORS for local Vite dev server
 app.add_middleware(
@@ -23,13 +32,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Async HTTP Client for httpx
-client = httpx.AsyncClient()
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    await client.aclose()
 
 @app.get("/api/models")
 async def get_models():
