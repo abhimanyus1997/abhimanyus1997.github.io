@@ -154,10 +154,9 @@
     width: 100% !important;
     height: 340px !important;
     opacity: 1 !important;
-    background: #1c1e1a !important; /* Premium dark background for the 3D model viewport */
-    border: 1px solid rgba(201, 255, 54, 0.08) !important;
-    border-radius: 4px !important;
-    overflow: hidden !important;
+    background: transparent !important;
+    border: none !important;
+    overflow: visible !important;
   }
   .visual-label, .model-status {
     display: none !important;
@@ -782,4 +781,108 @@ a:hover .ui-arrow[style*="rotate(90deg)"], button:hover .ui-arrow[style*="rotate
 @keyframes typingBounce {
   0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
   40% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* Cosmic Nebula / Supernova Background for Hero */
+.hero {
+  background: #06050c !important;
+  color: #f2f0e9 !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* Nebula Clouds */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(circle at 15% 20%, rgba(139, 92, 246, 0.45) 0%, transparent 60%),
+    radial-gradient(circle at 85% 30%, rgba(14, 165, 233, 0.4) 0%, transparent 50%),
+    radial-gradient(circle at 50% 85%, rgba(236, 72, 153, 0.28) 0%, transparent 55%),
+    radial-gradient(circle at 75% 70%, rgba(99, 102, 241, 0.3) 0%, transparent 50%);
+  filter: blur(65px);
+  opacity: 0.95;
+  z-index: 1;
+  pointer-events: none;
+  animation: supernovaPulse 25s infinite alternate ease-in-out;
+}
+
+/* Twinkling Starfield */
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: 
+    radial-gradient(circle at 12% 18%, #ffffff 1px, transparent 1px),
+    radial-gradient(circle at 28% 42%, rgba(255,255,255,0.7) 1.5px, transparent 1.5px),
+    radial-gradient(circle at 72% 28%, #ffffff 1px, transparent 1px),
+    radial-gradient(circle at 88% 72%, rgba(201, 255, 54, 0.8) 1.2px, transparent 1.5px),
+    radial-gradient(circle at 48% 82%, #ffffff 1px, transparent 1px),
+    radial-gradient(circle at 62% 18%, rgba(255,255,255,0.9) 2px, transparent 2px),
+    radial-gradient(circle at 18% 68%, #ffffff 1px, transparent 1px),
+    radial-gradient(circle at 50% 35%, rgba(255,255,255,0.4) 1px, transparent 1px),
+    radial-gradient(circle at 90% 10%, #ffffff 1px, transparent 1px);
+  background-size: 350px 350px;
+  opacity: 0.7;
+  z-index: 1;
+  pointer-events: none;
+  animation: starsTwinkle 10s infinite alternate ease-in-out;
+}
+
+/* Ensure all interactive controls and texts remain clickable and visible on top of cosmic background */
+.hero-copy, .visual, .flight-controls, .mobile-gamepad, .scroll {
+  position: relative;
+  z-index: 3 !important;
+}
+
+/* Header overlay styles when on hero */
+header {
+  color: #f2f0e9 !important;
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+header a {
+  color: #f2f0e9 !important;
+}
+header .available {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #f2f0e9 !important;
+}
+header .available i {
+  box-shadow: 0 0 0 4px rgba(201, 255, 54, 0.2) !important;
+}
+
+/* Hero copy styling for dark theme */
+.hero h1 {
+  color: #ffffff !important;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+}
+.hero .lede {
+  color: #b4b2c5 !important;
+}
+.hero .eyebrow {
+  color: var(--acid) !important;
+  text-shadow: 0 0 8px rgba(201, 255, 54, 0.3);
+}
+.hero .scroll {
+  color: #b4b2c5 !important;
+}
+.hero a:not(.primary) {
+  color: var(--acid) !important;
+}
+
+@keyframes supernovaPulse {
+  0% {
+    transform: scale(1) translate(0, 0);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.08) translate(1%, 1.5%);
+    opacity: 1;
+  }
+}
+
+@keyframes starsTwinkle {
+  0% { opacity: 0.45; }
+  100% { opacity: 0.8; }
 }
