@@ -127,3 +127,7 @@ else:
     @app.get("/")
     async def root():
         return {"message": "API Backend is running! Front-end assets not built yet. Run 'npm run build' to serve them here."}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
