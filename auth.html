@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <title>BIOMETRIC AUTHENTICATION</title>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+    <style>
+        :root {
+            --green: #a6ff2f;
+            --green2: #38ff7a;
+            --cyan: #00f0ff;
+            --red: #ff4444;
+            --dark: #020702;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            min-height: 100dvh;
+            background: #000;
+            color: var(--green);
+            font-family: "Courier New", monospace;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Cinematic Background */
+        .cinematic-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse at 50% 0%, rgba(166, 255, 47, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 100%, rgba(0, 240, 255, 0.1) 0%, transparent 50%),
+                #000;
+        }
+
+        .grid-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            background-image:
+                linear-gradient(rgba(166, 255, 47, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(166, 255, 47, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridPulse 4s ease-in-out infinite;
+        }
+
+        @keyframes gridPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* Scanlines */
+        .scanlines {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            background: linear-gradient(
+                rgba(166, 255, 47, 0.02) 50%,
+                rgba(0, 0, 0, 0.1) 50%
+            );
+            background-size: 100% 3px;
+        }
+
+        /* Main Container */
+        .auth-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Header */
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-header h1 {
+            font-size: clamp(18px, 5vw, 28px);
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px var(--green), 0 0 40px var(--green);
+            margin-bottom: 10px;
+        }
+
+        .auth-header .subtitle {
+            font-size: clamp(10px, 3vw, 12px);
+            letter-spacing: 4px;
+            color: var(--cyan);
+            text-shadow: 0 0 10px var(--cyan);
+        }
+
+        /* Scanner Frame */
+        .scanner-frame {
+            position: relative;
+            width: min(320px, 85vw);
+            height: min(400px, 60vh);
+            border: 2px solid var(--green);
+            background: rgba(0, 0, 0, 0.8);
+            box-shadow:
+                0 0 30px rgba(166, 255, 47, 0.3),
+                inset 0 0 50px rgba(166, 255, 47, 0.1);
+            overflow: hidden;
+        }
+
+        /* Corner Brackets */
+        .corner {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-color: var(--green);
+            border-style: solid;
+            z-index: 15;
+            filter: drop-shadow(0 0 8px var(--green));
+        }
+
+        .corner-tl { top: 10px; left: 10px; border-width: 3px 0 0 3px; }
+        .corner-tr { top: 10px; right: 10px; border-width: 3px 3px 0 0; }
+        .corner-bl { bottom: 10px; left: 10px; border-width: 0 0 3px 3px; }
+        .corner-br { bottom: 10px; right: 10px; border-width: 0 3px 3px 0; }
+
+        /* Video & Canvas */
+        video, canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        video {
+            filter: brightness(0.7) contrast(1.2) saturate(0.9);
+        }
+
+        canvas {
+            z-index: 5;
+        }
+
+        /* Scan Sweep */
+        .scan-sweep {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 100px;
+            top: -120px;
+            z-index: 6;
+            pointer-events: none;
+            background: linear-gradient(to bottom,
+                transparent,
+                rgba(166, 255, 47, 0.4),
+                rgba(166, 255, 47, 0.1),
+                transparent
+            );
+            animation: sweepMove 2.5s linear infinite;
+        }
+
+        @keyframes sweepMove {
+            from { top: -120px; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            to { top: 100%; opacity: 0; }
+        }
+
+        /* Face Guide */
+        .face-guide {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 180px;
+            height: 220px;
+            border: 2px dashed rgba(166, 255, 47, 0.4);
+            border-radius: 50%;
+            z-index: 4;
+            pointer-events: none;
+            animation: guidePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes guidePulse {
+            0%, 100% { border-color: rgba(166, 255, 47, 0.4); }
+            50% { border-color: rgba(166, 255, 47, 0.8); }
+        }
+
+        .face-guide::after {
+            content: "ALIGN FACE";
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--green);
+            white-space: nowrap;
+        }
+
+        /* Status Panel */
+        .status-panel {
+            margin-top: 25px;
+            padding: 15px 25px;
+            background: rgba(166, 255, 47, 0.08);
+            border: 1px solid rgba(166, 255, 47, 0.3);
+            text-align: center;
+            min-width: 280px;
+            animation: fadeInUp 0.8s ease 0.3s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .status-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            font-size: 11px;
+            letter-spacing: 2px;
+            border-bottom: 1px solid rgba(166, 255, 47, 0.1);
+        }
+
+        .status-line:last-child {
+            border-bottom: none;
+        }
+
+        .status-label {
+            color: rgba(166, 255, 47, 0.6);
+        }
+
+        .status-value {
+            color: var(--green);
+            text-shadow: 0 0 8px var(--green);
+        }
+
+        .status-value.success {
+            color: var(--green2);
+            animation: successFlash 0.5s ease 3;
+        }
+
+        .status-value.error {
+            color: var(--red);
+            text-shadow: 0 0 8px var(--red);
+        }
+
+        @keyframes successFlash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Audio Dialog */
+        .audio-dialog {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            animation: fadeInUp 0.8s ease 0.6s both;
+        }
+
+        .audio-waves {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            height: 30px;
+        }
+
+        .audio-wave {
+            width: 3px;
+            background: var(--green);
+            border-radius: 2px;
+            animation: waveAnim 1s ease-in-out infinite;
+        }
+
+        .audio-wave:nth-child(1) { animation-delay: 0s; height: 10px; }
+        .audio-wave:nth-child(2) { animation-delay: 0.1s; height: 20px; }
+        .audio-wave:nth-child(3) { animation-delay: 0.2s; height: 30px; }
+        .audio-wave:nth-child(4) { animation-delay: 0.3s; height: 20px; }
+        .audio-wave:nth-child(5) { animation-delay: 0.4s; height: 10px; }
+
+        @keyframes waveAnim {
+            0%, 100% { transform: scaleY(0.5); }
+            50% { transform: scaleY(1); }
+        }
+
+        .audio-text {
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--cyan);
+            text-shadow: 0 0 8px var(--cyan);
+        }
+
+        /* Start Button */
+        .start-btn {
+            margin-top: 25px;
+            padding: 16px 40px;
+            background: transparent;
+            border: 2px solid var(--green);
+            color: var(--green);
+            font-family: inherit;
+            font-size: 14px;
+            letter-spacing: 4px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.8s ease 0.5s both;
+        }
+
+        .start-btn::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: var(--green);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: -1;
+        }
+
+        .start-btn:hover::before {
+            transform: translateX(0);
+        }
+
+        .start-btn:hover {
+            color: #000;
+            box-shadow: 0 0 30px rgba(166, 255, 47, 0.5);
+        }
+
+        .start-btn:active {
+            transform: scale(0.98);
+        }
+
+        .start-btn.hidden {
+            display: none;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            display: grid;
+            place-items: center;
+            background: rgba(0, 0, 0, 0.95);
+            transition: 0.4s ease;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loading-box {
+            width: min(300px, 85vw);
+            padding: 25px;
+            border: 1px solid rgba(166, 255, 47, 0.4);
+            background: rgba(4, 20, 8, 0.9);
+            text-align: center;
+        }
+
+        .loading-title {
+            font-size: 14px;
+            letter-spacing: 4px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px var(--green);
+        }
+
+        .loading-bar {
+            height: 4px;
+            background: rgba(166, 255, 47, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--green), var(--cyan));
+            transition: width 0.3s ease;
+        }
+
+        .loading-text {
+            margin-top: 15px;
+            font-size: 10px;
+            letter-spacing: 2px;
+            color: var(--cyan);
+        }
+
+        /* Success Screen */
+        .success-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: grid;
+            place-items: center;
+            background: rgba(0, 0, 0, 0.98);
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.5s ease;
+        }
+
+        .success-screen.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .success-content {
+            text-align: center;
+            animation: successZoom 0.6s ease;
+        }
+
+        @keyframes successZoom {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            border: 3px solid var(--green2);
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 0 30px var(--green2);
+        }
+
+        .success-icon svg {
+            width: 40px;
+            height: 40px;
+            stroke: var(--green2);
+            stroke-width: 3;
+            fill: none;
+        }
+
+        .success-title {
+            font-size: 24px;
+            letter-spacing: 6px;
+            color: var(--green2);
+            text-shadow: 0 0 20px var(--green2);
+            margin-bottom: 10px;
+        }
+
+        .success-sub {
+            font-size: 12px;
+            letter-spacing: 3px;
+            color: var(--cyan);
+        }
+
+        /* Error Message */
+        .error-msg {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 60;
+            padding: 12px 20px;
+            background: rgba(255, 68, 68, 0.2);
+            border: 1px solid var(--red);
+            color: var(--red);
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-align: center;
+            display: none;
+        }
+
+        .error-msg.show {
+            display: block;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(-50%); }
+            20%, 60% { transform: translateX(calc(-50% - 5px)); }
+            40%, 80% { transform: translateX(calc(-50% + 5px)); }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="cinematic-bg"></div>
+    <div class="grid-overlay"></div>
+    <div class="scanlines"></div>
+
+    <div class="auth-container">
+        <header class="auth-header">
+            <h1>Biometric Auth</h1>
+            <div class="subtitle">NEURAL FACE RECOGNITION SYSTEM</div>
+        </header>
+
+        <div class="scanner-frame">
+            <div class="corner corner-tl"></div>
+            <div class="corner corner-tr"></div>
+            <div class="corner corner-bl"></div>
+            <div class="corner corner-br"></div>
+
+            <div class="face-guide"></div>
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="overlay"></canvas>
+            <div class="scan-sweep"></div>
+        </div>
+
+        <div class="status-panel">
+            <div class="status-line">
+                <span class="status-label">STATUS</span>
+                <span class="status-value" id="statusText">AWAITING INIT</span>
+            </div>
+            <div class="status-line">
+                <span class="status-label">IDENTITY</span>
+                <span class="status-value" id="identityText">---</span>
+            </div>
+            <div class="status-line">
+                <span class="status-label">CONFIDENCE</span>
+                <span class="status-value" id="confidenceText">---</span>
+            </div>
+        </div>
+
+        <button class="start-btn" id="startBtn">INITIALIZE SCAN</button>
+
+        <div class="audio-dialog" id="audioDialog" style="display: none;">
+            <div class="audio-waves">
+                <div class="audio-wave"></div>
+                <div class="audio-wave"></div>
+                <div class="audio-wave"></div>
+                <div class="audio-wave"></div>
+                <div class="audio-wave"></div>
+            </div>
+            <div class="audio-text" id="audioText">PROCESSING...</div>
+        </div>
+    </div>
+
+    <div class="loading-overlay hidden" id="loadingOverlay">
+        <div class="loading-box">
+            <div class="loading-title">SYSTEM INIT</div>
+            <div class="loading-bar">
+                <div class="loading-progress" id="loadingProgress"></div>
+            </div>
+            <div class="loading-text" id="loadingText">LOADING...</div>
+        </div>
+    </div>
+
+    <div class="success-screen" id="successScreen">
+        <div class="success-content">
+            <div class="success-icon">
+                <svg viewBox="0 0 24 24">
+                    <polyline points="4,12 9,17 20,6"></polyline>
+                </svg>
+            </div>
+            <div class="success-title">ACCESS GRANTED</div>
+            <div class="success-sub">IDENTITY VERIFIED</div>
+        </div>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <script>
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("overlay");
+        const ctx = canvas.getContext("2d");
+        const startBtn = document.getElementById("startBtn");
+        const loadingOverlay = document.getElementById("loadingOverlay");
+        const loadingProgress = document.getElementById("loadingProgress");
+        const loadingText = document.getElementById("loadingText");
+        const statusText = document.getElementById("statusText");
+        const identityText = document.getElementById("identityText");
+        const confidenceText = document.getElementById("confidenceText");
+        const audioDialog = document.getElementById("audioDialog");
+        const audioText = document.getElementById("audioText");
+        const successScreen = document.getElementById("successScreen");
+        const errorMsg = document.getElementById("errorMsg");
+
+        const MODEL_URL = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights";
+        const REFERENCE_IMAGE = "./abhimanyu-reference.jpg";
+        const MATCH_THRESHOLD = 0.55;
+
+        let faceMatcher = null;
+        let audioCtx = null;
+        let isScanning = false;
+        let authenticated = false;
+
+        // Audio Functions
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playTone(freq, duration, type = "sine", gain = 0.1) {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            g.gain.setValueAtTime(0.001, now);
+            g.gain.exponentialRampToValueAtTime(gain, now + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.001, now + duration);
+            osc.connect(g);
+            g.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + duration + 0.1);
+        }
+
+        function playScanningSound() {
+            playTone(440, 0.1, "square", 0.05);
+        }
+
+        function playSuccessSound() {
+            playTone(523, 0.15, "sine", 0.1);
+            setTimeout(() => playTone(659, 0.15, "sine", 0.1), 150);
+            setTimeout(() => playTone(784, 0.25, "sine", 0.12), 300);
+        }
+
+        function playErrorSound() {
+            playTone(200, 0.3, "sawtooth", 0.08);
+        }
+
+        // UI Functions
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.classList.add("show");
+            setTimeout(() => errorMsg.classList.remove("show"), 3000);
+        }
+
+        function updateProgress(percent, text) {
+            loadingProgress.style.width = `${percent}%`;
+            loadingText.textContent = text;
+        }
+
+        function showAudioDialog(text) {
+            audioDialog.style.display = "flex";
+            audioText.textContent = text;
+        }
+
+        function hideAudioDialog() {
+            audioDialog.style.display = "none";
+        }
+
+        // Load Models
+        async function loadModels() {
+            updateProgress(0, "LOADING MODELS...");
+            await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+            updateProgress(35, "FACE DETECTOR READY");
+            await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+            updateProgress(55, "LANDMARKS READY");
+            await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+            updateProgress(75, "RECOGNITION READY");
+            await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+            updateProgress(90, "EXPRESSIONS READY");
+            await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
+            updateProgress(100, "SYSTEM READY");
+        }
+
+        // Create Face Matcher
+        async function createFaceMatcher() {
+            try {
+                const img = await faceapi.fetchImage(REFERENCE_IMAGE);
+                const detection = await faceapi
+                    .detectSingleFace(img, new faceapi.TinyFaceDetectorOptions())
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
+
+                if (detection) {
+                    const labeled = new faceapi.LabeledFaceDescriptors("ABHIMANYU", [detection.descriptor]);
+                    faceMatcher = new faceapi.FaceMatcher(labeled, MATCH_THRESHOLD);
+                    return true;
+                }
+            } catch (e) {
+                console.warn("Reference not found:", e);
+            }
+            return false;
+        }
+
+        // Start Webcam
+        async function startWebcam() {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: "user",
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                },
+                audio: false
+            });
+            video.srcObject = stream;
+            await new Promise(r => video.onloadedmetadata = r);
+            await video.play();
+        }
+
+        // Resize Canvas
+        function resizeCanvas() {
+            const rect = video.getBoundingClientRect();
+            canvas.width = rect.width * devicePixelRatio;
+            canvas.height = rect.height * devicePixelRatio;
+            ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+        }
+
+        // Draw Detection
+        function drawDetection(box, label) {
+            const w = canvas.clientWidth;
+            const x = w - box.x - box.width;
+            const y = box.y;
+            const bw = box.width;
+            const bh = box.height;
+
+            const isMatch = label === "ABHIMANYU";
+            const color = isMatch ? "#38ff7a" : "#ffcc33";
+
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 15;
+
+            // Draw box
+            ctx.strokeRect(x, y, bw, bh);
+
+            // Draw corners
+            const c = 20;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(x, y + c); ctx.lineTo(x, y); ctx.lineTo(x + c, y);
+            ctx.moveTo(x + bw - c, y); ctx.lineTo(x + bw, y); ctx.lineTo(x + bw, y + c);
+            ctx.moveTo(x + bw, y + bh - c); ctx.lineTo(x + bw, y + bh); ctx.lineTo(x + bw - c, y + bh);
+            ctx.moveTo(x + c, y + bh); ctx.lineTo(x, y + bh); ctx.lineTo(x, y + bh - c);
+            ctx.stroke();
+
+            // Draw label
+            ctx.fillStyle = "rgba(0,0,0,0.7)";
+            ctx.fillRect(x, y - 25, bw, 25);
+            ctx.fillStyle = color;
+            ctx.font = "bold 12px Courier New";
+            ctx.fillText(isMatch ? "IDENTIFIED" : "SCANNING...", x + 10, y - 8);
+
+            ctx.restore();
+        }
+
+        // Detection Loop
+        async function detectLoop() {
+            if (!isScanning || authenticated) return;
+
+            resizeCanvas();
+
+            const detections = await faceapi
+                .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+                .withFaceLandmarks()
+                .withFaceDescriptors();
+
+            ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+            if (detections.length === 0) {
+                statusText.textContent = "NO FACE DETECTED";
+                identityText.textContent = "---";
+                confidenceText.textContent = "---";
+                playScanningSound();
+            } else {
+                const detection = detections[0];
+                const box = detection.detection.box;
+
+                let label = "UNKNOWN";
+                let distance = "---";
+
+                if (faceMatcher) {
+                    const match = faceMatcher.findBestMatch(detection.descriptor);
+                    label = match.label;
+                    distance = match.distance.toFixed(2);
+                }
+
+                drawDetection(box, label);
+
+                const confidence = Math.round(detection.detection.score * 100);
+
+                statusText.textContent = "SCANNING...";
+                identityText.textContent = label;
+                confidenceText.textContent = `${confidence}% | DIST: ${distance}`;
+
+                if (label === "ABHIMANYU" && parseFloat(distance) < MATCH_THRESHOLD) {
+                    // Success!
+                    authenticated = true;
+                    statusText.textContent = "VERIFIED";
+                    statusText.classList.add("success");
+                    identityText.classList.add("success");
+                    confidenceText.classList.add("success");
+
+                    playSuccessSound();
+                    showAudioDialog("IDENTITY CONFIRMED");
+
+                    setTimeout(() => {
+                        successScreen.classList.add("active");
+                        setTimeout(() => {
+                            // Redirect or callback
+                            window.location.href = "/";
+                        }, 2500);
+                    }, 1000);
+                } else {
+                    playTone(800, 0.05, "square", 0.03);
+                }
+            }
+
+            requestAnimationFrame(detectLoop);
+        }
+
+        // Start Button Handler
+        startBtn.addEventListener("click", async () => {
+            try {
+                startBtn.classList.add("hidden");
+                loadingOverlay.classList.remove("hidden");
+                statusText.textContent = "INITIALIZING...";
+                initAudio();
+
+                await loadModels();
+                await createFaceMatcher();
+                await startWebcam();
+
+                loadingOverlay.classList.add("hidden");
+                statusText.textContent = "READY";
+
+                showAudioDialog("ALIGN YOUR FACE");
+                playTone(600, 0.1, "sine", 0.08);
+
+                isScanning = true;
+                detectLoop();
+            } catch (e) {
+                console.error(e);
+                loadingOverlay.classList.add("hidden");
+                startBtn.classList.remove("hidden");
+                playErrorSound();
+                showError("CAMERA ACCESS REQUIRED. Use HTTPS and allow permissions.");
+            }
+        });
+
+        window.addEventListener("resize", resizeCanvas);
+    </script>
+</body>
+
+</html>
