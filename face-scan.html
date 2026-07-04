@@ -687,6 +687,7 @@
 
         <div class="controls" id="controls">
             <button id="startBtn">INITIALIZE WEBCAM SCAN</button>
+            <button class="skip-btn" id="skipBtn" style="position:absolute;top:18px;right:18px;z-index:60;padding:10px 14px;border:1px solid rgba(166,255,47,0.22);background:transparent;color:var(--green);">SKIP →</button>
         </div>
 
         <div class="loading-overlay hidden" id="loadingOverlay">
@@ -705,6 +706,23 @@
                     <div class="loading-item" data-item="reference">REFERENCE_MATCHER</div>
                 </div>
             </div>
+        </div>
+
+        <div class="audio-dialog" id="audioDialog" style="position:absolute;bottom:80px;left:50%;transform:translateX(-50%);display:none;z-index:80;align-items:center;gap:8px;flex-direction:column;min-width:220px;padding:8px 12px;background:rgba(0,0,0,0.6);border:1px solid rgba(166,255,47,0.12);">
+            <div id="audioWaves" style="display:flex;gap:4px;align-items:center;height:18px;">
+                <div class="audio-wave" style="width:3px;height:6px;background:var(--green);"></div>
+                <div class="audio-wave" style="width:3px;height:10px;background:var(--green);"></div>
+                <div class="audio-wave" style="width:3px;height:16px;background:var(--green);"></div>
+                <div class="audio-wave" style="width:3px;height:10px;background:var(--green);"></div>
+                <div class="audio-wave" style="width:3px;height:6px;background:var(--green);"></div>
+            </div>
+            <div id="audioText" style="font-size:11px;color:var(--green);letter-spacing:1px;">PROCESSING...</div>
+        </div>
+
+        <div class="voice-panel" id="voicePanel" style="position:absolute;bottom:150px;left:50%;transform:translateX(-50%);z-index:90;display:none;min-width:260px;padding:12px 16px;background:rgba(4,20,8,0.9);border:1px solid rgba(166,255,47,0.12);color:var(--green);text-align:center;">
+            <div style="font-size:10px;letter-spacing:2px;color:var(--green);">VOICE COMMAND</div>
+            <div id="voiceTranscript" style="margin-top:8px;font-size:14px;color:#eaffc8;min-height:20px;">Listening...</div>
+            <div style="font-size:10px;margin-top:8px;color:rgba(166,255,47,0.6);">Say: "projects", "about", "contact", or "home"</div>
         </div>
 
         <div class="error" id="errorBox"></div>
@@ -744,6 +762,107 @@
         let audioCtx = null;
         let lastBeep = 0;
         let lastKnownLabel = "UNKNOWN";
+        let recognition = null;
+
+        const AUDIO_BASE = "/static/audio/";
+        const AUDIO_FILES = {
+            abhimanyu: ["welcome-abhimanyu-1.wav", "welcome-abhimanyu-2.wav", "welcome-abhimanyu-3.wav", "welcome-abhimanyu-4.wav"],
+            unknown_male: ["welcome-unknown-male-1.wav", "welcome-unknown-male-2.wav", "welcome-unknown-male-3.wav", "welcome-unknown-male-4.wav"],
+            unknown_female: ["welcome-unknown-female-1.wav", "welcome-unknown-female-2.wav", "welcome-unknown-female-3.wav", "welcome-unknown-female-4.wav"],
+            group: ["welcome-group-1.wav", "welcome-group-2.wav", "welcome-group-3.wav"],
+            prompt: "welcome-prompt-query.wav"
+        };
+
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playTone(freq, duration, type = "sine", gain = 0.06) {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            g.gain.setValueAtTime(0.001, now);
+            g.gain.exponentialRampToValueAtTime(gain, now + 0.01);
+            g.gain.exponentialRampToValueAtTime(0.001, now + duration);
+            osc.connect(g);
+            g.connect(audioCtx.destination);
+            osc.start(now);
+            osc.stop(now + duration + 0.02);
+        }
+
+        function playWav(file) {
+            return new Promise((resolve) => {
+                const audio = new Audio(AUDIO_BASE + file);
+                audio.play().catch(console.warn);
+                audio.onended = resolve;
+                audio.onerror = resolve;
+                const ad = document.getElementById('audioDialog');
+                const at = document.getElementById('audioText');
+                if (ad) { ad.style.display = 'flex'; }
+                if (at) { at.textContent = 'PROCESSING...'; }
+                setTimeout(() => { if (ad) ad.style.display = 'none'; }, 1200);
+            });
+        }
+
+        function playSuccessSound() {
+            playTone(523, 0.12, "sine", 0.06);
+            setTimeout(() => playTone(659, 0.12, "sine", 0.06), 140);
+            setTimeout(() => playTone(784, 0.18, "sine", 0.07), 300);
+        }
+
+        async function speakWelcome(identity, gender, count) {
+            let audioKey = "unknown_male";
+            if (identity === "ABHIMANYU") audioKey = "abhimanyu";
+            else if (count > 1) audioKey = "group";
+            else if (gender === "female") audioKey = "unknown_female";
+
+            const files = AUDIO_FILES[audioKey];
+            const randomFile = files[Math.floor(Math.random() * files.length)];
+            const audioText = document.getElementById('audioText');
+            if (audioText) audioText.textContent = identity === "ABHIMANYU" ? "WELCOME BACK" : "WELCOME VISITOR";
+            await playWav(randomFile);
+            if (audioText) audioText.textContent = "AWAITING COMMAND";
+            await playWav(AUDIO_FILES.prompt);
+        }
+
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) { console.warn('Speech Recognition not supported'); return null; }
+
+            const rec = new SpeechRecognition();
+            rec.continuous = false;
+            rec.interimResults = true;
+            rec.lang = 'en-US';
+
+            rec.onstart = () => { const vp = document.getElementById('voicePanel'); if (vp) vp.style.display = 'block'; const vt = document.getElementById('voiceTranscript'); if (vt) vt.textContent = 'Listening...'; };
+            rec.onresult = (event) => {
+                const transcript = event.results[0][0].transcript.toLowerCase();
+                const vt = document.getElementById('voiceTranscript'); if (vt) vt.textContent = transcript;
+                if (event.results[0].isFinal) handleVoiceCommand(transcript);
+            };
+            rec.onerror = () => { const vt = document.getElementById('voiceTranscript'); if (vt) vt.textContent = 'Not recognized. Try again.'; };
+            rec.onend = () => { if (!recognition) return; setTimeout(() => { try { rec.start(); } catch(e){} }, 800); };
+
+            return rec;
+        }
+
+        function handleVoiceCommand(transcript) {
+            const commands = { "projects": "/#projects", "project": "/#projects", "about": "/#about", "about me": "/#about", "contact": "/#contact", "email": "/#contact", "home": "/", "main": "/", "skip": "/", "enter": "/" };
+            for (const [cmd, path] of Object.entries(commands)) {
+                if (transcript.includes(cmd)) { navigateTo(path, cmd.toUpperCase()); return; }
+            }
+            const vt = document.getElementById('voiceTranscript'); if (vt) vt.textContent = `Unknown: "${transcript}". Say: projects, about, contact, home`;
+        }
+
+        function navigateTo(path, label) {
+            const vp = document.getElementById('voicePanel'); if (vp) vp.style.display = 'none';
+            playSuccessSound();
+            sessionStorage.setItem('auth_done', 'true');
+            setTimeout(() => { window.location.href = path; }, 700);
+        }
 
         // Check if face-api is loaded
         function checkFaceApiLoaded() {
@@ -1295,6 +1414,16 @@
                         verifiedSound();
                         lastBeep = now;
                     }
+                    // Trigger audio welcome and speech recognition once
+                    if (!recognition) {
+                        initAudio();
+                        playSuccessSound();
+                        (async () => {
+                            await speakWelcome("ABHIMANYU", result.gender, resized.length);
+                            recognition = initSpeechRecognition();
+                            try { if (recognition) recognition.start(); } catch (e) { console.warn(e); }
+                        })();
+                    }
                 } else {
                     matchStatus.textContent = faceMatcher
                         ? `UNKNOWN | DIST: ${distanceText}`
@@ -1337,7 +1466,8 @@
                 await loadModels();
                 await createFaceMatcher();
                 await startWebcam();
-
+                // Prepare audio context for later playback
+                initAudio();
                 loadingOverlay.classList.add("hidden");
                 matchStatus.textContent = "LIVE TRACKING ACTIVE";
                 beep(440, 0.08, 0.04);
@@ -1374,6 +1504,13 @@
         startBtn.addEventListener("touchend", (e) => {
             e.preventDefault();
             startScan();
+        });
+
+        const skipBtn = document.getElementById('skipBtn');
+        if (skipBtn) skipBtn.addEventListener('click', () => {
+            playTone(600, 0.1, 'sine', 0.06);
+            sessionStorage.setItem('auth_done', 'true');
+            window.location.href = '/';
         });
 
         window.addEventListener("resize", resizeCanvas);
