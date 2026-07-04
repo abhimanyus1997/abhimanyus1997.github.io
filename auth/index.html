@@ -906,11 +906,40 @@
             return false;
         }
 
+        async function requestPermissions() {
+            // Request both camera and microphone upfront for iOS/Safari/Android
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: "user",
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    },
+                    audio: true // Request microphone for STT
+                });
+                // Stop the stream for now, we'll request again later
+                stream.getTracks().forEach(track => track.stop());
+                return true;
+            } catch (e) {
+                console.error("Permission denied:", e);
+                return false;
+            }
+        }
+
         async function startWebcam() {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+                audio: true // Include audio for iOS/Safari
+            });
             video.srcObject = stream;
             await new Promise(r => video.onloadedmetadata = r);
-            await video.play();
+
+            // iOS Safari requires explicit play() in user gesture
+            try {
+                await video.play();
+            } catch (e) {
+                console.warn("Autoplay blocked, waiting for interaction");
+            }
         }
 
         function resizeCanvas() {
@@ -1018,8 +1047,18 @@
             try {
                 startBtn.classList.add("hidden");
                 loadingOverlay.classList.remove("hidden");
-                statusText.textContent = "INITIALIZING...";
+                statusText.textContent = "REQUESTING PERMISSIONS...";
                 initAudio();
+
+                // Request camera + mic permissions upfront (iOS/Safari/Android)
+                updateProgress(5, "REQUESTING CAMERA & MICROPHONE...");
+                const hasPermissions = await requestPermissions();
+
+                if (!hasPermissions) {
+                    throw new Error("Permissions denied");
+                }
+
+                updateProgress(10, "PERMISSIONS GRANTED");
 
                 await loadModels();
                 await createFaceMatcher();
@@ -1038,7 +1077,7 @@
                 console.error(e);
                 loadingOverlay.classList.add("hidden");
                 startBtn.classList.remove("hidden");
-                showError("CAMERA ACCESS REQUIRED. Use HTTPS and allow permissions.");
+                showError("CAMERA & MIC ACCESS REQUIRED. Allow permissions in browser settings.");
             }
         });
 
