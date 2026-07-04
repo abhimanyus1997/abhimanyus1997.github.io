@@ -104,7 +104,7 @@ async def text_to_speech(request: Request):
          files["voice_url"] = (None, voice_url)
 
     try:
-        response = await client.post(TTS_BASE_URL, data=files, timeout=30.0)
+        response = await client.post(TTS_BASE_URL, files=files, timeout=30.0)
         response.raise_for_status()
         return Response(content=response.content, media_type="audio/wav")
     except httpx.HTTPStatusError as exc:

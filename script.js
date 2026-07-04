@@ -943,6 +943,23 @@ async function speakText(text, buttonElement) {
 }
 
 function addMessage(text,who='bot'){const row=document.createElement('div');row.className=`message ${who}`;row.style.display='flex';row.style.alignItems='flex-start';row.style.gap='8px';row.style.marginBottom='12px';const badge=document.createElement('span');badge.textContent=who==='bot'?'AI':'YOU';const p=document.createElement('p');p.textContent=text;p.style.flex='1';p.style.margin='0';row.append(badge,p);if(who==='bot'&&text){const ttsBtn=document.createElement('button');ttsBtn.className='tts-btn';ttsBtn.innerHTML='🔊';ttsBtn.title='Speak text';ttsBtn.style.cssText='background:none;border:none;color:var(--acid);cursor:pointer;font-size:12px;padding:2px;opacity:0.6;transition:opacity 0.2s;margin-top:2px;flex-shrink:0;';ttsBtn.addEventListener('mouseenter',()=>ttsBtn.style.opacity='1');ttsBtn.addEventListener('mouseleave',()=>ttsBtn.style.opacity='0.6');ttsBtn.onclick=()=>speakText(text,ttsBtn);row.append(ttsBtn)}messages.append(row);messages.scrollTop=messages.scrollHeight;return p}
+function addTypingIndicator() {
+  const row=document.createElement('div');
+  row.className=`message bot typing-row`;
+  row.style.display='flex';
+  row.style.alignItems='flex-start';
+  row.style.gap='8px';
+  row.style.marginBottom='12px';
+  const badge=document.createElement('span');
+  badge.textContent='AI';
+  const indicator=document.createElement('div');
+  indicator.className='typing-indicator';
+  indicator.innerHTML='<span></span><span></span><span></span>';
+  row.append(badge,indicator);
+  messages.append(row);
+  messages.scrollTop=messages.scrollHeight;
+  return row;
+}
 async function loadAI(){
   if(ready||busy)return;
   if(!('gpu'in navigator)){statusEl.textContent='WEBGPU IS NOT AVAILABLE IN THIS BROWSER';addMessage('This browser cannot run the local model. Chrome or Edge with WebGPU enabled is recommended. You can still reach Abhimanyu by email.');return}
@@ -957,7 +974,10 @@ async function loadAI(){
 start.addEventListener('click',loadAI);
 suggestions.addEventListener('click',e=>{if(e.target.tagName!=='BUTTON')return;if(!ready){pendingPrompt=e.target.textContent;if(apiType==='local'){loadAI()}else{initAI()}}else{input.value=e.target.textContent;form.requestSubmit()}});
 form.addEventListener('submit',async e=>{
-  e.preventDefault();const text=input.value.trim();if(!text||!ready||busy)return;input.value='';addMessage(text,'user');history.push({role:'user',content:text});busy=true;input.disabled=true;send.disabled=true;const out=addMessage('');
+  e.preventDefault();const text=input.value.trim();if(!text||!ready||busy)return;input.value='';addMessage(text,'user');history.push({role:'user',content:text});busy=true;input.disabled=true;send.disabled=true;
+  
+  const typingRow = addTypingIndicator();
+  let out = null;
   
   if (apiType === 'proxy' || apiType === 'direct') {
     try {
@@ -1003,15 +1023,26 @@ form.addEventListener('submit',async e=>{
             if (dataStr === '[DONE]') continue;
             try {
               const parsed = JSON.parse(dataStr);
-              answer += parsed.choices[0]?.delta?.content || '';
-              out.textContent = answer;
-              messages.scrollTop = messages.scrollHeight;
+              const deltaContent = parsed.choices[0]?.delta?.content || '';
+              if (deltaContent) {
+                if (!out) {
+                  typingRow.remove();
+                  out = addMessage('');
+                }
+                answer += deltaContent;
+                out.textContent = answer;
+                messages.scrollTop = messages.scrollHeight;
+              }
             } catch (e) {}
           }
         }
       }
+      if (typingRow.parentNode) typingRow.remove();
+      if (!out) out = addMessage(answer || 'No response.');
       history.push({role:'assistant',content:answer});
     } catch(err) {
+      if (typingRow.parentNode) typingRow.remove();
+      if (!out) out = addMessage('');
       out.textContent = 'Cloud AI error. Falling back to local/webgpu option...';
       console.error(err);
       ready = false;
@@ -1024,8 +1055,31 @@ form.addEventListener('submit',async e=>{
       busy=false;input.disabled=false;send.disabled=false;input.focus();
     }
   } else {
-    try{const stream=await engine.chat.completions.create({messages:history,temperature:.25,max_tokens:180,stream:true});let answer='';for await(const chunk of stream){answer+=chunk.choices[0]?.delta?.content||'';out.textContent=answer;messages.scrollTop=messages.scrollHeight}history.push({role:'assistant',content:answer})}
-    catch(err){out.textContent='I hit a local inference error. Please try once more.';console.error(err)}
+    try{
+      const stream=await engine.chat.completions.create({messages:history,temperature:.25,max_tokens:180,stream:true});
+      let answer='';
+      for await(const chunk of stream){
+        const deltaContent = chunk.choices[0]?.delta?.content || '';
+        if (deltaContent) {
+          if (!out) {
+            typingRow.remove();
+            out = addMessage('');
+          }
+          answer+=deltaContent;
+          out.textContent=answer;
+          messages.scrollTop=messages.scrollHeight;
+        }
+      }
+      if (typingRow.parentNode) typingRow.remove();
+      if (!out) out = addMessage(answer || 'No response.');
+      history.push({role:'assistant',content:answer});
+    }
+    catch(err){
+      if (typingRow.parentNode) typingRow.remove();
+      if (!out) out = addMessage('');
+      out.textContent='I hit a local inference error. Please try once more.';
+      console.error(err);
+    }
     finally{busy=false;input.disabled=false;send.disabled=false;input.focus()}
   }
 });
