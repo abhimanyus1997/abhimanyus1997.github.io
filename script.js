@@ -500,9 +500,9 @@ async function initThree(){
             ease=1-Math.pow(1-entry,3);
       
       const isMobile=window.innerWidth<=800;
-      const baseX=0;
-      const baseY=0;
-      const baseScale=isMobile?0.54:0.78;
+      const baseX=isMobile?0:1.75;
+      const baseY=isMobile?-1.6:-.02;
+      const baseScale=isMobile?0.82:0.78;
       
       const x=baseX+(1-ease)*(isMobile?0:4.8)+mx*.24;
       const y=baseY+(1-ease)*(isMobile?0:.65)-my*.12+Math.sin(boost*Math.PI)*.28;
