@@ -1,6 +1,6 @@
 import profile from './profile.json';
-const canvas=document.querySelector('#field');
-document.documentElement.dataset.portfolioJs='ready';
+const canvas = document.querySelector('#field');
+document.documentElement.dataset.portfolioJs = 'ready';
 
 window.addEventListener('error', (event) => {
   console.error('[Global Error]', {
@@ -290,61 +290,61 @@ const resumeAudio = () => {
 addEventListener('click', resumeAudio);
 addEventListener('touchstart', resumeAudio);
 
-async function initThree(){
-  try{
-    const THREE=window.THREE;
-    if(!THREE?.GLTFLoader)throw new Error('Three.js or GLTFLoader did not initialize');
-    const scene=new THREE.Scene();
-    const camera=new THREE.PerspectiveCamera(42,1,.1,100);
-    const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,powerPreference:'high-performance'});
-    renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-    renderer.setClearColor(0x000000,0);renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
-    camera.position.set(0,0,7);
-    const group=new THREE.Group();
+async function initThree() {
+  try {
+    const THREE = window.THREE;
+    if (!THREE?.GLTFLoader) throw new Error('Three.js or GLTFLoader did not initialize');
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(42, 1, .1, 100);
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0); renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+    camera.position.set(0, 0, 7);
+    const group = new THREE.Group();
     scene.add(group);
-    const core=new THREE.Mesh(new THREE.IcosahedronGeometry(1.38,2),new THREE.MeshBasicMaterial({color:0xc9ff36,wireframe:true,transparent:true,opacity:.1}));
-    const wire=new THREE.Mesh(new THREE.IcosahedronGeometry(1.55,1),new THREE.MeshBasicMaterial({color:0x26301d,wireframe:true,transparent:true,opacity:.28}));
-    core.position.z=-1.8;wire.position.z=-1.7;group.add(core,wire);
-    
+    const core = new THREE.Mesh(new THREE.IcosahedronGeometry(1.38, 2), new THREE.MeshBasicMaterial({ color: 0xc9ff36, wireframe: true, transparent: true, opacity: .1 }));
+    const wire = new THREE.Mesh(new THREE.IcosahedronGeometry(1.55, 1), new THREE.MeshBasicMaterial({ color: 0x26301d, wireframe: true, transparent: true, opacity: .28 }));
+    core.position.z = -1.8; wire.position.z = -1.7; group.add(core, wire);
+
     // Glowing green starfield
-    const particleData=[];
-    for(let i=0;i<150;i++){
-      const a=Math.random()*Math.PI*2;
-      const b=Math.acos(2*Math.random()-1);
-      const r=3+Math.random()*6.5;
-      particleData.push(r*Math.sin(b)*Math.cos(a),r*Math.cos(b)*.65,r*Math.sin(b)*Math.sin(a));
+    const particleData = [];
+    for (let i = 0; i < 150; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const b = Math.acos(2 * Math.random() - 1);
+      const r = 3 + Math.random() * 6.5;
+      particleData.push(r * Math.sin(b) * Math.cos(a), r * Math.cos(b) * .65, r * Math.sin(b) * Math.sin(a));
     }
-    const particleGeo=new THREE.BufferGeometry();particleGeo.setAttribute('position',new THREE.Float32BufferAttribute(particleData,3));
-    const orbit=new THREE.Points(particleGeo,new THREE.PointsMaterial({color:0x242920,size:.045,transparent:true,opacity:0.5}));group.add(orbit);
-    
-    const ring1=new THREE.Mesh(new THREE.TorusGeometry(2.15,.008,3,72),new THREE.MeshBasicMaterial({color:0x536146,transparent:true,opacity:.45}));
-    ring1.rotation.x=1.08;group.add(ring1);
-    const ring2=ring1.clone();ring2.scale.setScalar(1.22);ring2.rotation.set(.4,.8,0);group.add(ring2);
-    const carRig=new THREE.Group();carRig.visible=false;scene.add(carRig);let mixer=null;
-    let gearAction=null;let gearOpen=true;
-    const shadow=new THREE.Mesh(new THREE.CircleGeometry(1,48),new THREE.MeshBasicMaterial({color:0x11130f,transparent:true,opacity:.13,depthWrite:false}));shadow.scale.set(2.2,.42,1);shadow.rotation.x=-Math.PI/2;scene.add(shadow);
-    scene.add(new THREE.HemisphereLight(0xdde7f0,0x171915,1.15));
-    keyLight=new THREE.DirectionalLight(0xffffff,2.6);keyLight.position.set(-4,5,6);scene.add(keyLight);
-    rimLight=new THREE.PointLight(0xffa31a,5.5,12);rimLight.position.set(3,-1,3);scene.add(rimLight);
-    const carStatus=document.querySelector('#car-status');
-    new THREE.GLTFLoader().load('/static/models/hovercar.glb',gltf=>{
-      const car=gltf.scene;const box=new THREE.Box3().setFromObject(car),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
-      const scale=5.1/Math.max(size.x,size.y,size.z);car.scale.setScalar(scale);car.position.copy(center).multiplyScalar(-scale);car.rotation.y=Math.PI/2-.22;
-      car.traverse(node=>{if(node.isMesh){node.frustumCulled=false;const mats=Array.isArray(node.material)?node.material:[node.material];mats.forEach(m=>{if(!m)return;const name=(m.name||'').toLowerCase();const tone=name.includes('body')?0x34383d:name.includes('metal')?0x202326:name.includes('plastic')?0x111315:null;if(tone!==null){if(m.color)m.color.setHex(tone);if(m.uniforms?.diffuse?.value)m.uniforms.diffuse.value.setHex(tone)}if(m.map)m.map.encoding=THREE.sRGBEncoding;if(m.emissiveMap)m.emissiveMap.encoding=THREE.sRGBEncoding;m.side=THREE.DoubleSide;m.needsUpdate=true})}});
-      carRig.add(car);carRig.visible=true;
-      carStatus.classList.add('ready');carStatus.textContent='HOVERCAR ONLINE';
+    const particleGeo = new THREE.BufferGeometry(); particleGeo.setAttribute('position', new THREE.Float32BufferAttribute(particleData, 3));
+    const orbit = new THREE.Points(particleGeo, new THREE.PointsMaterial({ color: 0x242920, size: .045, transparent: true, opacity: 0.5 })); group.add(orbit);
+
+    const ring1 = new THREE.Mesh(new THREE.TorusGeometry(2.15, .008, 3, 72), new THREE.MeshBasicMaterial({ color: 0x536146, transparent: true, opacity: .45 }));
+    ring1.rotation.x = 1.08; group.add(ring1);
+    const ring2 = ring1.clone(); ring2.scale.setScalar(1.22); ring2.rotation.set(.4, .8, 0); group.add(ring2);
+    const carRig = new THREE.Group(); carRig.visible = false; scene.add(carRig); let mixer = null;
+    let gearAction = null; let gearOpen = true;
+    const shadow = new THREE.Mesh(new THREE.CircleGeometry(1, 48), new THREE.MeshBasicMaterial({ color: 0x11130f, transparent: true, opacity: .13, depthWrite: false })); shadow.scale.set(2.2, .42, 1); shadow.rotation.x = -Math.PI / 2; scene.add(shadow);
+    scene.add(new THREE.HemisphereLight(0xdde7f0, 0x171915, 1.15));
+    keyLight = new THREE.DirectionalLight(0xffffff, 2.6); keyLight.position.set(-4, 5, 6); scene.add(keyLight);
+    rimLight = new THREE.PointLight(0xffa31a, 5.5, 12); rimLight.position.set(3, -1, 3); scene.add(rimLight);
+    const carStatus = document.querySelector('#car-status');
+    new THREE.GLTFLoader().load('/static/models/hovercar.glb', gltf => {
+      const car = gltf.scene; const box = new THREE.Box3().setFromObject(car), size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
+      const scale = 5.1 / Math.max(size.x, size.y, size.z); car.scale.setScalar(scale); car.position.copy(center).multiplyScalar(-scale); car.rotation.y = Math.PI / 2 - .22;
+      car.traverse(node => { if (node.isMesh) { node.frustumCulled = false; const mats = Array.isArray(node.material) ? node.material : [node.material]; mats.forEach(m => { if (!m) return; const name = (m.name || '').toLowerCase(); const tone = name.includes('body') ? 0x34383d : name.includes('metal') ? 0x202326 : name.includes('plastic') ? 0x111315 : null; if (tone !== null) { if (m.color) m.color.setHex(tone); if (m.uniforms?.diffuse?.value) m.uniforms.diffuse.value.setHex(tone) } if (m.map) m.map.encoding = THREE.sRGBEncoding; if (m.emissiveMap) m.emissiveMap.encoding = THREE.sRGBEncoding; m.side = THREE.DoubleSide; m.needsUpdate = true }) } });
+      carRig.add(car); carRig.visible = true;
+      carStatus.classList.add('ready'); carStatus.textContent = 'HOVERCAR ONLINE';
       document.body.classList.add('model-ready');
-      
-      if(gltf.animations?.length){
-        mixer=new THREE.AnimationMixer(car);
+
+      if (gltf.animations?.length) {
+        mixer = new THREE.AnimationMixer(car);
         const hoverAction = mixer.clipAction(gltf.animations[0]);
         hoverAction.play();
-        
+
         const gearClip = gltf.animations.find(clip => {
           const name = clip.name.toLowerCase();
           return name.includes('gear') || name.includes('land') || name.includes('close') || name.includes('open') || name.includes('retract');
         }) || (gltf.animations.length > 1 ? gltf.animations[1] : null);
-        
+
         if (gearClip) {
           gearAction = mixer.clipAction(gearClip);
           gearAction.setLoop(THREE.LoopOnce);
@@ -359,67 +359,67 @@ async function initThree(){
         }
       }
       modelLoaded = true;
-    },xhr=>{if(xhr.total){const pct=Math.round(xhr.loaded/xhr.total*100);modelLoadPercent = pct;if(carStatus.lastChild)carStatus.lastChild.textContent=` LOADING HOVERCAR · ${pct}%`}},err=>{
+    }, xhr => { if (xhr.total) { const pct = Math.round(xhr.loaded / xhr.total * 100); modelLoadPercent = pct; if (carStatus.lastChild) carStatus.lastChild.textContent = ` LOADING HOVERCAR · ${pct}%` } }, err => {
       carStatus.classList.add('error');
-      carStatus.textContent='3D MODEL UNAVAILABLE';
-      console.warn('Hovercar could not load',err);
+      carStatus.textContent = '3D MODEL UNAVAILABLE';
+      console.warn('Hovercar could not load', err);
       modelFailed = true;
       const controls = document.getElementById('flight-controls');
       if (controls) controls.style.display = 'none';
     });
-    let mx=0,my=0,manualYaw=0,manualPitch=0,manualRoll=0,userScale=1.1,autoRotate=true,boostUntil=0;
-    addEventListener('pointermove',e=>{mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5},{passive:true});
-    const controlDock=document.querySelector('#flight-controls'),sizeControl=document.querySelector('#flight-size');
+    let mx = 0, my = 0, manualYaw = 0, manualPitch = 0, manualRoll = 0, userScale = 1.1, autoRotate = true, boostUntil = 0;
+    addEventListener('pointermove', e => { mx = e.clientX / innerWidth - .5; my = e.clientY / innerHeight - .5 }, { passive: true });
+    const controlDock = document.querySelector('#flight-controls'), sizeControl = document.querySelector('#flight-size');
     if (controlDock) {
       const autoBtn = controlDock.querySelector('[data-flight="auto"]');
       if (autoBtn) autoBtn.setAttribute('aria-pressed', 'true');
     }
 
-    function fly(action,target){
-      if(action==='yaw-left' || action==='yaw-right' || action==='pitch-up' || action==='pitch-down' || action==='roll-left' || action==='roll-right') {
+    function fly(action, target) {
+      if (action === 'yaw-left' || action === 'yaw-right' || action === 'pitch-up' || action === 'pitch-down' || action === 'roll-left' || action === 'roll-right') {
         Sfx.playManeuver();
       }
-      if(action==='yaw-left')manualYaw-=.3;
-      if(action==='yaw-right')manualYaw+=.3;
-      if(action==='pitch-up')manualPitch=Math.min(.55,manualPitch+.14);
-      if(action==='pitch-down')manualPitch=Math.max(-.55,manualPitch-.14);
-      if(action==='roll-left')manualRoll=Math.max(-.65,manualRoll-.15);
-      if(action==='roll-right')manualRoll=Math.min(.65,manualRoll+.15);
-      if(action==='boost') {
-        boostUntil=performance.now()+900;
+      if (action === 'yaw-left') manualYaw -= .3;
+      if (action === 'yaw-right') manualYaw += .3;
+      if (action === 'pitch-up') manualPitch = Math.min(.55, manualPitch + .14);
+      if (action === 'pitch-down') manualPitch = Math.max(-.55, manualPitch - .14);
+      if (action === 'roll-left') manualRoll = Math.max(-.65, manualRoll - .15);
+      if (action === 'roll-right') manualRoll = Math.min(.65, manualRoll + .15);
+      if (action === 'boost') {
+        boostUntil = performance.now() + 900;
         Sfx.playBoost();
       }
-      if(action==='auto'){autoRotate=!autoRotate;target?.setAttribute('aria-pressed',String(autoRotate))}
-      if(action==='reset'){
-        manualYaw=0;manualPitch=0;manualRoll=0;userScale=1.1;sizeControl.value=110;autoRotate=false;
-        controlDock.querySelector('[data-flight="auto"]').setAttribute('aria-pressed','false');
+      if (action === 'auto') { autoRotate = !autoRotate; target?.setAttribute('aria-pressed', String(autoRotate)) }
+      if (action === 'reset') {
+        manualYaw = 0; manualPitch = 0; manualRoll = 0; userScale = 1.1; sizeControl.value = 110; autoRotate = false;
+        controlDock.querySelector('[data-flight="auto"]').setAttribute('aria-pressed', 'false');
       }
     }
-    controlDock.addEventListener('click',e=>{const button=e.target.closest('button'),action=button?.dataset.flight;if(action)fly(action,button)});
-    function resize(){
-      const r=canvas.getBoundingClientRect();
+    controlDock.addEventListener('click', e => { const button = e.target.closest('button'), action = button?.dataset.flight; if (action) fly(action, button) });
+    function resize() {
+      const r = canvas.getBoundingClientRect();
       if (r.height > 0 && r.width > 0) {
-        renderer.setSize(r.width,r.height,false);
-        camera.aspect=r.width/r.height;
+        renderer.setSize(r.width, r.height, false);
+        camera.aspect = r.width / r.height;
         camera.updateProjectionMatrix();
       }
     }
-    addEventListener('resize',resize);resize();
-    addEventListener('keydown',e=>{if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;const action={a:'yaw-left',ArrowLeft:'yaw-left',d:'yaw-right',ArrowRight:'yaw-right',w:'pitch-up',ArrowUp:'pitch-up',s:'pitch-down',ArrowDown:'pitch-down',q:'roll-left',e:'roll-right',' ':'boost',r:'reset'}[e.key];if(action){e.preventDefault();fly(action)}});
-    sizeControl.addEventListener('input',()=>{userScale=Number(sizeControl.value)/100});
-    
+    addEventListener('resize', resize); resize();
+    addEventListener('keydown', e => { if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; const action = { a: 'yaw-left', ArrowLeft: 'yaw-left', d: 'yaw-right', ArrowRight: 'yaw-right', w: 'pitch-up', ArrowUp: 'pitch-up', s: 'pitch-down', ArrowDown: 'pitch-down', q: 'roll-left', e: 'roll-right', ' ': 'boost', r: 'reset' }[e.key]; if (action) { e.preventDefault(); fly(action) } });
+    sizeControl.addEventListener('input', () => { userScale = Number(sizeControl.value) / 100 });
+
     // Mobile Gamepad & Gyroscope Controls
-    (function() {
+    (function () {
       const joystickBase = document.getElementById('joystick-base');
       const joystickStick = document.getElementById('joystick-stick');
       const gyroBtn = document.getElementById('gyro-btn');
       const boostBtn = document.getElementById('boost-btn');
-      
+
       if (joystickBase && joystickStick) {
         let active = false;
         let startX = 0, startY = 0;
         const maxDistance = 30;
-        
+
         function onStart(e) {
           active = true;
           const t = e.touches ? e.touches[0] : e;
@@ -427,24 +427,24 @@ async function initThree(){
           startY = t.clientY;
           joystickStick.style.transition = 'none';
         }
-        
+
         function onMove(e) {
           if (!active) return;
           const t = e.touches ? e.touches[0] : e;
           const dx = t.clientX - startX;
           const dy = t.clientY - startY;
-          const dist = Math.min(Math.sqrt(dx*dx + dy*dy), maxDistance);
+          const dist = Math.min(Math.sqrt(dx * dx + dy * dy), maxDistance);
           const angle = Math.atan2(dy, dx);
-          
+
           const px = Math.cos(angle) * dist;
           const py = Math.sin(angle) * dist;
-          
+
           joystickStick.style.transform = `translate(${px}px, ${py}px)`;
-          
+
           mx = px / maxDistance;
           my = py / maxDistance;
         }
-        
+
         function onEnd() {
           if (!active) return;
           active = false;
@@ -453,21 +453,21 @@ async function initThree(){
           mx = 0;
           my = 0;
         }
-        
-        joystickBase.addEventListener('touchstart', onStart, {passive: true});
-        addEventListener('touchmove', onMove, {passive: false});
+
+        joystickBase.addEventListener('touchstart', onStart, { passive: true });
+        addEventListener('touchmove', onMove, { passive: false });
         addEventListener('touchend', onEnd);
       }
-      
+
       let gyroActive = false;
       function onOrientation(e) {
         if (!gyroActive) return;
         if (e.beta !== null && e.gamma !== null) {
           let pitch = 0;
           let roll = 0;
-          
+
           const orientation = window.orientation || (window.screen && window.screen.orientation && window.screen.orientation.angle) || 0;
-          
+
           if (orientation === 90) {
             pitch = e.gamma / 22;
             roll = -e.beta / 22;
@@ -481,12 +481,12 @@ async function initThree(){
             pitch = (e.beta - 48) / 22;
             roll = e.gamma / 22;
           }
-          
+
           mx = Math.max(-1, Math.min(1, roll));
           my = Math.max(-1, Math.min(1, pitch));
         }
       }
-      
+
       if (gyroBtn) {
         gyroBtn.addEventListener('click', async () => {
           if (gyroActive) {
@@ -514,7 +514,7 @@ async function initThree(){
             }
           }
         });
-        
+
         function enableGyro() {
           gyroActive = true;
           gyroBtn.textContent = 'GYRO: ON';
@@ -522,7 +522,7 @@ async function initThree(){
           addEventListener('deviceorientation', onOrientation);
         }
       }
-      
+
       if (boostBtn) {
         boostBtn.addEventListener('touchstart', e => {
           e.preventDefault();
@@ -533,26 +533,26 @@ async function initThree(){
           boostBtn.classList.remove('active');
         });
       }
-      
+
     })();
 
-    const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,clock=new THREE.Clock();
-    let last=0,previousX=0;
-    function render(ms=0){
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches, clock = new THREE.Clock();
+    let last = 0, previousX = 0;
+    function render(ms = 0) {
       requestAnimationFrame(render);
-      if(ms-last<33)return;
-      const delta=Math.min((ms-last)/1000,.05);
-      last=ms;
-      const t=clock.getElapsedTime(),
-            boost=Math.max(0,(boostUntil-ms)/900),
-            entry=entryStart?Math.max(0,Math.min(1,(ms-entryStart)/1800)):0,
-            ease=1-Math.pow(1-entry,3);
-      
-      const isMobile=window.innerWidth<=800;
-      const baseX=isMobile?0:1.75;
-      const baseY=isMobile?-1.6:-.02;
-      const baseScale=isMobile?0.82:0.78;
-      
+      if (ms - last < 33) return;
+      const delta = Math.min((ms - last) / 1000, .05);
+      last = ms;
+      const t = clock.getElapsedTime(),
+        boost = Math.max(0, (boostUntil - ms) / 900),
+        entry = entryStart ? Math.max(0, Math.min(1, (ms - entryStart) / 1800)) : 0,
+        ease = 1 - Math.pow(1 - entry, 3);
+
+      const isMobile = window.innerWidth <= 800;
+      const baseX = isMobile ? 0 : 1.75;
+      const baseY = isMobile ? -1.6 : -.02;
+      const baseScale = isMobile ? 0.82 : 0.78;
+
       // ──────────────────────────────────────────────
       // Scroll-driven 3D flight path (realistic)
       // s=0 (hero) → land approach at s=1 (footer)
@@ -570,8 +570,8 @@ async function initThree(){
       const flyScale = 1.0 - Math.sin(sp * Math.PI) * (isMobile ? 0.12 : 0.22);
 
       // Banking & pitch feel realistic during turns
-      const flyYaw   = Math.sin(sp * Math.PI * 1.2) * 0.55;
-      const flyRoll  = -Math.cos(sp * Math.PI * 1.2) * 0.22 + 0.22;
+      const flyYaw = Math.sin(sp * Math.PI * 1.2) * 0.55;
+      const flyRoll = -Math.cos(sp * Math.PI * 1.2) * 0.22 + 0.22;
       const flyPitch = -sp * 0.25 + Math.sin(sp * Math.PI * 0.8) * 0.15;
 
       // Lighting: key sweeps across, rim shifts warm (takeoff) → cool (cruise) → warm (land)
@@ -615,7 +615,7 @@ async function initThree(){
           Sfx.playGear(true);
         }
       }
-      
+
       if (modelFailed) {
         shadow.visible = false;
         group.visible = true;
@@ -625,27 +625,27 @@ async function initThree(){
         group.scale.setScalar(isMobile ? 0.65 : 0.95);
       } else {
         shadow.visible = true;
-        shadow.position.set(x,y-(isMobile?.44:.62),z-.15);
-        shadow.scale.set(1.9*s*(1+boost*.25),.34*s,1);
-        shadow.material.opacity=.12*ease*(1-boost*.4);
-        
-        group.visible=true;
-        group.rotation.y=t*.05;
-        orbit.rotation.y=-t*.08;
-        group.position.set(isMobile?0:1.8,isMobile?.1:.1,isMobile?-1.5:-1.5);
-        group.scale.setScalar(isMobile?.42:.58);
+        shadow.position.set(x, y - (isMobile ? .44 : .62), z - .15);
+        shadow.scale.set(1.9 * s * (1 + boost * .25), .34 * s, 1);
+        shadow.material.opacity = .12 * ease * (1 - boost * .4);
+
+        group.visible = true;
+        group.rotation.y = t * .05;
+        orbit.rotation.y = -t * .08;
+        group.position.set(isMobile ? 0 : 1.8, isMobile ? .1 : .1, isMobile ? -1.5 : -1.5);
+        group.scale.setScalar(isMobile ? .42 : .58);
       }
-      
-      if(mixer)mixer.update(delta);
-      renderer.render(scene,camera);
+
+      if (mixer) mixer.update(delta);
+      renderer.render(scene, camera);
     }
     render();
-  }catch(err){modelFailed=true;canvas.hidden=true;console.warn('3D scene unavailable',err)}
+  } catch (err) { modelFailed = true; canvas.hidden = true; console.warn('3D scene unavailable', err) }
 }
 initThree();
 
-const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.animate([{opacity:0,transform:'translateY(28px)'},{opacity:1,transform:'none'}],{duration:700,easing:'cubic-bezier(.2,.8,.2,1)',fill:'both'})}),{threshold:.12});
-document.querySelectorAll('.project,.timeline article').forEach(e=>io.observe(e));
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.animate([{ opacity: 0, transform: 'translateY(28px)' }, { opacity: 1, transform: 'none' }], { duration: 700, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' }) }), { threshold: .12 });
+document.querySelectorAll('.project,.timeline article').forEach(e => io.observe(e));
 
 function scrambleText(element, duration = 1400) {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -653,7 +653,7 @@ function scrambleText(element, duration = 1400) {
   const chars = '01X_/*+-^%&$!#?@';
   const fps = 60;
   const totalFrames = Math.floor((duration / 1000) * fps);
-  
+
   const tokens = [];
   let i = 0;
   while (i < originalHTML.length) {
@@ -746,10 +746,10 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function runBootSequence() {
   const slides = document.querySelectorAll('.intro-slide');
   const skipBtn = document.getElementById('skip-intro');
-  
+
   let currentSlideIdx = 0;
   let sequenceFinished = false;
-  
+
   function finishIntro() {
     if (sequenceFinished) return;
     sequenceFinished = true;
@@ -759,30 +759,30 @@ async function runBootSequence() {
     setTimeout(startScrambleAnimations, 1800);
     Sfx.playArrival();
   }
-  
+
   if (skipBtn) {
     skipBtn.addEventListener('click', finishIntro);
     skipBtn.addEventListener('touchstart', e => {
       e.preventDefault();
       finishIntro();
-    }, {passive: false});
+    }, { passive: false });
   }
-  
+
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
     finishIntro();
     return;
   }
-  
+
   // Play startup triple-beep
   Sfx.playStartup();
-  
+
   const slideDuration = 2400; // 2.4s per slide
-  
+
   while (currentSlideIdx < slides.length) {
     if (currentSlideIdx === slides.length - 1) {
       slides.forEach(s => s.classList.remove('active'));
       slides[currentSlideIdx].classList.add('active');
-      
+
       const statusEl = slides[currentSlideIdx].querySelector('.intro-status');
       if (statusEl) {
         const startTime = performance.now();
@@ -812,15 +812,15 @@ async function runBootSequence() {
       await sleep(1500);
       break;
     }
-    
+
     slides.forEach(s => s.classList.remove('active'));
     slides[currentSlideIdx].classList.add('active');
     Sfx.playSlide();
-    
+
     await sleep(slideDuration);
     currentSlideIdx++;
   }
-  
+
   finishIntro();
 }
 
@@ -838,7 +838,7 @@ fetch('/static/images/pilot_sync.svg')
 
 
 
-const launch=document.querySelector('#chat-launch'),panel=document.querySelector('#chat-panel'),close=document.querySelector('#chat-close'),clearBtn=document.querySelector('#clear-chat'),start=document.querySelector('#start-ai'),statusEl=document.querySelector('#model-status'),progressEl=document.querySelector('#model-progress'),gate=document.querySelector('#model-gate'),form=document.querySelector('#chat-form'),input=document.querySelector('#chat-input'),send=form.querySelector('button'),messages=document.querySelector('#chat-messages'),suggestions=document.querySelector('#suggestions'),micBtn=document.querySelector('#mic-btn');
+const launch = document.querySelector('#chat-launch'), panel = document.querySelector('#chat-panel'), close = document.querySelector('#chat-close'), clearBtn = document.querySelector('#clear-chat'), start = document.querySelector('#start-ai'), statusEl = document.querySelector('#model-status'), progressEl = document.querySelector('#model-progress'), gate = document.querySelector('#model-gate'), form = document.querySelector('#chat-form'), input = document.querySelector('#chat-input'), send = form.querySelector('button'), messages = document.querySelector('#chat-messages'), suggestions = document.querySelector('#suggestions'), micBtn = document.querySelector('#mic-btn');
 const modeLabel = document.querySelector('#chat-mode-label');
 const modelSelect = document.querySelector('#model-select');
 const chatNote = document.querySelector('#chat-note');
@@ -867,7 +867,7 @@ function startVoiceListening() {
       console.warn('[Voice] SpeechRecognition not available');
       return;
     }
-    if (recognition) { try { recognition.stop(); } catch(e) { console.warn('[Voice] Stop previous recognition failed:', e); } }
+    if (recognition) { try { recognition.stop(); } catch (e) { console.warn('[Voice] Stop previous recognition failed:', e); } }
     recognition = new SR();
     recognition.lang = 'en-US';
     recognition.interimResults = true;
@@ -924,7 +924,7 @@ function stopVoiceListening() {
   try {
     voiceListeningActive = false;
     if (recognition) {
-      try { recognition.stop(); } catch(e) { console.warn('[Voice] Stop recognition failed:', e); }
+      try { recognition.stop(); } catch (e) { console.warn('[Voice] Stop recognition failed:', e); }
       recognition = null;
     }
     if (centralMicBtn) { centralMicBtn.classList.remove('listening'); centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
@@ -953,12 +953,12 @@ function updateModeUI() {
   }
 }
 
-let engine=null,ready=false,busy=false,pendingPrompt='';
+let engine = null, ready = false, busy = false, pendingPrompt = '';
 let apiType = 'local'; // 'proxy' | 'direct' | 'local'
 let selectedModel = '';
 let availableModels = [];
 
-const TTS_FALLBACK_URL = 'http://13.126.102.204:5555/tts';
+const TTS_FALLBACK_URL = 'https://tts.abhimanyu.fyi/';
 
 const getEnvValue = (key, fallback = '') => {
   try {
@@ -980,6 +980,11 @@ const normalizeTtsUrl = (url) => {
 
     if (value.includes('localhost') || value.includes('127.0.0.1')) {
       console.warn('[Config] Localhost TTS URL blocked. Using fallback:', TTS_FALLBACK_URL);
+      return TTS_FALLBACK_URL;
+    }
+
+    if (window.location.protocol === 'https:' && value.startsWith('http://')) {
+      console.warn('[Config] HTTP TTS URL blocked on HTTPS page. Using fallback:', TTS_FALLBACK_URL);
       return TTS_FALLBACK_URL;
     }
 
@@ -1146,18 +1151,18 @@ function setupCloudAI(labelName) {
       modelSelect.value = selectedModel;
       modelSelect.style.display = 'block';
 
-    modelSelect.addEventListener('change', (e) => {
-      selectedModel = e.target.value;
-    });
-  }
+      modelSelect.addEventListener('change', (e) => {
+        selectedModel = e.target.value;
+      });
+    }
 
-  addMessage(`Connected to ${labelName}. Ready to chat.`);
-  if (pendingPrompt) {
-    input.value = pendingPrompt;
-    pendingPrompt = '';
-    form.requestSubmit();
-  }
-  console.log('[AI] Cloud AI setup complete:', labelName);
+    addMessage(`Connected to ${labelName}. Ready to chat.`);
+    if (pendingPrompt) {
+      input.value = pendingPrompt;
+      pendingPrompt = '';
+      form.requestSubmit();
+    }
+    console.log('[AI] Cloud AI setup complete:', labelName);
   } catch (e) {
     console.error('[AI] setupCloudAI failed:', e);
     ready = false;
@@ -1165,12 +1170,12 @@ function setupCloudAI(labelName) {
   }
 }
 
-function toggle(open){
+function toggle(open) {
   try {
-    panel.classList.toggle('open',open);
-    panel.setAttribute('aria-hidden',String(!open));
-    launch.setAttribute('aria-expanded',String(open));
-    launch.style.visibility=open?'hidden':'visible';
+    panel.classList.toggle('open', open);
+    panel.setAttribute('aria-hidden', String(!open));
+    launch.setAttribute('aria-expanded', String(open));
+    launch.style.visibility = open ? 'hidden' : 'visible';
     if (open) {
       if (!ready && !busy && apiType === 'local') {
         initAI();
@@ -1179,7 +1184,7 @@ function toggle(open){
       if (isVoiceModeActive && ready) {
         setTimeout(startVoiceListening, 400);
       }
-      if(ready && !isVoiceModeActive) input.focus();
+      if (ready && !isVoiceModeActive) input.focus();
     } else {
       stopVoiceListening();
       if (currentAudio) {
@@ -1192,14 +1197,14 @@ function toggle(open){
   }
 }
 
-launch.addEventListener('click',()=>toggle(true));
-close.addEventListener('click',()=>toggle(false));
+launch.addEventListener('click', () => toggle(true));
+close.addEventListener('click', () => toggle(false));
 if (clearBtn) {
   clearBtn.addEventListener('click', clearChat);
   clearBtn.addEventListener('mouseenter', () => { clearBtn.style.opacity = '1'; clearBtn.style.color = 'var(--acid)'; });
   clearBtn.addEventListener('mouseleave', () => { clearBtn.style.opacity = '0.6'; clearBtn.style.color = 'var(--muted)'; });
 }
-addEventListener('keydown',e=>{if(e.key==='Escape')toggle(false)});
+addEventListener('keydown', e => { if (e.key === 'Escape') toggle(false) });
 
 // Voice mode toggle header button
 if (toggleVoiceModeBtn) {
@@ -1363,13 +1368,13 @@ function speakNative(text) {
     if (preferred) utter.voice = preferred;
     utter.onend = () => {
       try {
-        if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getSpeakerIcon({animated: false}); }
+        if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getSpeakerIcon({ animated: false }); }
         if (isVoiceModeActive && autoListenAfterSpeak) startVoiceListening();
       } catch (e) { console.warn('[TTS] speakNative onend error:', e); }
     };
     utter.onerror = (e) => {
       console.warn('[TTS] speakNative error:', e);
-      if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getSpeakerIcon({animated: false}); }
+      if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getSpeakerIcon({ animated: false }); }
     };
     window.speechSynthesis.speak(utter);
     console.log('[TTS] Native speech started');
@@ -1384,20 +1389,20 @@ async function speakText(text, buttonElement) {
     if (streamingPlayer) {
       streamingPlayer.stop();
       streamingPlayer = null;
-      if (buttonElement) buttonElement.innerHTML = getSpeakerIcon({animated: false});
+      if (buttonElement) buttonElement.innerHTML = getSpeakerIcon({ animated: false });
       if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
       return;
     }
     if (currentAudio) {
       currentAudio.pause();
       currentAudio = null;
-      if (buttonElement) buttonElement.innerHTML = getSpeakerIcon({animated: false});
+      if (buttonElement) buttonElement.innerHTML = getSpeakerIcon({ animated: false });
       if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
       return;
     }
     if (window.speechSynthesis && window.speechSynthesis.speaking) {
       window.speechSynthesis.cancel();
-      if (buttonElement) buttonElement.innerHTML = getSpeakerIcon({animated: false});
+      if (buttonElement) buttonElement.innerHTML = getSpeakerIcon({ animated: false });
       if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
       return;
     }
@@ -1409,7 +1414,7 @@ async function speakText(text, buttonElement) {
 
     // Show loading state
     if (buttonElement) { buttonElement.innerHTML = getLoadingIcon(); buttonElement.disabled = true; }
-    if (isVoiceModeActive && centralMicBtn) { centralMicBtn.classList.add('speaking'); centralMicBtn.innerHTML = getSpeakerIcon({animated: true}); }
+    if (isVoiceModeActive && centralMicBtn) { centralMicBtn.classList.add('speaking'); centralMicBtn.innerHTML = getSpeakerIcon({ animated: true }); }
 
     const cleanText = text.replace(/[*_`#\-]/g, '').trim();
     console.log('[TTS] Starting TTS for:', cleanText.substring(0, 50) + '...');
@@ -1466,63 +1471,63 @@ async function speakText(text, buttonElement) {
       }
 
       // Use streaming player for immediate playback
-    if (!response?.body) {
-      throw new Error('TTS response body is empty or not streamable');
-    }
-
-    const reader = response.body.getReader();
-    streamingPlayer = new StreamingWavPlayer();
-
-    streamingPlayer.onFirstAudio = () => {
-      // First audio chunk received - update UI
-      if (buttonElement) { buttonElement.innerHTML = getStopIcon(); buttonElement.disabled = false; }
-      if (centralMicBtn) { centralMicBtn.classList.add('speaking'); centralMicBtn.innerHTML = getStopIcon(); }
-    };
-
-    streamingPlayer.onEnded = () => {
-      if (buttonElement) { buttonElement.innerHTML = getSpeakerIcon({animated: false}); buttonElement.disabled = false; }
-      if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
-      streamingPlayer = null;
-      if (isVoiceModeActive && autoListenAfterSpeak) startVoiceListening();
-    };
-
-    // Process stream
-    const processStream = async () => {
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) {
-            // Stream complete - wait for audio to finish
-            setTimeout(() => {
-              if (streamingPlayer && !streamingPlayer.stopped) {
-                streamingPlayer.onEnded?.();
-              }
-            }, 500);
-            break;
-          }
-          if (value && streamingPlayer) {
-            streamingPlayer.addChunk(value);
-          }
-        }
-      } catch (e) {
-        console.error('Stream error:', e);
-        streamingPlayer?.stop();
-        streamingPlayer = null;
+      if (!response?.body) {
+        throw new Error('TTS response body is empty or not streamable');
       }
-    };
+
+      const reader = response.body.getReader();
+      streamingPlayer = new StreamingWavPlayer();
+
+      streamingPlayer.onFirstAudio = () => {
+        // First audio chunk received - update UI
+        if (buttonElement) { buttonElement.innerHTML = getStopIcon(); buttonElement.disabled = false; }
+        if (centralMicBtn) { centralMicBtn.classList.add('speaking'); centralMicBtn.innerHTML = getStopIcon(); }
+      };
+
+      streamingPlayer.onEnded = () => {
+        if (buttonElement) { buttonElement.innerHTML = getSpeakerIcon({ animated: false }); buttonElement.disabled = false; }
+        if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
+        streamingPlayer = null;
+        if (isVoiceModeActive && autoListenAfterSpeak) startVoiceListening();
+      };
+
+      // Process stream
+      const processStream = async () => {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+              // Stream complete - wait for audio to finish
+              setTimeout(() => {
+                if (streamingPlayer && !streamingPlayer.stopped) {
+                  streamingPlayer.onEnded?.();
+                }
+              }, 500);
+              break;
+            }
+            if (value && streamingPlayer) {
+              streamingPlayer.addChunk(value);
+            }
+          }
+        } catch (e) {
+          console.error('Stream error:', e);
+          streamingPlayer?.stop();
+          streamingPlayer = null;
+        }
+      };
 
       processStream();
 
     } catch (error) {
       console.warn('[TTS] Streaming TTS failed, falling back to native:', error);
-      if (buttonElement) { buttonElement.innerHTML = getSpeakerIcon({animated: false}); buttonElement.disabled = false; }
+      if (buttonElement) { buttonElement.innerHTML = getSpeakerIcon({ animated: false }); buttonElement.disabled = false; }
       if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
       streamingPlayer = null;
       speakNative(cleanText);
     }
   } catch (e) {
     console.error('[TTS] speakText failed completely:', e);
-    if (buttonElement) { buttonElement.innerHTML = getSpeakerIcon({animated: false}); buttonElement.disabled = false; }
+    if (buttonElement) { buttonElement.innerHTML = getSpeakerIcon({ animated: false }); buttonElement.disabled = false; }
     if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
     speakNative(text.replace(/[*_`#\-]/g, '').trim());
   }
@@ -1533,7 +1538,7 @@ function getMicIcon() {
   return `<svg class="mic-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg>`;
 }
 
-function getSpeakerIcon({animated = false} = {}) {
+function getSpeakerIcon({ animated = false } = {}) {
   const animClass = animated ? 'animating' : '';
   return `<svg class="speaker-icon ${animClass}" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path class="wave1" d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path class="wave2" d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`;
 }
@@ -1563,27 +1568,27 @@ function clearChat() {
   }
 }
 
-function addMessage(text,who='bot'){
+function addMessage(text, who = 'bot') {
   try {
-    const row=document.createElement('div');
-    row.className=`message ${who}`;
-    row.style.cssText='display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;';
-    const badge=document.createElement('span');
-    badge.textContent=who==='bot'?'AI':'YOU';
-    const p=document.createElement('p');
-    p.style.flex='1';p.style.margin='0';
-    if(text) p.textContent=text;
-    row.append(badge,p);
-    if(who==='bot'&&text){
-      const ttsBtn=document.createElement('button');
-      ttsBtn.className='tts-btn';
-      ttsBtn.innerHTML=getSpeakerIcon({animated: false});
-      ttsBtn.title='Speak text';
-      ttsBtn.onclick=()=>speakText(text,ttsBtn);
+    const row = document.createElement('div');
+    row.className = `message ${who}`;
+    row.style.cssText = 'display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;';
+    const badge = document.createElement('span');
+    badge.textContent = who === 'bot' ? 'AI' : 'YOU';
+    const p = document.createElement('p');
+    p.style.flex = '1'; p.style.margin = '0';
+    if (text) p.textContent = text;
+    row.append(badge, p);
+    if (who === 'bot' && text) {
+      const ttsBtn = document.createElement('button');
+      ttsBtn.className = 'tts-btn';
+      ttsBtn.innerHTML = getSpeakerIcon({ animated: false });
+      ttsBtn.title = 'Speak text';
+      ttsBtn.onclick = () => speakText(text, ttsBtn);
       row.append(ttsBtn);
     }
     messages.append(row);
-    messages.scrollTop=messages.scrollHeight;
+    messages.scrollTop = messages.scrollHeight;
     return p;
   } catch (e) {
     console.error('[Chat] addMessage failed:', e);
@@ -1591,41 +1596,41 @@ function addMessage(text,who='bot'){
   }
 }
 function addTypingIndicator() {
-  const row=document.createElement('div');
-  row.className=`message bot typing-row`;
-  row.style.display='flex';
-  row.style.alignItems='flex-start';
-  row.style.gap='8px';
-  row.style.marginBottom='12px';
-  const badge=document.createElement('span');
-  badge.textContent='AI';
-  const indicator=document.createElement('div');
-  indicator.className='typing-indicator';
-  indicator.innerHTML='<span></span><span></span><span></span>';
-  row.append(badge,indicator);
+  const row = document.createElement('div');
+  row.className = `message bot typing-row`;
+  row.style.display = 'flex';
+  row.style.alignItems = 'flex-start';
+  row.style.gap = '8px';
+  row.style.marginBottom = '12px';
+  const badge = document.createElement('span');
+  badge.textContent = 'AI';
+  const indicator = document.createElement('div');
+  indicator.className = 'typing-indicator';
+  indicator.innerHTML = '<span></span><span></span><span></span>';
+  row.append(badge, indicator);
   messages.append(row);
-  messages.scrollTop=messages.scrollHeight;
+  messages.scrollTop = messages.scrollHeight;
   return row;
 }
-async function loadAI(){
-  if(ready||busy)return;
-  if(!('gpu'in navigator)){statusEl.textContent='WEBGPU IS NOT AVAILABLE IN THIS BROWSER';addMessage('This browser cannot run the local model. Chrome or Edge with WebGPU enabled is recommended. You can still reach Abhimanyu by email.');return}
-  busy=true;start.disabled=true;statusEl.textContent='LOADING WEBLLM RUNTIME…';
-  try{
-    const webllm=await import('https://esm.run/@mlc-ai/web-llm@0.2.84');
-    engine=await webllm.CreateMLCEngine('SmolLM2-360M-Instruct-q4f16_1-MLC',{initProgressCallback:p=>{const pct=Math.round((p.progress||0)*100);progressEl.style.width=`${pct}%`;statusEl.textContent=`${p.text||'LOADING MODEL'} · ${pct}%`}});
-    ready=true;busy=false;gate.style.display='none';input.disabled=false;send.disabled=false;if(micBtn)micBtn.disabled=false;if(centralMicBtn){centralMicBtn.disabled=false;if(voiceStatus)voiceStatus.textContent='Voice Mode Connected';}addMessage('I’m ready. What would you like to know?');input.focus();
-    if(pendingPrompt){input.value=pendingPrompt;pendingPrompt='';form.requestSubmit()}
-  }catch(err){busy=false;start.disabled=false;statusEl.textContent='MODEL COULD NOT LOAD · TRY AGAIN';addMessage('The local model could not start. Check WebGPU support and available device memory, then try again.');console.error(err)}
+async function loadAI() {
+  if (ready || busy) return;
+  if (!('gpu' in navigator)) { statusEl.textContent = 'WEBGPU IS NOT AVAILABLE IN THIS BROWSER'; addMessage('This browser cannot run the local model. Chrome or Edge with WebGPU enabled is recommended. You can still reach Abhimanyu by email.'); return }
+  busy = true; start.disabled = true; statusEl.textContent = 'LOADING WEBLLM RUNTIME…';
+  try {
+    const webllm = await import('https://esm.run/@mlc-ai/web-llm@0.2.84');
+    engine = await webllm.CreateMLCEngine('SmolLM2-360M-Instruct-q4f16_1-MLC', { initProgressCallback: p => { const pct = Math.round((p.progress || 0) * 100); progressEl.style.width = `${pct}%`; statusEl.textContent = `${p.text || 'LOADING MODEL'} · ${pct}%` } });
+    ready = true; busy = false; gate.style.display = 'none'; input.disabled = false; send.disabled = false; if (micBtn) micBtn.disabled = false; if (centralMicBtn) { centralMicBtn.disabled = false; if (voiceStatus) voiceStatus.textContent = 'Voice Mode Connected'; } addMessage('I’m ready. What would you like to know?'); input.focus();
+    if (pendingPrompt) { input.value = pendingPrompt; pendingPrompt = ''; form.requestSubmit() }
+  } catch (err) { busy = false; start.disabled = false; statusEl.textContent = 'MODEL COULD NOT LOAD · TRY AGAIN'; addMessage('The local model could not start. Check WebGPU support and available device memory, then try again.'); console.error(err) }
 }
-start.addEventListener('click',loadAI);
-suggestions.addEventListener('click',e=>{if(e.target.tagName!=='BUTTON')return;if(!ready){pendingPrompt=e.target.textContent;if(apiType==='local'){loadAI()}else{initAI()}}else{input.value=e.target.textContent;form.requestSubmit()}});
-form.addEventListener('submit',async e=>{
-  e.preventDefault();const text=input.value.trim();if(!text||!ready||busy)return;input.value='';addMessage(text,'user');history.push({role:'user',content:text});busy=true;input.disabled=true;send.disabled=true;if(micBtn)micBtn.disabled=true;if(centralMicBtn)centralMicBtn.disabled=true;
-  
+start.addEventListener('click', loadAI);
+suggestions.addEventListener('click', e => { if (e.target.tagName !== 'BUTTON') return; if (!ready) { pendingPrompt = e.target.textContent; if (apiType === 'local') { loadAI() } else { initAI() } } else { input.value = e.target.textContent; form.requestSubmit() } });
+form.addEventListener('submit', async e => {
+  e.preventDefault(); const text = input.value.trim(); if (!text || !ready || busy) return; input.value = ''; addMessage(text, 'user'); history.push({ role: 'user', content: text }); busy = true; input.disabled = true; send.disabled = true; if (micBtn) micBtn.disabled = true; if (centralMicBtn) centralMicBtn.disabled = true;
+
   const typingRow = addTypingIndicator();
   let out = null;
-  
+
   if (apiType === 'proxy' || apiType === 'direct') {
     try {
       const endpoint = apiType === 'proxy' ? '/api/chat' : `${baseUrl}/v1/chat/completions`;
@@ -1633,7 +1638,7 @@ form.addEventListener('submit',async e=>{
       if (apiType === 'direct') {
         headers['Authorization'] = `Bearer ${apiKey}`;
       }
-      
+
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: headers,
@@ -1681,19 +1686,19 @@ form.addEventListener('submit',async e=>{
                 out.textContent = answer;
                 messages.scrollTop = messages.scrollHeight;
               }
-            } catch (e) {}
+            } catch (e) { }
           }
         }
       }
       if (typingRow.parentNode) typingRow.remove();
       if (!out) out = addMessage(answer || 'No response.');
       else out.classList.remove('typing-cursor');
-      history.push({role:'assistant',content:answer});
+      history.push({ role: 'assistant', content: answer });
       if (autoSpeakResponse) {
         autoSpeakResponse = false;
         speakText(answer, null); // fire concurrently, no await
       }
-    } catch(err) {
+    } catch (err) {
       if (typingRow.parentNode) typingRow.remove();
       if (!out) out = addMessage('');
       out.textContent = 'Cloud AI error. Falling back to local/webgpu option...';
@@ -1705,13 +1710,13 @@ form.addEventListener('submit',async e=>{
       if (modelSelect) modelSelect.style.display = 'none';
       if (gate) gate.style.display = 'block';
     } finally {
-      busy=false;input.disabled=false;send.disabled=false;if(micBtn)micBtn.disabled=false;if(centralMicBtn)centralMicBtn.disabled=false;input.focus();
+      busy = false; input.disabled = false; send.disabled = false; if (micBtn) micBtn.disabled = false; if (centralMicBtn) centralMicBtn.disabled = false; input.focus();
     }
   } else {
-    try{
-      const stream=await engine.chat.completions.create({messages:history,temperature:.25,max_tokens:180,stream:true});
-      let answer='';
-      for await(const chunk of stream){
+    try {
+      const stream = await engine.chat.completions.create({ messages: history, temperature: .25, max_tokens: 180, stream: true });
+      let answer = '';
+      for await (const chunk of stream) {
         const deltaContent = chunk.choices[0]?.delta?.content || '';
         if (deltaContent) {
           if (!out) {
@@ -1719,27 +1724,27 @@ form.addEventListener('submit',async e=>{
             out = addMessage('');
             out.classList.add('typing-cursor');
           }
-          answer+=deltaContent;
-          out.textContent=answer;
-          messages.scrollTop=messages.scrollHeight;
+          answer += deltaContent;
+          out.textContent = answer;
+          messages.scrollTop = messages.scrollHeight;
         }
       }
       if (typingRow.parentNode) typingRow.remove();
       if (!out) out = addMessage(answer || 'No response.');
       else out.classList.remove('typing-cursor');
-      history.push({role:'assistant',content:answer});
+      history.push({ role: 'assistant', content: answer });
       if (autoSpeakResponse) {
         autoSpeakResponse = false;
         speakText(answer, null); // fire concurrently, no await
       }
     }
-    catch(err){
+    catch (err) {
       if (typingRow.parentNode) typingRow.remove();
       if (!out) out = addMessage('');
-      out.textContent='I hit a local inference error. Please try once more.';
+      out.textContent = 'I hit a local inference error. Please try once more.';
       console.error(err);
     }
-    finally{busy=false;input.disabled=false;send.disabled=false;if(micBtn)micBtn.disabled=false;if(centralMicBtn)centralMicBtn.disabled=false;input.focus()}
+    finally { busy = false; input.disabled = false; send.disabled = false; if (micBtn) micBtn.disabled = false; if (centralMicBtn) centralMicBtn.disabled = false; input.focus() }
   }
 });
 
@@ -1795,21 +1800,21 @@ addEventListener('appinstalled', () => {
 });
 
 // Custom Cursor Logic
-(function() {
+(function () {
   const dot = document.getElementById('cursor-dot');
   const ring = document.getElementById('cursor-ring');
   if (!dot || !ring) return;
-  
+
   let mouseX = -100, mouseY = -100;
   let ringX = -100, ringY = -100;
-  
+
   addEventListener('mousemove', e => {
     mouseX = e.clientX;
     mouseY = e.clientY;
     dot.style.left = `${mouseX}px`;
     dot.style.top = `${mouseY}px`;
   });
-  
+
   function tick() {
     ringX += (mouseX - ringX) * 0.15;
     ringY += (mouseY - ringY) * 0.15;
@@ -1818,7 +1823,7 @@ addEventListener('appinstalled', () => {
     requestAnimationFrame(tick);
   }
   tick();
-  
+
   const interactives = 'a, button, input, textarea, [data-flight], .project, .chat-launch';
   addEventListener('mouseover', e => {
     if (e.target.closest(interactives)) {
@@ -1830,14 +1835,14 @@ addEventListener('appinstalled', () => {
       document.body.classList.remove('cursor-hover');
     }
   });
-  
+
   // Global click sound effect
   addEventListener('click', e => {
     if (e.target.closest(interactives)) {
       Sfx.playClick();
     }
   });
-  
+
   // Interactive Timeline Expansion
   document.querySelectorAll('.timeline article').forEach(article => {
     article.addEventListener('click', () => {
@@ -1858,7 +1863,7 @@ addEventListener('appinstalled', () => {
   const timeline = document.querySelector('.timeline');
   const progressLine = document.querySelector('.timeline-progress-line');
   const timelineArticles = document.querySelectorAll('.timeline article');
-  
+
   function handleScroll() {
     // 1. Timeline progress and active state tracking
     if (timeline && progressLine) {
@@ -1868,7 +1873,7 @@ addEventListener('appinstalled', () => {
       const passed = Math.max(0, Math.min(timelineHeight, startActiveY - rect.top));
       const percent = (passed / timelineHeight) * 100;
       progressLine.style.height = `${percent}%`;
-      
+
       let currentActive = null;
       timelineArticles.forEach(article => {
         const artRect = article.getBoundingClientRect();
@@ -1876,7 +1881,7 @@ addEventListener('appinstalled', () => {
           currentActive = article;
         }
       });
-      
+
       timelineArticles.forEach(article => {
         if (article === currentActive) {
           article.classList.add('active-role');
@@ -1885,7 +1890,7 @@ addEventListener('appinstalled', () => {
         }
       });
     }
-    
+
     // 2. Hero 3D spaceship scroll parallax
     const canvas = document.getElementById('field');
     const hero = document.querySelector('.hero');
@@ -1894,7 +1899,7 @@ addEventListener('appinstalled', () => {
       if (docHeight > 0) {
         scrollProgress = window.scrollY / docHeight;
       }
-      
+
       if (scrollProgress > 0.82) {
         canvas.style.opacity = `${(1.0 - scrollProgress) / 0.18}`;
       } else {
@@ -1902,7 +1907,7 @@ addEventListener('appinstalled', () => {
       }
       canvas.style.transform = 'none';
     }
-    
+
     // 3. Project card & about-visual scroll parallax
     document.querySelectorAll('.project, .about-visual').forEach(el => {
       const rect = el.getBoundingClientRect();
@@ -1913,8 +1918,8 @@ addEventListener('appinstalled', () => {
       }
     });
   }
-  
-  addEventListener('scroll', handleScroll, {passive: true});
+
+  addEventListener('scroll', handleScroll, { passive: true });
   handleScroll(); // Initial run on load
 })();
 
