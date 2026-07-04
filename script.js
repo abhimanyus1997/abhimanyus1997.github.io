@@ -958,7 +958,7 @@ let apiType = 'local'; // 'proxy' | 'direct' | 'local'
 let selectedModel = '';
 let availableModels = [];
 
-const TTS_FALLBACK_URL = 'https://tts.abhimanyu.fyi/';
+const TTS_FALLBACK_URL = 'https://tts.abhimanyu.fyi/tts';
 
 const getEnvValue = (key, fallback = '') => {
   try {
