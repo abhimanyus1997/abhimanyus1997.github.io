@@ -19,6 +19,18 @@
   <link rel="apple-touch-icon" href="static/images/icon-192.png">
 </head>
 <body>
+  <!-- Mobile Auth Redirect Check -->
+  <script>
+    (function() {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const authDone = sessionStorage.getItem('auth_done');
+      const isAuthPage = window.location.pathname.includes('auth.html');
+
+      if (isMobile && !authDone && !isAuthPage) {
+        window.location.href = '/auth.html';
+      }
+    })();
+  </script>
   <div class="noise"></div>
 
   <!-- Biometric Navigation Confirmation Overlay -->

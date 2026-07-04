@@ -289,7 +289,7 @@
         /* Audio Dialog */
         .audio-dialog {
             position: fixed;
-            bottom: 20px;
+            bottom: 80px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 20;
@@ -320,6 +320,12 @@
         .audio-wave:nth-child(4) { animation-delay: 0.3s; height: 20px; }
         .audio-wave:nth-child(5) { animation-delay: 0.4s; height: 10px; }
 
+        .audio-wave.inactive {
+            animation: none;
+            height: 10px;
+            opacity: 0.3;
+        }
+
         @keyframes waveAnim {
             0%, 100% { transform: scaleY(0.5); }
             50% { transform: scaleY(1); }
@@ -330,6 +336,49 @@
             letter-spacing: 3px;
             color: var(--cyan);
             text-shadow: 0 0 8px var(--cyan);
+            text-align: center;
+        }
+
+        /* Voice Commands Panel */
+        .voice-panel {
+            position: fixed;
+            bottom: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 25;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 20px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--green);
+            min-width: 280px;
+        }
+
+        .voice-panel.active {
+            display: flex;
+        }
+
+        .voice-title {
+            font-size: 12px;
+            letter-spacing: 4px;
+            color: var(--green);
+            margin-bottom: 5px;
+        }
+
+        .voice-transcript {
+            font-size: 14px;
+            color: var(--cyan);
+            min-height: 20px;
+            text-align: center;
+        }
+
+        .voice-commands {
+            font-size: 9px;
+            color: rgba(166, 255, 47, 0.5);
+            text-align: center;
+            margin-top: 10px;
         }
 
         /* Start Button */
@@ -374,6 +423,29 @@
 
         .start-btn.hidden {
             display: none;
+        }
+
+        /* Skip Button */
+        .skip-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 30;
+            padding: 10px 20px;
+            background: transparent;
+            border: 1px solid rgba(166, 255, 47, 0.3);
+            color: rgba(166, 255, 47, 0.6);
+            font-family: inherit;
+            font-size: 11px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .skip-btn:hover {
+            border-color: var(--green);
+            color: var(--green);
+            box-shadow: 0 0 15px rgba(166, 255, 47, 0.3);
         }
 
         /* Loading Overlay */
@@ -495,6 +567,37 @@
             color: var(--cyan);
         }
 
+        /* Navigation Buttons */
+        .nav-buttons {
+            display: none;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .nav-buttons.active {
+            display: flex;
+        }
+
+        .nav-btn {
+            padding: 12px 24px;
+            background: rgba(166, 255, 47, 0.1);
+            border: 1px solid var(--green);
+            color: var(--green);
+            font-family: inherit;
+            font-size: 12px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--green);
+            color: #000;
+            box-shadow: 0 0 20px rgba(166, 255, 47, 0.4);
+        }
+
         /* Error Message */
         .error-msg {
             position: fixed;
@@ -522,6 +625,32 @@
             20%, 60% { transform: translateX(calc(-50% - 5px)); }
             40%, 80% { transform: translateX(calc(-50% + 5px)); }
         }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .scanner-frame {
+                width: 90vw;
+                height: 50vh;
+            }
+
+            .status-panel {
+                min-width: 90vw;
+                padding: 10px 15px;
+            }
+
+            .status-line {
+                font-size: 10px;
+            }
+
+            .voice-panel {
+                min-width: 90vw;
+                bottom: 130px;
+            }
+
+            .audio-dialog {
+                bottom: 60px;
+            }
+        }
     </style>
 </head>
 
@@ -529,6 +658,8 @@
     <div class="cinematic-bg"></div>
     <div class="grid-overlay"></div>
     <div class="scanlines"></div>
+
+    <button class="skip-btn" id="skipBtn">SKIP →</button>
 
     <div class="auth-container">
         <header class="auth-header">
@@ -565,8 +696,15 @@
 
         <button class="start-btn" id="startBtn">INITIALIZE SCAN</button>
 
+        <div class="nav-buttons" id="navButtons">
+            <button class="nav-btn" data-nav="projects">PROJECTS</button>
+            <button class="nav-btn" data-nav="about">ABOUT</button>
+            <button class="nav-btn" data-nav="contact">CONTACT</button>
+            <button class="nav-btn" data-nav="home">HOME</button>
+        </div>
+
         <div class="audio-dialog" id="audioDialog" style="display: none;">
-            <div class="audio-waves">
+            <div class="audio-waves" id="audioWaves">
                 <div class="audio-wave"></div>
                 <div class="audio-wave"></div>
                 <div class="audio-wave"></div>
@@ -574,6 +712,12 @@
                 <div class="audio-wave"></div>
             </div>
             <div class="audio-text" id="audioText">PROCESSING...</div>
+        </div>
+
+        <div class="voice-panel" id="voicePanel">
+            <div class="voice-title">VOICE COMMAND</div>
+            <div class="voice-transcript" id="voiceTranscript">Listening...</div>
+            <div class="voice-commands">Say: "projects", "about", "contact", or "home"</div>
         </div>
     </div>
 
@@ -594,8 +738,8 @@
                     <polyline points="4,12 9,17 20,6"></polyline>
                 </svg>
             </div>
-            <div class="success-title">ACCESS GRANTED</div>
-            <div class="success-sub">IDENTITY VERIFIED</div>
+            <div class="success-title" id="successTitle">ACCESS GRANTED</div>
+            <div class="success-sub" id="successSub">IDENTITY VERIFIED</div>
         </div>
     </div>
 
@@ -606,6 +750,7 @@
         const canvas = document.getElementById("overlay");
         const ctx = canvas.getContext("2d");
         const startBtn = document.getElementById("startBtn");
+        const skipBtn = document.getElementById("skipBtn");
         const loadingOverlay = document.getElementById("loadingOverlay");
         const loadingProgress = document.getElementById("loadingProgress");
         const loadingText = document.getElementById("loadingText");
@@ -613,20 +758,59 @@
         const identityText = document.getElementById("identityText");
         const confidenceText = document.getElementById("confidenceText");
         const audioDialog = document.getElementById("audioDialog");
+        const audioWaves = document.getElementById("audioWaves");
         const audioText = document.getElementById("audioText");
+        const voicePanel = document.getElementById("voicePanel");
+        const voiceTranscript = document.getElementById("voiceTranscript");
         const successScreen = document.getElementById("successScreen");
+        const successTitle = document.getElementById("successTitle");
+        const successSub = document.getElementById("successSub");
         const errorMsg = document.getElementById("errorMsg");
+        const navButtons = document.getElementById("navButtons");
 
         const MODEL_URL = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights";
         const REFERENCE_IMAGE = "./abhimanyu-reference.jpg";
         const MATCH_THRESHOLD = 0.55;
+        const AUDIO_BASE = "/static/audio/";
+
+        // Audio files mapping
+        const AUDIO_FILES = {
+            abhimanyu: [
+                "welcome-abhimanyu-1.wav",
+                "welcome-abhimanyu-2.wav",
+                "welcome-abhimanyu-3.wav",
+                "welcome-abhimanyu-4.wav"
+            ],
+            unknown_male: [
+                "welcome-unknown-male-1.wav",
+                "welcome-unknown-male-2.wav",
+                "welcome-unknown-male-3.wav",
+                "welcome-unknown-male-4.wav"
+            ],
+            unknown_female: [
+                "welcome-unknown-female-1.wav",
+                "welcome-unknown-female-2.wav",
+                "welcome-unknown-female-3.wav",
+                "welcome-unknown-female-4.wav"
+            ],
+            group: [
+                "welcome-group-1.wav",
+                "welcome-group-2.wav",
+                "welcome-group-3.wav"
+            ],
+            prompt: "welcome-prompt-query.wav"
+        };
 
         let faceMatcher = null;
         let audioCtx = null;
         let isScanning = false;
         let authenticated = false;
+        let recognition = null;
+        let currentUser = null;
+        let currentGender = null;
+        let faceCount = 0;
 
-        // Audio Functions
+        // ========== AUDIO FUNCTIONS ==========
         function initAudio() {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
@@ -647,6 +831,23 @@
             osc.stop(now + duration + 0.1);
         }
 
+        function playWav(file) {
+            return new Promise((resolve) => {
+                const audio = new Audio(AUDIO_BASE + file);
+                audio.play().catch(console.warn);
+                audio.onended = resolve;
+                audio.onerror = resolve;
+
+                // Visual feedback
+                audioDialog.style.display = "flex";
+                audioWaves.querySelectorAll(".audio-wave").forEach(w => w.classList.remove("inactive"));
+
+                setTimeout(() => {
+                    audioWaves.querySelectorAll(".audio-wave").forEach(w => w.classList.add("inactive"));
+                }, 500);
+            });
+        }
+
         function playScanningSound() {
             playTone(440, 0.1, "square", 0.05);
         }
@@ -661,7 +862,115 @@
             playTone(200, 0.3, "sawtooth", 0.08);
         }
 
-        // UI Functions
+        // ========== TTS ==========
+        async function speakWelcome(identity, gender, count) {
+            let audioKey = "unknown_male";
+
+            if (identity === "ABHIMANYU") {
+                audioKey = "abhimanyu";
+            } else if (count > 1) {
+                audioKey = "group";
+            } else if (gender === "female") {
+                audioKey = "unknown_female";
+            }
+
+            const files = AUDIO_FILES[audioKey];
+            const randomFile = files[Math.floor(Math.random() * files.length)];
+
+            audioText.textContent = identity === "ABHIMANYU" ? "WELCOME BACK" : "WELCOME VISITOR";
+            await playWav(randomFile);
+
+            // Play prompt for voice command
+            audioText.textContent = "AWAITING COMMAND";
+            await playWav(AUDIO_FILES.prompt);
+        }
+
+        // ========== STT (Speech Recognition) ==========
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+            if (!SpeechRecognition) {
+                console.warn("Speech Recognition not supported");
+                return null;
+            }
+
+            const rec = new SpeechRecognition();
+            rec.continuous = false;
+            rec.interimResults = true;
+            rec.lang = "en-US";
+
+            rec.onstart = () => {
+                voicePanel.classList.add("active");
+                voiceTranscript.textContent = "Listening...";
+            };
+
+            rec.onresult = (event) => {
+                const transcript = event.results[0][0].transcript.toLowerCase();
+                voiceTranscript.textContent = transcript;
+
+                if (event.results[0].isFinal) {
+                    handleVoiceCommand(transcript);
+                }
+            };
+
+            rec.onerror = (event) => {
+                console.warn("Speech error:", event.error);
+                voiceTranscript.textContent = "Not recognized. Try again.";
+            };
+
+            rec.onend = () => {
+                if (!authenticated) {
+                    // Restart listening if not navigated
+                    setTimeout(() => {
+                        if (voicePanel.classList.contains("active")) {
+                            rec.start();
+                        }
+                    }, 1000);
+                }
+            };
+
+            return rec;
+        }
+
+        function handleVoiceCommand(transcript) {
+            const commands = {
+                "projects": "/#projects",
+                "project": "/#projects",
+                "about": "/#about",
+                "about me": "/#about",
+                "contact": "/#contact",
+                "email": "/#contact",
+                "home": "/",
+                "main": "/",
+                "skip": "/",
+                "enter": "/"
+            };
+
+            for (const [cmd, path] of Object.entries(commands)) {
+                if (transcript.includes(cmd)) {
+                    navigateTo(path, cmd.toUpperCase());
+                    return;
+                }
+            }
+
+            voiceTranscript.textContent = `Unknown: "${transcript}". Say: projects, about, contact, home`;
+        }
+
+        function navigateTo(path, label) {
+            authenticated = true;
+
+            voicePanel.classList.remove("active");
+            voiceTranscript.textContent = `NAVIGATING TO ${label}...`;
+
+            playSuccessSound();
+
+            setTimeout(() => {
+                sessionStorage.setItem("auth_done", "true");
+                window.location.href = path;
+            }, 800);
+        }
+
+        // ========== UI FUNCTIONS ==========
         function showError(msg) {
             errorMsg.textContent = msg;
             errorMsg.classList.add("show");
@@ -673,31 +982,19 @@
             loadingText.textContent = text;
         }
 
-        function showAudioDialog(text) {
-            audioDialog.style.display = "flex";
-            audioText.textContent = text;
-        }
-
-        function hideAudioDialog() {
-            audioDialog.style.display = "none";
-        }
-
-        // Load Models
+        // ========== FACE DETECTION ==========
         async function loadModels() {
-            updateProgress(0, "LOADING MODELS...");
+            updateProgress(0, "LOADING NEURAL MODELS...");
             await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-            updateProgress(35, "FACE DETECTOR READY");
+            updateProgress(25, "FACE DETECTOR READY");
             await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-            updateProgress(55, "LANDMARKS READY");
+            updateProgress(50, "LANDMARKS READY");
             await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
             updateProgress(75, "RECOGNITION READY");
-            await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
-            updateProgress(90, "EXPRESSIONS READY");
             await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
             updateProgress(100, "SYSTEM READY");
         }
 
-        // Create Face Matcher
         async function createFaceMatcher() {
             try {
                 const img = await faceapi.fetchImage(REFERENCE_IMAGE);
@@ -717,7 +1014,6 @@
             return false;
         }
 
-        // Start Webcam
         async function startWebcam() {
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
@@ -732,7 +1028,6 @@
             await video.play();
         }
 
-        // Resize Canvas
         function resizeCanvas() {
             const rect = video.getBoundingClientRect();
             canvas.width = rect.width * devicePixelRatio;
@@ -740,7 +1035,6 @@
             ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
         }
 
-        // Draw Detection
         function drawDetection(box, label) {
             const w = canvas.clientWidth;
             const x = w - box.x - box.width;
@@ -757,10 +1051,8 @@
             ctx.shadowColor = color;
             ctx.shadowBlur = 15;
 
-            // Draw box
             ctx.strokeRect(x, y, bw, bh);
 
-            // Draw corners
             const c = 20;
             ctx.lineWidth = 4;
             ctx.beginPath();
@@ -770,7 +1062,6 @@
             ctx.moveTo(x + c, y + bh); ctx.lineTo(x, y + bh); ctx.lineTo(x, y + bh - c);
             ctx.stroke();
 
-            // Draw label
             ctx.fillStyle = "rgba(0,0,0,0.7)";
             ctx.fillRect(x, y - 25, bw, 25);
             ctx.fillStyle = color;
@@ -780,7 +1071,8 @@
             ctx.restore();
         }
 
-        // Detection Loop
+        let lastDetection = { identity: null, gender: null, count: 0 };
+
         async function detectLoop() {
             if (!isScanning || authenticated) return;
 
@@ -789,6 +1081,7 @@
             const detections = await faceapi
                 .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
                 .withFaceLandmarks()
+                .withAgeAndGender()
                 .withFaceDescriptors();
 
             ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
@@ -799,6 +1092,8 @@
                 confidenceText.textContent = "---";
                 playScanningSound();
             } else {
+                faceCount = detections.length;
+
                 const detection = detections[0];
                 const box = detection.detection.box;
 
@@ -819,24 +1114,15 @@
                 identityText.textContent = label;
                 confidenceText.textContent = `${confidence}% | DIST: ${distance}`;
 
+                currentUser = label;
+                currentGender = detection.gender;
+
+                // Check if identity confirmed
                 if (label === "ABHIMANYU" && parseFloat(distance) < MATCH_THRESHOLD) {
-                    // Success!
-                    authenticated = true;
-                    statusText.textContent = "VERIFIED";
-                    statusText.classList.add("success");
-                    identityText.classList.add("success");
-                    confidenceText.classList.add("success");
-
-                    playSuccessSound();
-                    showAudioDialog("IDENTITY CONFIRMED");
-
-                    setTimeout(() => {
-                        successScreen.classList.add("active");
-                        setTimeout(() => {
-                            // Redirect or callback
-                            window.location.href = "/";
-                        }, 2500);
-                    }, 1000);
+                    await handleAuthentication(label, detection.gender, faceCount);
+                } else if (label === "unknown" && confidence > 70) {
+                    // Unknown user detected with good confidence
+                    await handleAuthentication(label, detection.gender, faceCount);
                 } else {
                     playTone(800, 0.05, "square", 0.03);
                 }
@@ -845,7 +1131,47 @@
             requestAnimationFrame(detectLoop);
         }
 
-        // Start Button Handler
+        let authTriggered = false;
+
+        async function handleAuthentication(identity, gender, count) {
+            if (authTriggered) return;
+            authTriggered = true;
+            isScanning = false;
+
+            statusText.textContent = "VERIFIED";
+            statusText.classList.add("success");
+            identityText.classList.add("success");
+            confidenceText.classList.add("success");
+
+            playSuccessSound();
+            successTitle.textContent = identity === "ABHIMANYU" ? "WELCOME BACK" : "WELCOME VISITOR";
+            successSub.textContent = identity === "ABHIMANYU" ? "ABHIMANYU VERIFIED" : `${gender.toUpperCase()} DETECTED`;
+            successScreen.classList.add("active");
+
+            // Speak welcome message
+            await speakWelcome(identity, gender, count);
+
+            // Show voice panel and navigation buttons
+            voicePanel.classList.add("active");
+            navButtons.classList.add("active");
+            audioDialog.style.display = "none";
+
+            // Start listening for voice commands
+            if (recognition) {
+                recognition.start();
+            }
+        }
+
+        // ========== NAV BUTTON HANDLERS ==========
+        navButtons.querySelectorAll(".nav-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const nav = btn.dataset.nav;
+                const path = nav === "home" ? "/" : `/#${nav}`;
+                navigateTo(path, nav.toUpperCase());
+            });
+        });
+
+        // ========== START BUTTON HANDLER ==========
         startBtn.addEventListener("click", async () => {
             try {
                 startBtn.classList.add("hidden");
@@ -860,8 +1186,12 @@
                 loadingOverlay.classList.add("hidden");
                 statusText.textContent = "READY";
 
-                showAudioDialog("ALIGN YOUR FACE");
+                audioDialog.style.display = "flex";
+                audioText.textContent = "ALIGN YOUR FACE";
                 playTone(600, 0.1, "sine", 0.08);
+
+                // Initialize speech recognition
+                recognition = initSpeechRecognition();
 
                 isScanning = true;
                 detectLoop();
@@ -872,6 +1202,13 @@
                 playErrorSound();
                 showError("CAMERA ACCESS REQUIRED. Use HTTPS and allow permissions.");
             }
+        });
+
+        // ========== SKIP BUTTON HANDLER ==========
+        skipBtn.addEventListener("click", () => {
+            playTone(600, 0.1, "sine", 0.08);
+            sessionStorage.setItem("auth_done", "true");
+            window.location.href = "/";
         });
 
         window.addEventListener("resize", resizeCanvas);
