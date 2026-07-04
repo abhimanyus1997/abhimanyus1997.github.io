@@ -8,15 +8,19 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <title>BIOMETRIC AUTHENTICATION</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 
     <style>
         :root {
-            --green: #a6ff2f;
-            --green2: #38ff7a;
-            --cyan: #00f0ff;
-            --red: #ff4444;
-            --dark: #020702;
+            --ink: #171915;
+            --paper: #f2f0e9;
+            --acid: #c9ff36;
+            --muted: #73766c;
+            --mono: 'DM Mono', monospace;
         }
 
         * {
@@ -28,11 +32,21 @@
         body {
             min-height: 100vh;
             min-height: 100dvh;
-            background: #000;
-            color: var(--green);
-            font-family: "Courier New", monospace;
+            background: var(--ink);
+            color: var(--paper);
+            font-family: Manrope, sans-serif;
             overflow: hidden;
             position: relative;
+        }
+
+        /* Noise Overlay */
+        .noise {
+            position: fixed;
+            inset: 0;
+            opacity: 0.04;
+            pointer-events: none;
+            z-index: 1;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         }
 
         /* Cinematic Background */
@@ -41,38 +55,26 @@
             inset: 0;
             z-index: 0;
             background:
-                radial-gradient(ellipse at 50% 0%, rgba(166, 255, 47, 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 100%, rgba(0, 240, 255, 0.1) 0%, transparent 50%),
-                #000;
+                radial-gradient(ellipse at 50% 0%, rgba(201, 255, 54, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 100%, rgba(201, 255, 54, 0.05) 0%, transparent 50%),
+                var(--ink);
         }
 
+        /* Grid Overlay */
         .grid-overlay {
             position: fixed;
             inset: 0;
             z-index: 1;
             background-image:
-                linear-gradient(rgba(166, 255, 47, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(166, 255, 47, 0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
-            animation: gridPulse 4s ease-in-out infinite;
+                linear-gradient(rgba(201, 255, 54, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(201, 255, 54, 0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            animation: gridPulse 5s ease-in-out infinite;
         }
 
         @keyframes gridPulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
-        }
-
-        /* Scanlines */
-        .scanlines {
-            position: fixed;
-            inset: 0;
-            z-index: 2;
-            pointer-events: none;
-            background: linear-gradient(
-                rgba(166, 255, 47, 0.02) 50%,
-                rgba(0, 0, 0, 0.1) 50%
-            );
-            background-size: 100% 3px;
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
         }
 
         /* Main Container */
@@ -86,13 +88,13 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 6vw;
         }
 
-        /* Header */
+        /* Header - Intelligence in Motion Style */
         .auth-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
             animation: fadeInDown 0.8s ease;
         }
 
@@ -107,51 +109,71 @@
             }
         }
 
-        .auth-header h1 {
-            font-size: clamp(18px, 5vw, 28px);
-            letter-spacing: 8px;
-            text-transform: uppercase;
-            text-shadow: 0 0 20px var(--green), 0 0 40px var(--green);
-            margin-bottom: 10px;
+        .auth-eyebrow {
+            font: 10px var(--mono);
+            letter-spacing: 0.18em;
+            color: var(--acid);
+            margin-bottom: 20px;
         }
 
-        .auth-header .subtitle {
-            font-size: clamp(10px, 3vw, 12px);
-            letter-spacing: 4px;
-            color: var(--cyan);
-            text-shadow: 0 0 10px var(--cyan);
+        .auth-title {
+            font: 600 clamp(32px, 8vw, 72px) / 0.88 Manrope, sans-serif;
+            letter-spacing: -0.06em;
+            color: var(--paper);
+            margin-bottom: 12px;
+        }
+
+        .auth-subtitle {
+            font: 9px var(--mono);
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .auth-subtitle i {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--acid);
+            box-shadow: 0 0 18px var(--acid);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
         }
 
         /* Scanner Frame */
         .scanner-frame {
             position: relative;
-            width: min(320px, 85vw);
-            height: min(400px, 60vh);
-            border: 2px solid var(--green);
-            background: rgba(0, 0, 0, 0.8);
-            box-shadow:
-                0 0 30px rgba(166, 255, 47, 0.3),
-                inset 0 0 50px rgba(166, 255, 47, 0.1);
+            width: min(320px, 80vw);
+            aspect-ratio: 3/4;
+            background: rgba(23, 25, 21, 0.8);
+            border: 1px solid rgba(201, 255, 54, 0.2);
             overflow: hidden;
+            box-shadow: 0 0 60px rgba(201, 255, 54, 0.1);
         }
 
         /* Corner Brackets */
         .corner {
             position: absolute;
-            width: 30px;
-            height: 30px;
-            border-color: var(--green);
+            width: 24px;
+            height: 24px;
+            border-color: var(--acid);
             border-style: solid;
             z-index: 15;
-            filter: drop-shadow(0 0 8px var(--green));
         }
 
-        .corner-tl { top: 10px; left: 10px; border-width: 3px 0 0 3px; }
-        .corner-tr { top: 10px; right: 10px; border-width: 3px 3px 0 0; }
-        .corner-bl { bottom: 10px; left: 10px; border-width: 0 0 3px 3px; }
-        .corner-br { bottom: 10px; right: 10px; border-width: 0 3px 3px 0; }
+        .corner-tl { top: 12px; left: 12px; border-width: 2px 0 0 2px; }
+        .corner-tr { top: 12px; right: 12px; border-width: 2px 2px 0 0; }
+        .corner-bl { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; }
+        .corner-br { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; }
 
-        /* Video & Canvas */
         video, canvas {
             position: absolute;
             inset: 0;
@@ -162,7 +184,7 @@
         }
 
         video {
-            filter: brightness(0.7) contrast(1.2) saturate(0.9);
+            filter: brightness(0.75) contrast(1.15);
         }
 
         canvas {
@@ -174,21 +196,20 @@
             position: absolute;
             left: 0;
             right: 0;
-            height: 100px;
-            top: -120px;
+            height: 80px;
+            top: -100px;
             z-index: 6;
             pointer-events: none;
             background: linear-gradient(to bottom,
                 transparent,
-                rgba(166, 255, 47, 0.4),
-                rgba(166, 255, 47, 0.1),
+                rgba(201, 255, 54, 0.25),
                 transparent
             );
             animation: sweepMove 2.5s linear infinite;
         }
 
         @keyframes sweepMove {
-            from { top: -120px; opacity: 0; }
+            from { top: -100px; opacity: 0; }
             10% { opacity: 1; }
             90% { opacity: 1; }
             to { top: 100%; opacity: 0; }
@@ -200,9 +221,9 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 180px;
-            height: 220px;
-            border: 2px dashed rgba(166, 255, 47, 0.4);
+            width: 140px;
+            height: 180px;
+            border: 2px dashed rgba(201, 255, 54, 0.3);
             border-radius: 50%;
             z-index: 4;
             pointer-events: none;
@@ -210,29 +231,28 @@
         }
 
         @keyframes guidePulse {
-            0%, 100% { border-color: rgba(166, 255, 47, 0.4); }
-            50% { border-color: rgba(166, 255, 47, 0.8); }
+            0%, 100% { border-color: rgba(201, 255, 54, 0.3); }
+            50% { border-color: rgba(201, 255, 54, 0.6); }
         }
 
         .face-guide::after {
             content: "ALIGN FACE";
             position: absolute;
-            bottom: -30px;
+            bottom: -28px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 10px;
-            letter-spacing: 3px;
-            color: var(--green);
+            font: 9px var(--mono);
+            letter-spacing: 0.15em;
+            color: var(--acid);
             white-space: nowrap;
         }
 
         /* Status Panel */
         .status-panel {
-            margin-top: 25px;
-            padding: 15px 25px;
-            background: rgba(166, 255, 47, 0.08);
-            border: 1px solid rgba(166, 255, 47, 0.3);
-            text-align: center;
+            margin-top: 30px;
+            padding: 18px 24px;
+            background: rgba(23, 25, 21, 0.6);
+            border: 1px solid rgba(201, 255, 54, 0.15);
             min-width: 280px;
             animation: fadeInUp 0.8s ease 0.3s both;
         }
@@ -252,10 +272,10 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 0;
-            font-size: 11px;
-            letter-spacing: 2px;
-            border-bottom: 1px solid rgba(166, 255, 47, 0.1);
+            padding: 10px 0;
+            font: 10px var(--mono);
+            letter-spacing: 0.08em;
+            border-bottom: 1px solid rgba(201, 255, 54, 0.08);
         }
 
         .status-line:last-child {
@@ -263,22 +283,17 @@
         }
 
         .status-label {
-            color: rgba(166, 255, 47, 0.6);
+            color: var(--muted);
         }
 
         .status-value {
-            color: var(--green);
-            text-shadow: 0 0 8px var(--green);
+            color: var(--acid);
         }
 
         .status-value.success {
-            color: var(--green2);
+            color: var(--acid);
+            text-shadow: 0 0 10px var(--acid);
             animation: successFlash 0.5s ease 3;
-        }
-
-        .status-value.error {
-            color: var(--red);
-            text-shadow: 0 0 8px var(--red);
         }
 
         @keyframes successFlash {
@@ -293,36 +308,35 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 20;
-            display: flex;
+            display: none;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
-            animation: fadeInUp 0.8s ease 0.6s both;
+            gap: 12px;
         }
 
         .audio-waves {
             display: flex;
             align-items: center;
-            gap: 4px;
-            height: 30px;
+            gap: 3px;
+            height: 24px;
         }
 
         .audio-wave {
-            width: 3px;
-            background: var(--green);
-            border-radius: 2px;
+            width: 2px;
+            background: var(--acid);
+            border-radius: 1px;
             animation: waveAnim 1s ease-in-out infinite;
         }
 
-        .audio-wave:nth-child(1) { animation-delay: 0s; height: 10px; }
-        .audio-wave:nth-child(2) { animation-delay: 0.1s; height: 20px; }
-        .audio-wave:nth-child(3) { animation-delay: 0.2s; height: 30px; }
-        .audio-wave:nth-child(4) { animation-delay: 0.3s; height: 20px; }
-        .audio-wave:nth-child(5) { animation-delay: 0.4s; height: 10px; }
+        .audio-wave:nth-child(1) { animation-delay: 0s; height: 8px; }
+        .audio-wave:nth-child(2) { animation-delay: 0.1s; height: 16px; }
+        .audio-wave:nth-child(3) { animation-delay: 0.2s; height: 24px; }
+        .audio-wave:nth-child(4) { animation-delay: 0.3s; height: 16px; }
+        .audio-wave:nth-child(5) { animation-delay: 0.4s; height: 8px; }
 
         .audio-wave.inactive {
             animation: none;
-            height: 10px;
+            height: 8px;
             opacity: 0.3;
         }
 
@@ -332,17 +346,15 @@
         }
 
         .audio-text {
-            font-size: 10px;
-            letter-spacing: 3px;
-            color: var(--cyan);
-            text-shadow: 0 0 8px var(--cyan);
-            text-align: center;
+            font: 10px var(--mono);
+            letter-spacing: 0.15em;
+            color: var(--acid);
         }
 
-        /* Voice Commands Panel */
+        /* Voice Panel */
         .voice-panel {
             position: fixed;
-            bottom: 150px;
+            bottom: 140px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 25;
@@ -350,9 +362,9 @@
             flex-direction: column;
             align-items: center;
             gap: 10px;
-            padding: 15px 20px;
-            background: rgba(0, 0, 0, 0.9);
-            border: 1px solid var(--green);
+            padding: 16px 24px;
+            background: rgba(23, 25, 21, 0.95);
+            border: 1px solid rgba(201, 255, 54, 0.2);
             min-width: 280px;
         }
 
@@ -361,60 +373,42 @@
         }
 
         .voice-title {
-            font-size: 12px;
-            letter-spacing: 4px;
-            color: var(--green);
-            margin-bottom: 5px;
+            font: 10px var(--mono);
+            letter-spacing: 0.18em;
+            color: var(--acid);
         }
 
         .voice-transcript {
             font-size: 14px;
-            color: var(--cyan);
+            color: var(--paper);
             min-height: 20px;
             text-align: center;
         }
 
         .voice-commands {
-            font-size: 9px;
-            color: rgba(166, 255, 47, 0.5);
+            font: 9px var(--mono);
+            letter-spacing: 0.08em;
+            color: var(--muted);
             text-align: center;
             margin-top: 10px;
         }
 
         /* Start Button */
         .start-btn {
-            margin-top: 25px;
-            padding: 16px 40px;
-            background: transparent;
-            border: 2px solid var(--green);
-            color: var(--green);
-            font-family: inherit;
-            font-size: 14px;
-            letter-spacing: 4px;
+            margin-top: 30px;
+            padding: 14px 36px;
+            background: var(--acid);
+            border: none;
+            color: var(--ink);
+            font: 12px var(--mono);
+            letter-spacing: 0.12em;
             cursor: pointer;
-            position: relative;
-            overflow: hidden;
             transition: all 0.3s ease;
             animation: fadeInUp 0.8s ease 0.5s both;
         }
 
-        .start-btn::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: var(--green);
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-            z-index: -1;
-        }
-
-        .start-btn:hover::before {
-            transform: translateX(0);
-        }
-
         .start-btn:hover {
-            color: #000;
-            box-shadow: 0 0 30px rgba(166, 255, 47, 0.5);
+            box-shadow: 0 0 30px rgba(201, 255, 54, 0.4);
         }
 
         .start-btn:active {
@@ -431,21 +425,19 @@
             top: 20px;
             right: 20px;
             z-index: 30;
-            padding: 10px 20px;
+            padding: 10px 18px;
             background: transparent;
-            border: 1px solid rgba(166, 255, 47, 0.3);
-            color: rgba(166, 255, 47, 0.6);
-            font-family: inherit;
-            font-size: 11px;
-            letter-spacing: 2px;
+            border: 1px solid rgba(201, 255, 54, 0.2);
+            color: var(--muted);
+            font: 10px var(--mono);
+            letter-spacing: 0.1em;
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
         .skip-btn:hover {
-            border-color: var(--green);
-            color: var(--green);
-            box-shadow: 0 0 15px rgba(166, 255, 47, 0.3);
+            border-color: var(--acid);
+            color: var(--acid);
         }
 
         /* Loading Overlay */
@@ -455,7 +447,7 @@
             z-index: 50;
             display: grid;
             place-items: center;
-            background: rgba(0, 0, 0, 0.95);
+            background: var(--ink);
             transition: 0.4s ease;
         }
 
@@ -466,38 +458,37 @@
 
         .loading-box {
             width: min(300px, 85vw);
-            padding: 25px;
-            border: 1px solid rgba(166, 255, 47, 0.4);
-            background: rgba(4, 20, 8, 0.9);
+            padding: 24px;
+            border: 1px solid rgba(201, 255, 54, 0.2);
+            background: rgba(23, 25, 21, 0.9);
             text-align: center;
         }
 
         .loading-title {
-            font-size: 14px;
-            letter-spacing: 4px;
+            font: 11px var(--mono);
+            letter-spacing: 0.18em;
+            color: var(--acid);
             margin-bottom: 20px;
-            text-shadow: 0 0 10px var(--green);
         }
 
         .loading-bar {
-            height: 4px;
-            background: rgba(166, 255, 47, 0.2);
-            border-radius: 2px;
+            height: 3px;
+            background: rgba(201, 255, 54, 0.15);
             overflow: hidden;
         }
 
         .loading-progress {
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, var(--green), var(--cyan));
+            background: var(--acid);
             transition: width 0.3s ease;
         }
 
         .loading-text {
-            margin-top: 15px;
-            font-size: 10px;
-            letter-spacing: 2px;
-            color: var(--cyan);
+            margin-top: 14px;
+            font: 9px var(--mono);
+            letter-spacing: 0.1em;
+            color: var(--muted);
         }
 
         /* Success Screen */
@@ -507,7 +498,7 @@
             z-index: 100;
             display: grid;
             place-items: center;
-            background: rgba(0, 0, 0, 0.98);
+            background: var(--ink);
             opacity: 0;
             visibility: hidden;
             transition: 0.5s ease;
@@ -526,7 +517,7 @@
         @keyframes successZoom {
             from {
                 opacity: 0;
-                transform: scale(0.8);
+                transform: scale(0.85);
             }
             to {
                 opacity: 1;
@@ -535,43 +526,42 @@
         }
 
         .success-icon {
-            width: 80px;
-            height: 80px;
-            border: 3px solid var(--green2);
+            width: 70px;
+            height: 70px;
+            border: 2px solid var(--acid);
             border-radius: 50%;
             display: grid;
             place-items: center;
             margin: 0 auto 20px;
-            box-shadow: 0 0 30px var(--green2);
+            box-shadow: 0 0 30px rgba(201, 255, 54, 0.3);
         }
 
         .success-icon svg {
-            width: 40px;
-            height: 40px;
-            stroke: var(--green2);
-            stroke-width: 3;
+            width: 32px;
+            height: 32px;
+            stroke: var(--acid);
+            stroke-width: 2.5;
             fill: none;
         }
 
         .success-title {
-            font-size: 24px;
-            letter-spacing: 6px;
-            color: var(--green2);
-            text-shadow: 0 0 20px var(--green2);
-            margin-bottom: 10px;
+            font: 600 clamp(24px, 5vw, 36px) / 1 Manrope, sans-serif;
+            letter-spacing: -0.04em;
+            color: var(--paper);
+            margin-bottom: 8px;
         }
 
         .success-sub {
-            font-size: 12px;
-            letter-spacing: 3px;
-            color: var(--cyan);
+            font: 10px var(--mono);
+            letter-spacing: 0.12em;
+            color: var(--acid);
         }
 
         /* Navigation Buttons */
         .nav-buttons {
             display: none;
-            gap: 15px;
-            margin-top: 20px;
+            gap: 12px;
+            margin-top: 24px;
             flex-wrap: wrap;
             justify-content: center;
         }
@@ -581,21 +571,20 @@
         }
 
         .nav-btn {
-            padding: 12px 24px;
-            background: rgba(166, 255, 47, 0.1);
-            border: 1px solid var(--green);
-            color: var(--green);
-            font-family: inherit;
-            font-size: 12px;
-            letter-spacing: 2px;
+            padding: 12px 22px;
+            background: transparent;
+            border: 1px solid rgba(201, 255, 54, 0.3);
+            color: var(--paper);
+            font: 10px var(--mono);
+            letter-spacing: 0.1em;
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
         .nav-btn:hover {
-            background: var(--green);
-            color: #000;
-            box-shadow: 0 0 20px rgba(166, 255, 47, 0.4);
+            background: var(--acid);
+            color: var(--ink);
+            border-color: var(--acid);
         }
 
         /* Error Message */
@@ -606,11 +595,11 @@
             transform: translateX(-50%);
             z-index: 60;
             padding: 12px 20px;
-            background: rgba(255, 68, 68, 0.2);
-            border: 1px solid var(--red);
-            color: var(--red);
-            font-size: 11px;
-            letter-spacing: 2px;
+            background: rgba(154, 90, 73, 0.2);
+            border: 1px solid #9a5a49;
+            color: #d4a29a;
+            font: 10px var(--mono);
+            letter-spacing: 0.08em;
             text-align: center;
             display: none;
         }
@@ -628,43 +617,47 @@
 
         /* Responsive */
         @media (max-width: 480px) {
+            .auth-container {
+                padding: 8vw 5vw;
+            }
+
             .scanner-frame {
-                width: 90vw;
-                height: 50vh;
+                width: 75vw;
             }
 
             .status-panel {
-                min-width: 90vw;
-                padding: 10px 15px;
-            }
-
-            .status-line {
-                font-size: 10px;
+                min-width: 85vw;
+                padding: 14px 18px;
             }
 
             .voice-panel {
-                min-width: 90vw;
-                bottom: 130px;
+                min-width: 85vw;
+                bottom: 120px;
             }
 
             .audio-dialog {
                 bottom: 60px;
+            }
+
+            .nav-btn {
+                padding: 10px 18px;
             }
         }
     </style>
 </head>
 
 <body>
+    <div class="noise"></div>
     <div class="cinematic-bg"></div>
     <div class="grid-overlay"></div>
-    <div class="scanlines"></div>
 
     <button class="skip-btn" id="skipBtn">SKIP →</button>
 
     <div class="auth-container">
         <header class="auth-header">
-            <h1>Biometric Auth</h1>
-            <div class="subtitle">NEURAL FACE RECOGNITION SYSTEM</div>
+            <p class="auth-eyebrow">AS / BIOMETRIC AUTH</p>
+            <h1 class="auth-title">INTELLIGENCE<br>IN MOTION</h1>
+            <span class="auth-subtitle"><i></i> NEURAL CORRELATION ENGINE</span>
         </header>
 
         <div class="scanner-frame">
@@ -703,7 +696,7 @@
             <button class="nav-btn" data-nav="home">HOME</button>
         </div>
 
-        <div class="audio-dialog" id="audioDialog" style="display: none;">
+        <div class="audio-dialog" id="audioDialog">
             <div class="audio-waves" id="audioWaves">
                 <div class="audio-wave"></div>
                 <div class="audio-wave"></div>
@@ -769,35 +762,15 @@
         const navButtons = document.getElementById("navButtons");
 
         const MODEL_URL = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights";
-        const REFERENCE_IMAGE = "./abhimanyu-reference.jpg";
+        const REFERENCE_IMAGE = "/abhimanyu-reference.jpg";
         const MATCH_THRESHOLD = 0.55;
         const AUDIO_BASE = "/static/audio/";
 
-        // Audio files mapping
         const AUDIO_FILES = {
-            abhimanyu: [
-                "welcome-abhimanyu-1.wav",
-                "welcome-abhimanyu-2.wav",
-                "welcome-abhimanyu-3.wav",
-                "welcome-abhimanyu-4.wav"
-            ],
-            unknown_male: [
-                "welcome-unknown-male-1.wav",
-                "welcome-unknown-male-2.wav",
-                "welcome-unknown-male-3.wav",
-                "welcome-unknown-male-4.wav"
-            ],
-            unknown_female: [
-                "welcome-unknown-female-1.wav",
-                "welcome-unknown-female-2.wav",
-                "welcome-unknown-female-3.wav",
-                "welcome-unknown-female-4.wav"
-            ],
-            group: [
-                "welcome-group-1.wav",
-                "welcome-group-2.wav",
-                "welcome-group-3.wav"
-            ],
+            abhimanyu: ["welcome-abhimanyu-1.wav", "welcome-abhimanyu-2.wav", "welcome-abhimanyu-3.wav", "welcome-abhimanyu-4.wav"],
+            unknown_male: ["welcome-unknown-male-1.wav", "welcome-unknown-male-2.wav", "welcome-unknown-male-3.wav", "welcome-unknown-male-4.wav"],
+            unknown_female: ["welcome-unknown-female-1.wav", "welcome-unknown-female-2.wav", "welcome-unknown-female-3.wav", "welcome-unknown-female-4.wav"],
+            group: ["welcome-group-1.wav", "welcome-group-2.wav", "welcome-group-3.wav"],
             prompt: "welcome-prompt-query.wav"
         };
 
@@ -806,11 +779,8 @@
         let isScanning = false;
         let authenticated = false;
         let recognition = null;
-        let currentUser = null;
-        let currentGender = null;
-        let faceCount = 0;
+        let authTriggered = false;
 
-        // ========== AUDIO FUNCTIONS ==========
         function initAudio() {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
@@ -837,19 +807,10 @@
                 audio.play().catch(console.warn);
                 audio.onended = resolve;
                 audio.onerror = resolve;
-
-                // Visual feedback
                 audioDialog.style.display = "flex";
                 audioWaves.querySelectorAll(".audio-wave").forEach(w => w.classList.remove("inactive"));
-
-                setTimeout(() => {
-                    audioWaves.querySelectorAll(".audio-wave").forEach(w => w.classList.add("inactive"));
-                }, 500);
+                setTimeout(() => audioWaves.querySelectorAll(".audio-wave").forEach(w => w.classList.add("inactive")), 500);
             });
-        }
-
-        function playScanningSound() {
-            playTone(440, 0.1, "square", 0.05);
         }
 
         function playSuccessSound() {
@@ -858,119 +819,57 @@
             setTimeout(() => playTone(784, 0.25, "sine", 0.12), 300);
         }
 
-        function playErrorSound() {
-            playTone(200, 0.3, "sawtooth", 0.08);
-        }
-
-        // ========== TTS ==========
         async function speakWelcome(identity, gender, count) {
             let audioKey = "unknown_male";
-
-            if (identity === "ABHIMANYU") {
-                audioKey = "abhimanyu";
-            } else if (count > 1) {
-                audioKey = "group";
-            } else if (gender === "female") {
-                audioKey = "unknown_female";
-            }
+            if (identity === "ABHIMANYU") audioKey = "abhimanyu";
+            else if (count > 1) audioKey = "group";
+            else if (gender === "female") audioKey = "unknown_female";
 
             const files = AUDIO_FILES[audioKey];
             const randomFile = files[Math.floor(Math.random() * files.length)];
-
             audioText.textContent = identity === "ABHIMANYU" ? "WELCOME BACK" : "WELCOME VISITOR";
             await playWav(randomFile);
-
-            // Play prompt for voice command
             audioText.textContent = "AWAITING COMMAND";
             await playWav(AUDIO_FILES.prompt);
         }
 
-        // ========== STT (Speech Recognition) ==========
         function initSpeechRecognition() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-            if (!SpeechRecognition) {
-                console.warn("Speech Recognition not supported");
-                return null;
-            }
+            if (!SpeechRecognition) { console.warn("Speech Recognition not supported"); return null; }
 
             const rec = new SpeechRecognition();
             rec.continuous = false;
             rec.interimResults = true;
             rec.lang = "en-US";
 
-            rec.onstart = () => {
-                voicePanel.classList.add("active");
-                voiceTranscript.textContent = "Listening...";
-            };
-
+            rec.onstart = () => { voicePanel.classList.add("active"); voiceTranscript.textContent = "Listening..."; };
             rec.onresult = (event) => {
                 const transcript = event.results[0][0].transcript.toLowerCase();
                 voiceTranscript.textContent = transcript;
-
-                if (event.results[0].isFinal) {
-                    handleVoiceCommand(transcript);
-                }
+                if (event.results[0].isFinal) handleVoiceCommand(transcript);
             };
-
-            rec.onerror = (event) => {
-                console.warn("Speech error:", event.error);
-                voiceTranscript.textContent = "Not recognized. Try again.";
-            };
-
-            rec.onend = () => {
-                if (!authenticated) {
-                    // Restart listening if not navigated
-                    setTimeout(() => {
-                        if (voicePanel.classList.contains("active")) {
-                            rec.start();
-                        }
-                    }, 1000);
-                }
-            };
+            rec.onerror = () => { voiceTranscript.textContent = "Not recognized. Try again."; };
+            rec.onend = () => { if (!authenticated) setTimeout(() => { if (voicePanel.classList.contains("active")) rec.start(); }, 1000); };
 
             return rec;
         }
 
         function handleVoiceCommand(transcript) {
-            const commands = {
-                "projects": "/#projects",
-                "project": "/#projects",
-                "about": "/#about",
-                "about me": "/#about",
-                "contact": "/#contact",
-                "email": "/#contact",
-                "home": "/",
-                "main": "/",
-                "skip": "/",
-                "enter": "/"
-            };
-
+            const commands = { "projects": "/#projects", "project": "/#projects", "about": "/#about", "about me": "/#about", "contact": "/#contact", "email": "/#contact", "home": "/", "main": "/", "skip": "/", "enter": "/" };
             for (const [cmd, path] of Object.entries(commands)) {
-                if (transcript.includes(cmd)) {
-                    navigateTo(path, cmd.toUpperCase());
-                    return;
-                }
+                if (transcript.includes(cmd)) { navigateTo(path, cmd.toUpperCase()); return; }
             }
-
             voiceTranscript.textContent = `Unknown: "${transcript}". Say: projects, about, contact, home`;
         }
 
         function navigateTo(path, label) {
             authenticated = true;
-
             voicePanel.classList.remove("active");
             voiceTranscript.textContent = `NAVIGATING TO ${label}...`;
-
             playSuccessSound();
-
-            setTimeout(() => {
-                sessionStorage.setItem("auth_done", "true");
-                window.location.href = path;
-            }, 800);
+            setTimeout(() => { sessionStorage.setItem("auth_done", "true"); window.location.href = path; }, 800);
         }
 
-        // ========== UI FUNCTIONS ==========
         function showError(msg) {
             errorMsg.textContent = msg;
             errorMsg.classList.add("show");
@@ -982,7 +881,6 @@
             loadingText.textContent = text;
         }
 
-        // ========== FACE DETECTION ==========
         async function loadModels() {
             updateProgress(0, "LOADING NEURAL MODELS...");
             await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
@@ -998,31 +896,18 @@
         async function createFaceMatcher() {
             try {
                 const img = await faceapi.fetchImage(REFERENCE_IMAGE);
-                const detection = await faceapi
-                    .detectSingleFace(img, new faceapi.TinyFaceDetectorOptions())
-                    .withFaceLandmarks()
-                    .withFaceDescriptor();
-
+                const detection = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
                 if (detection) {
                     const labeled = new faceapi.LabeledFaceDescriptors("ABHIMANYU", [detection.descriptor]);
                     faceMatcher = new faceapi.FaceMatcher(labeled, MATCH_THRESHOLD);
                     return true;
                 }
-            } catch (e) {
-                console.warn("Reference not found:", e);
-            }
+            } catch (e) { console.warn("Reference not found:", e); }
             return false;
         }
 
         async function startWebcam() {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: "user",
-                    width: { ideal: 640 },
-                    height: { ideal: 480 }
-                },
-                audio: false
-            });
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
             video.srcObject = stream;
             await new Promise(r => video.onloadedmetadata = r);
             await video.play();
@@ -1041,62 +926,38 @@
             const y = box.y;
             const bw = box.width;
             const bh = box.height;
-
             const isMatch = label === "ABHIMANYU";
-            const color = isMatch ? "#38ff7a" : "#ffcc33";
+            const color = isMatch ? "#c9ff36" : "#ffcc33";
 
             ctx.save();
             ctx.strokeStyle = color;
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 2;
             ctx.shadowColor = color;
-            ctx.shadowBlur = 15;
-
+            ctx.shadowBlur = 12;
             ctx.strokeRect(x, y, bw, bh);
 
-            const c = 20;
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(x, y + c); ctx.lineTo(x, y); ctx.lineTo(x + c, y);
-            ctx.moveTo(x + bw - c, y); ctx.lineTo(x + bw, y); ctx.lineTo(x + bw, y + c);
-            ctx.moveTo(x + bw, y + bh - c); ctx.lineTo(x + bw, y + bh); ctx.lineTo(x + bw - c, y + bh);
-            ctx.moveTo(x + c, y + bh); ctx.lineTo(x, y + bh); ctx.lineTo(x, y + bh - c);
-            ctx.stroke();
-
-            ctx.fillStyle = "rgba(0,0,0,0.7)";
-            ctx.fillRect(x, y - 25, bw, 25);
+            ctx.fillStyle = "rgba(23,25,21,0.85)";
+            ctx.fillRect(x, y - 22, bw, 22);
             ctx.fillStyle = color;
-            ctx.font = "bold 12px Courier New";
-            ctx.fillText(isMatch ? "IDENTIFIED" : "SCANNING...", x + 10, y - 8);
-
+            ctx.font = "10px 'DM Mono', monospace";
+            ctx.fillText(isMatch ? "IDENTIFIED" : "SCANNING...", x + 8, y - 7);
             ctx.restore();
         }
 
-        let lastDetection = { identity: null, gender: null, count: 0 };
-
         async function detectLoop() {
             if (!isScanning || authenticated) return;
-
             resizeCanvas();
 
-            const detections = await faceapi
-                .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
-                .withFaceLandmarks()
-                .withAgeAndGender()
-                .withFaceDescriptors();
-
+            const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withAgeAndGender().withFaceDescriptors();
             ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
             if (detections.length === 0) {
                 statusText.textContent = "NO FACE DETECTED";
                 identityText.textContent = "---";
                 confidenceText.textContent = "---";
-                playScanningSound();
             } else {
-                faceCount = detections.length;
-
                 const detection = detections[0];
                 const box = detection.detection.box;
-
                 let label = "UNKNOWN";
                 let distance = "---";
 
@@ -1107,31 +968,20 @@
                 }
 
                 drawDetection(box, label);
-
                 const confidence = Math.round(detection.detection.score * 100);
-
                 statusText.textContent = "SCANNING...";
                 identityText.textContent = label;
                 confidenceText.textContent = `${confidence}% | DIST: ${distance}`;
 
-                currentUser = label;
-                currentGender = detection.gender;
-
-                // Check if identity confirmed
                 if (label === "ABHIMANYU" && parseFloat(distance) < MATCH_THRESHOLD) {
-                    await handleAuthentication(label, detection.gender, faceCount);
+                    await handleAuthentication(label, detection.gender, detections.length);
                 } else if (label === "unknown" && confidence > 70) {
-                    // Unknown user detected with good confidence
-                    await handleAuthentication(label, detection.gender, faceCount);
-                } else {
-                    playTone(800, 0.05, "square", 0.03);
+                    await handleAuthentication(label, detection.gender, detections.length);
                 }
             }
 
             requestAnimationFrame(detectLoop);
         }
-
-        let authTriggered = false;
 
         async function handleAuthentication(identity, gender, count) {
             if (authTriggered) return;
@@ -1148,21 +998,14 @@
             successSub.textContent = identity === "ABHIMANYU" ? "ABHIMANYU VERIFIED" : `${gender.toUpperCase()} DETECTED`;
             successScreen.classList.add("active");
 
-            // Speak welcome message
             await speakWelcome(identity, gender, count);
-
-            // Show voice panel and navigation buttons
             voicePanel.classList.add("active");
             navButtons.classList.add("active");
             audioDialog.style.display = "none";
 
-            // Start listening for voice commands
-            if (recognition) {
-                recognition.start();
-            }
+            if (recognition) recognition.start();
         }
 
-        // ========== NAV BUTTON HANDLERS ==========
         navButtons.querySelectorAll(".nav-btn").forEach(btn => {
             btn.addEventListener("click", () => {
                 const nav = btn.dataset.nav;
@@ -1171,7 +1014,6 @@
             });
         });
 
-        // ========== START BUTTON HANDLER ==========
         startBtn.addEventListener("click", async () => {
             try {
                 startBtn.classList.add("hidden");
@@ -1185,26 +1027,21 @@
 
                 loadingOverlay.classList.add("hidden");
                 statusText.textContent = "READY";
-
                 audioDialog.style.display = "flex";
                 audioText.textContent = "ALIGN YOUR FACE";
                 playTone(600, 0.1, "sine", 0.08);
 
-                // Initialize speech recognition
                 recognition = initSpeechRecognition();
-
                 isScanning = true;
                 detectLoop();
             } catch (e) {
                 console.error(e);
                 loadingOverlay.classList.add("hidden");
                 startBtn.classList.remove("hidden");
-                playErrorSound();
                 showError("CAMERA ACCESS REQUIRED. Use HTTPS and allow permissions.");
             }
         });
 
-        // ========== SKIP BUTTON HANDLER ==========
         skipBtn.addEventListener("click", () => {
             playTone(600, 0.1, "sine", 0.08);
             sessionStorage.setItem("auth_done", "true");
