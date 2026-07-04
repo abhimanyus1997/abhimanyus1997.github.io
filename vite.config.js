@@ -10,7 +10,8 @@ export default defineConfig({
       input: {
         main: './index.html',
         scanProfile: './scan-profile.html',
-        faceScan: './face-scan.html'
+        faceScan: './face-scan.html',
+        auth: './auth/index.html'
       }
     }
   },
