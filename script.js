@@ -6,6 +6,10 @@ let entryStart = 0;
 let modelLoaded = false;
 let modelFailed = false;
 let modelLoadPercent = 0;
+let scrollProgress = 0;
+let smoothScroll = 0;
+let keyLight = null;
+let rimLight = null;
 
 // Web Audio API Sound Synthesizer (100% offline, zero-latency, synthesized dynamically)
 const Sfx = {
@@ -280,8 +284,8 @@ async function initThree(){
     let gearAction=null;let gearOpen=true;
     const shadow=new THREE.Mesh(new THREE.CircleGeometry(1,48),new THREE.MeshBasicMaterial({color:0x11130f,transparent:true,opacity:.13,depthWrite:false}));shadow.scale.set(2.2,.42,1);shadow.rotation.x=-Math.PI/2;scene.add(shadow);
     scene.add(new THREE.HemisphereLight(0xdde7f0,0x171915,1.15));
-    const key=new THREE.DirectionalLight(0xffffff,2.6);key.position.set(-4,5,6);scene.add(key);
-    const rim=new THREE.PointLight(0xffa31a,5.5,12);rim.position.set(3,-1,3);scene.add(rim);
+    keyLight=new THREE.DirectionalLight(0xffffff,2.6);keyLight.position.set(-4,5,6);scene.add(keyLight);
+    rimLight=new THREE.PointLight(0xffa31a,5.5,12);rimLight.position.set(3,-1,3);scene.add(rimLight);
     const carStatus=document.querySelector('#car-status');
     new THREE.GLTFLoader().load('/static/models/hovercar.glb',gltf=>{
       const car=gltf.scene;const box=new THREE.Box3().setFromObject(car),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
@@ -305,9 +309,13 @@ async function initThree(){
           gearAction = mixer.clipAction(gearClip);
           gearAction.setLoop(THREE.LoopOnce);
           gearAction.clampWhenFinished = true;
-          gearAction.time = gearClip.duration;
-          gearAction.paused = true;
+          // Start at end (gear retracted/closed) then play forward to open it on load
+          gearAction.reset();
+          gearAction.time = 0;
+          gearAction.timeScale = 1;
+          gearAction.paused = false;
           gearAction.play();
+          gearOpen = true;
         }
       }
       modelLoaded = true;
@@ -319,7 +327,7 @@ async function initThree(){
       const controls = document.getElementById('flight-controls');
       if (controls) controls.style.display = 'none';
     });
-    let mx=0,my=0,manualYaw=0,manualPitch=0,manualRoll=0,userScale=1.1,autoRotate=true,boostUntil=0,scrollProgress=0,smoothScroll=0;
+    let mx=0,my=0,manualYaw=0,manualPitch=0,manualRoll=0,userScale=1.1,autoRotate=true,boostUntil=0;
     addEventListener('pointermove',e=>{mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5},{passive:true});
     const controlDock=document.querySelector('#flight-controls'),sizeControl=document.querySelector('#flight-size');
     if (controlDock) {
@@ -505,40 +513,61 @@ async function initThree(){
       const baseY=isMobile?-1.6:-.02;
       const baseScale=isMobile?0.82:0.78;
       
-      // Smoothly interpolate scroll progress for organic flight motions
-      smoothScroll = THREE.MathUtils.lerp(smoothScroll, scrollProgress, 0.05);
+      // ──────────────────────────────────────────────
+      // Scroll-driven 3D flight path (realistic)
+      // s=0 (hero) → land approach at s=1 (footer)
+      // ──────────────────────────────────────────────
+      smoothScroll = THREE.MathUtils.lerp(smoothScroll, scrollProgress, 0.04);
+      const sp = smoothScroll; // shorthand
 
-      // Flight path offsets based on scroll progress (swooping, dipping, banking, scaling)
-      const flyX = Math.sin(smoothScroll * Math.PI) * -3.8 - smoothScroll * 1.5;
-      const flyY = -smoothScroll * 5.2 + Math.sin(smoothScroll * Math.PI * 1.5) * 1.0;
-      const flyZ = smoothScroll * 2.8;
-      const flyScale = 1.0 - smoothScroll * 0.35 + Math.sin(smoothScroll * Math.PI) * 0.25;
+      // X: gentle sinusoidal sweep left→right across scene
+      const flyX = Math.sin(sp * Math.PI * 1.2) * (isMobile ? 1.2 : 2.8);
+      // Y: descend slowly mid-scroll, then pull back up for landing
+      const flyY = -sp * (isMobile ? 1.2 : 2.2) + Math.sin(sp * Math.PI * 0.8) * 0.5;
+      // Z: push INTO background mid-scroll (sp≈0.5), return closer at footer (sp≈1)
+      const flyZ = Math.sin(sp * Math.PI) * (isMobile ? -0.8 : -2.2);
+      // Scale: shrink slightly as it recedes, grow back at landing
+      const flyScale = 1.0 - Math.sin(sp * Math.PI) * (isMobile ? 0.12 : 0.22);
 
-      const flyPitch = Math.sin(smoothScroll * Math.PI * 2) * -0.38 + (smoothScroll > 0.1 && smoothScroll < 0.9 ? -0.15 : 0);
-      const flyYaw = smoothScroll * Math.PI * 1.5 - Math.sin(smoothScroll * Math.PI) * 0.8;
-      const flyRoll = Math.sin(smoothScroll * Math.PI * 2) * 0.55;
+      // Banking & pitch feel realistic during turns
+      const flyYaw   = Math.sin(sp * Math.PI * 1.2) * 0.55;
+      const flyRoll  = -Math.cos(sp * Math.PI * 1.2) * 0.22 + 0.22;
+      const flyPitch = -sp * 0.25 + Math.sin(sp * Math.PI * 0.8) * 0.15;
 
-      const x = baseX + (1 - ease) * (isMobile ? 0 : 4.8) + mx * .24 + (isMobile ? flyX * 0.5 : flyX);
-      const y = baseY + (1 - ease) * (isMobile ? 0 : .65) - my * .12 + Math.sin(boost * Math.PI) * .28 + (isMobile ? flyY * 0.5 : flyY);
+      // Lighting: key sweeps across, rim shifts warm (takeoff) → cool (cruise) → warm (land)
+      if (keyLight) {
+        keyLight.position.x = THREE.MathUtils.lerp(-4, 2, sp);
+        keyLight.intensity = THREE.MathUtils.lerp(2.6, 1.8, sp);
+      }
+      if (rimLight) {
+        // warm orange on ground → cyan-blue mid-flight → amber on landing
+        const hue = sp < 0.5 ? THREE.MathUtils.lerp(0.08, 0.55, sp * 2) : THREE.MathUtils.lerp(0.55, 0.1, (sp - 0.5) * 2);
+        rimLight.color.setHSL(hue, 1.0, 0.55);
+        rimLight.intensity = 5.5 + Math.sin(sp * Math.PI) * 3.5;
+      }
+
+      const x = baseX + (1 - ease) * (isMobile ? 0 : 4.8) + mx * .24 + flyX;
+      const y = baseY + (1 - ease) * (isMobile ? 0 : .65) - my * .12 + Math.sin(boost * Math.PI) * .28 + flyY;
       const z = -.2 + (1 - ease) * (isMobile ? 0 : -1.5) + boost * .45 + flyZ;
       const s = baseScale * userScale * (.35 + .65 * ease) * (1 + Math.sin(boost * Math.PI) * .08) * flyScale;
-      
+
       carRig.position.set(x, y + (!reduce ? Math.sin(t * 1.2) * .055 : 0), z);
       carRig.scale.setScalar(s);
       carRig.rotation.y = THREE.MathUtils.lerp(carRig.rotation.y, manualYaw + mx * .35 + (autoRotate ? t * .5 : 0) + (1 - ease) * -1.15 + flyYaw, .08);
       carRig.rotation.z = THREE.MathUtils.lerp(carRig.rotation.z, manualRoll + (x - previousX) * -.18 + Math.sin(t * .7) * .014 + flyRoll, .08);
-      carRig.rotation.x = THREE.MathUtils.lerp(carRig.rotation.x, manualPitch - my * .14 - boost * .12 + (1 - ease) * .12 + flyPitch, .08);
+      carRig.rotation.x = THREE.MathUtils.lerp(carRig.rotation.x, manualPitch - my * .14 - boost * .12 + (1 - ease) * 0.12 + flyPitch, .08);
       previousX = x;
-      
-      // Automatic Landing Gear based on boost state
+
+      // Landing gear: open when boosting, close at footer (sp > 0.88)
       if (gearAction) {
-        if (boost > 0.45 && gearOpen) {
+        const nearFooter = sp > 0.88;
+        if ((boost > 0.45 || nearFooter) && gearOpen) {
           gearOpen = false;
           gearAction.paused = false;
           gearAction.timeScale = -1; // Retract
           gearAction.play();
-          Sfx.playGear(false);
-        } else if (boost === 0 && !gearOpen) {
+          if (!nearFooter) Sfx.playGear(false);
+        } else if (boost === 0 && !nearFooter && !gearOpen) {
           gearOpen = true;
           gearAction.paused = false;
           gearAction.timeScale = 1; // Extend
@@ -783,8 +812,80 @@ const voiceTranscript = document.querySelector('#voice-transcript');
 const switchToTextBtn = document.querySelector('#switch-to-text');
 const toggleVoiceModeBtn = document.querySelector('#toggle-voice-mode');
 
-let isVoiceModeActive = true; // Voice Mode by default!
+let isVoiceModeActive = false; // Start text mode; user can switch to voice
 let autoListenAfterSpeak = true;
+let autoSpeakResponse = false;
+let recognition = null;
+let voiceListeningActive = false;
+
+function startVoiceListening() {
+  if (!ready || voiceListeningActive) return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    if (voiceStatus) voiceStatus.textContent = 'Speech recognition not supported';
+    return;
+  }
+  if (recognition) { try { recognition.stop(); } catch(e) {} }
+  recognition = new SR();
+  recognition.lang = 'en-US';
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+  recognition.continuous = false;
+  voiceListeningActive = true;
+  if (centralMicBtn) { centralMicBtn.classList.add('listening'); centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = '🎙️'; centralMicBtn.disabled = false; }
+  if (voiceStatus) voiceStatus.textContent = 'Listening...';
+  if (voiceTranscript) voiceTranscript.textContent = '...';
+  recognition.onresult = (e) => {
+    let interim = ''; let final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) { final += e.results[i][0].transcript; }
+      else { interim += e.results[i][0].transcript; }
+    }
+    if (voiceTranscript) voiceTranscript.textContent = final || interim || '...';
+    if (final) {
+      input.value = final;
+    }
+  };
+  recognition.onend = () => {
+    voiceListeningActive = false;
+    if (centralMicBtn) centralMicBtn.classList.remove('listening');
+    const spoken = input.value.trim();
+    if (spoken && ready) {
+      autoSpeakResponse = true;
+      form.requestSubmit();
+    } else if (isVoiceModeActive) {
+      if (voiceStatus) voiceStatus.textContent = 'Tap mic to speak';
+    }
+  };
+  recognition.onerror = (e) => {
+    voiceListeningActive = false;
+    if (centralMicBtn) centralMicBtn.classList.remove('listening');
+    if (voiceStatus) voiceStatus.textContent = e.error === 'not-allowed' ? 'Mic permission denied' : 'Try again';
+    console.warn('SpeechRecognition error', e.error);
+  };
+  try { recognition.start(); } catch(e) { voiceListeningActive = false; }
+}
+
+function stopVoiceListening() {
+  voiceListeningActive = false;
+  if (recognition) { try { recognition.stop(); } catch(e) {} recognition = null; }
+  if (centralMicBtn) { centralMicBtn.classList.remove('listening'); centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = '🎙️'; }
+  if (voiceStatus) voiceStatus.textContent = 'Voice paused';
+}
+
+function updateModeUI() {
+  if (isVoiceModeActive) {
+    if (voiceModeContainer) voiceModeContainer.style.display = 'flex';
+    if (messages) messages.style.display = 'none';
+    if (document.querySelector('.suggestions')) document.querySelector('.suggestions').style.display = 'none';
+    if (toggleVoiceModeBtn) { toggleVoiceModeBtn.title = 'Switch to keyboard mode'; toggleVoiceModeBtn.innerHTML = '⌨️'; }
+  } else {
+    if (voiceModeContainer) voiceModeContainer.style.display = 'none';
+    if (messages) messages.style.display = 'flex';
+    if (document.querySelector('.suggestions')) document.querySelector('.suggestions').style.display = 'flex';
+    if (toggleVoiceModeBtn) { toggleVoiceModeBtn.title = 'Switch to voice mode'; toggleVoiceModeBtn.innerHTML = '🎙️'; }
+  }
+}
 
 let engine=null,ready=false,busy=false,pendingPrompt='';
 let apiType = 'local'; // 'proxy' | 'direct' | 'local'
@@ -936,6 +1037,44 @@ function toggle(open){
 launch.addEventListener('click',()=>toggle(true));
 close.addEventListener('click',()=>toggle(false));
 addEventListener('keydown',e=>{if(e.key==='Escape')toggle(false)});
+
+// Voice mode toggle header button
+if (toggleVoiceModeBtn) {
+  toggleVoiceModeBtn.addEventListener('click', () => {
+    isVoiceModeActive = !isVoiceModeActive;
+    updateModeUI();
+    if (isVoiceModeActive && ready) {
+      setTimeout(startVoiceListening, 250);
+    } else {
+      stopVoiceListening();
+    }
+  });
+}
+
+// Central mic button
+if (centralMicBtn) {
+  centralMicBtn.addEventListener('click', () => {
+    if (voiceListeningActive) {
+      stopVoiceListening();
+    } else if (currentAudio) {
+      currentAudio.pause(); currentAudio = null;
+      centralMicBtn.classList.remove('speaking');
+      centralMicBtn.innerHTML = '🎙️';
+    } else {
+      startVoiceListening();
+    }
+  });
+}
+
+// Switch to text mode button
+if (switchToTextBtn) {
+  switchToTextBtn.addEventListener('click', () => {
+    isVoiceModeActive = false;
+    stopVoiceListening();
+    updateModeUI();
+    input.focus();
+  });
+}
 
 let currentAudio = null;
 async function speakText(text, buttonElement) {
@@ -1360,173 +1499,12 @@ addEventListener('appinstalled', () => {
   handleScroll(); // Initial run on load
 })();
 
-// Speech-to-Speech Mode Controller Logic
-let autoSpeakResponse = false;
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-let voiceRecognition = null;
-let isVoiceListening = false;
-
-function updateModeUI() {
-  if (isVoiceModeActive) {
-    if (voiceModeContainer) voiceModeContainer.style.display = 'flex';
-    if (messages) messages.style.display = 'none';
-    if (suggestions) suggestions.style.display = 'none';
-    if (form) form.style.display = 'none';
-    if (toggleVoiceModeBtn) {
-      toggleVoiceModeBtn.innerHTML = '⌨️';
-      toggleVoiceModeBtn.title = 'Switch to Keyboard Mode';
-    }
-  } else {
-    if (voiceModeContainer) voiceModeContainer.style.display = 'none';
-    if (messages) messages.style.display = 'flex';
-    if (suggestions) suggestions.style.display = 'flex';
-    if (form) form.style.display = 'grid';
-    if (toggleVoiceModeBtn) {
-      toggleVoiceModeBtn.innerHTML = '🎙️';
-      toggleVoiceModeBtn.title = 'Switch to Voice Mode';
-    }
-    stopVoiceListening();
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio = null;
-    }
-  }
-}
-
-function startVoiceListening() {
-  if (!voiceRecognition || isVoiceListening) return;
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-  }
-  try {
-    voiceRecognition.start();
-  } catch (e) {
-    console.error('Failed to start speech recognition:', e);
-  }
-}
-
-function stopVoiceListening() {
-  if (voiceRecognition && isVoiceListening) {
-    voiceRecognition.stop();
-  }
-}
-
-(function() {
-  if (SpeechRecognition) {
-    voiceRecognition = new SpeechRecognition();
-    voiceRecognition.continuous = false; // VAD: stop on pause
-    voiceRecognition.interimResults = true; // live feedback
-    voiceRecognition.lang = 'en-US';
-
-    voiceRecognition.onstart = () => {
-      isVoiceListening = true;
-      if (centralMicBtn) {
-        centralMicBtn.classList.add('listening');
-        centralMicBtn.classList.remove('speaking');
-        centralMicBtn.innerHTML = '🛑';
-      }
-      if (voiceStatus) voiceStatus.textContent = 'Listening...';
-    };
-
-    voiceRecognition.onend = () => {
-      isVoiceListening = false;
-      if (centralMicBtn) {
-        centralMicBtn.classList.remove('listening');
-        if (!centralMicBtn.classList.contains('speaking')) {
-          centralMicBtn.innerHTML = '🎙️';
-        }
-      }
-      if (voiceStatus && !currentAudio) voiceStatus.textContent = 'Tap to Talk';
-    };
-
-    voiceRecognition.onresult = (event) => {
-      let interimTranscript = '';
-      let finalTranscript = '';
-
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        } else {
-          interimTranscript += event.results[i][0].transcript;
-        }
-      }
-
-      const activeTranscript = finalTranscript || interimTranscript;
-      if (voiceTranscript) {
-        voiceTranscript.textContent = `"${activeTranscript}"`;
-      }
-
-      if (finalTranscript) {
-        input.value = finalTranscript;
-        autoSpeakResponse = true;
-        voiceRecognition.stop();
-        form.requestSubmit();
-        if (voiceStatus) voiceStatus.textContent = 'Thinking...';
-      }
-    };
-
-    voiceRecognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
-      isVoiceListening = false;
-      if (centralMicBtn) {
-        centralMicBtn.classList.remove('listening');
-        centralMicBtn.innerHTML = '🎙️';
-      }
-      if (voiceStatus) voiceStatus.textContent = 'Tap to Talk';
-    };
-
-    // Standard input bar micro mic button listener
-    if (micBtn) {
-      micBtn.addEventListener('click', () => {
-        isVoiceModeActive = true;
-        updateModeUI();
-        startVoiceListening();
-      });
-    }
-
-    // Central voice mode button
-    if (centralMicBtn) {
-      centralMicBtn.addEventListener('click', () => {
-        if (isVoiceListening) {
-          stopVoiceListening();
-        } else if (currentAudio) {
-          currentAudio.pause();
-          currentAudio = null;
-          if (centralMicBtn) {
-            centralMicBtn.classList.remove('speaking');
-            centralMicBtn.innerHTML = '🎙️';
-          }
-          if (voiceStatus) voiceStatus.textContent = 'Tap to Talk';
-        } else {
-          startVoiceListening();
-        }
-      });
-    }
-
-    // Mode toggles
-    if (toggleVoiceModeBtn) {
-      toggleVoiceModeBtn.addEventListener('click', () => {
-        isVoiceModeActive = !isVoiceModeActive;
-        updateModeUI();
-        if (isVoiceModeActive && ready) {
-          startVoiceListening();
-        }
-      });
-    }
-
-    if (switchToTextBtn) {
-      switchToTextBtn.addEventListener('click', () => {
-        isVoiceModeActive = false;
-        updateModeUI();
-      });
-    }
-
-  } else {
-    // Web Speech not supported
-    if (toggleVoiceModeBtn) toggleVoiceModeBtn.style.display = 'none';
-    if (micBtn) micBtn.style.display = 'none';
-    isVoiceModeActive = false;
+// micBtn in the text bar also starts voice mode
+if (micBtn) {
+  micBtn.addEventListener('click', () => {
+    isVoiceModeActive = true;
     updateModeUI();
-  }
-})();
+    startVoiceListening();
+  });
+}
+

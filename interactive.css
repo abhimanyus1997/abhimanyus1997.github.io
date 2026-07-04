@@ -1,7 +1,7 @@
 .chat-launch{position:fixed;right:24px;bottom:22px;z-index:20;border:0;background:var(--ink);color:#fff;padding:15px 18px;display:flex;align-items:center;gap:11px;font:10px var(--mono);letter-spacing:.06em;cursor:pointer;box-shadow:0 12px 40px rgba(0,0,0,.16)}
 .hero{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr)}.hero-copy,.visual{min-width:0}.visual{margin-right:0}
 .model-status{position:absolute;left:20px;bottom:24px;font:8px var(--mono);letter-spacing:.08em;color:var(--muted);display:flex;align-items:center;gap:8px;transition:opacity .4s}.model-status i{width:5px;height:5px;background:#90b900;border-radius:50%;box-shadow:0 0 0 4px rgba(144,185,0,.13);animation:model-pulse 1s infinite}.model-status.ready{opacity:0}.model-status.error{color:#9a5a49}.model-status.error i{background:#9a5a49;animation:none}.orb-copy{z-index:2;mix-blend-mode:multiply}.orb-copy b{opacity:.12}.orb-copy small{background:rgba(242,240,233,.78);padding:4px 7px}@keyframes model-pulse{50%{opacity:.25;transform:scale(.6)}}
-.flight-canvas{position:fixed;inset:0;width:100vw;height:100vh;z-index:4;pointer-events:none}.section,.metrics,footer{position:relative}.dark{z-index:1}.hero-copy{z-index:5}.visual-label,.model-status,.orb-copy{z-index:5}
+.flight-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}.section,.metrics,footer{position:relative}.dark{z-index:1}.hero-copy{z-index:5}.visual-label,.model-status,.orb-copy{z-index:5}
 .flight-controls {
   position: absolute;
   left: 22px;
