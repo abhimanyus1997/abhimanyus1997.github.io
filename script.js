@@ -755,7 +755,7 @@ fetch('/static/images/pilot_sync.svg')
 
 
 
-const launch=document.querySelector('#chat-launch'),panel=document.querySelector('#chat-panel'),close=document.querySelector('#chat-close'),start=document.querySelector('#start-ai'),statusEl=document.querySelector('#model-status'),progressEl=document.querySelector('#model-progress'),gate=document.querySelector('#model-gate'),form=document.querySelector('#chat-form'),input=document.querySelector('#chat-input'),send=form.querySelector('button'),messages=document.querySelector('#chat-messages'),suggestions=document.querySelector('#suggestions');
+const launch=document.querySelector('#chat-launch'),panel=document.querySelector('#chat-panel'),close=document.querySelector('#chat-close'),start=document.querySelector('#start-ai'),statusEl=document.querySelector('#model-status'),progressEl=document.querySelector('#model-progress'),gate=document.querySelector('#model-gate'),form=document.querySelector('#chat-form'),input=document.querySelector('#chat-input'),send=form.querySelector('button'),messages=document.querySelector('#chat-messages'),suggestions=document.querySelector('#suggestions'),micBtn=document.querySelector('#mic-btn');
 const modeLabel = document.querySelector('#chat-mode-label');
 const modelSelect = document.querySelector('#model-select');
 const chatNote = document.querySelector('#chat-note');
@@ -828,6 +828,7 @@ function setupCloudAI(labelName) {
   if (gate) gate.style.display = 'none';
   input.disabled = false;
   send.disabled = false;
+  if (micBtn) micBtn.disabled = false;
 
   if (modelSelect && availableModels.length > 0) {
     modelSelect.innerHTML = '';
@@ -872,74 +873,61 @@ function toggle(open){
 launch.addEventListener('click',()=>toggle(true));
 close.addEventListener('click',()=>toggle(false));
 addEventListener('keydown',e=>{if(e.key==='Escape')toggle(false)});
-let currentAudio = null;
+let currentUtterance = null;
 async function speakText(text, buttonElement) {
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
+  if (window.speechSynthesis.speaking) {
+    window.speechSynthesis.cancel();
+    if (currentUtterance) {
+      currentUtterance = null;
+      buttonElement.innerHTML = '🔊';
+      return;
+    }
   }
   
   buttonElement.innerHTML = '⏳';
   buttonElement.disabled = true;
 
   try {
-    let response;
-    try {
-      response = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text })
-      });
-    } catch (e) {
-      console.warn('Backend TTS proxy failed, trying direct...', e);
-    }
-
-    if (!response || !response.ok) {
-      const params = new URLSearchParams();
-      params.append('text', text);
-      
-      response = await fetch('http://13.126.102.204:5555/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString()
-      });
-    }
-
-    if (!response.ok) {
-      throw new Error(`TTS request failed with status ${response.status}`);
-    }
-
-    const blob = await response.blob();
-    const audioUrl = URL.createObjectURL(blob);
-    currentAudio = new Audio(audioUrl);
+    const cleanText = text.replace(/[*_`#\-]/g, '').trim();
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    const voices = window.speechSynthesis.getVoices();
+    const englishVoice = voices.find(v => v.lang.includes('en-US') && v.name.includes('Google')) ||
+                         voices.find(v => v.lang.includes('en')) ||
+                         voices[0];
+    if (englishVoice) utterance.voice = englishVoice;
+    utterance.rate = 1.05;
     
-    buttonElement.innerHTML = '🛑';
-    buttonElement.disabled = false;
+    currentUtterance = utterance;
 
-    currentAudio.addEventListener('ended', () => {
-      buttonElement.innerHTML = '🔊';
-      currentAudio = null;
-      buttonElement.onclick = () => speakText(text, buttonElement);
-    });
-
-    buttonElement.onclick = () => {
-      if (currentAudio) {
-        currentAudio.pause();
-        currentAudio = null;
+    utterance.onstart = () => {
+      buttonElement.innerHTML = '🛑';
+      buttonElement.disabled = false;
+      buttonElement.onclick = () => {
+        window.speechSynthesis.cancel();
         buttonElement.innerHTML = '🔊';
         buttonElement.onclick = () => speakText(text, buttonElement);
-      }
+      };
     };
 
-    await currentAudio.play();
-  } catch (error) {
-    console.error('TTS error:', error);
-    buttonElement.innerHTML = '❌';
-    setTimeout(() => {
+    utterance.onend = () => {
       buttonElement.innerHTML = '🔊';
-      buttonElement.disabled = false;
+      currentUtterance = null;
       buttonElement.onclick = () => speakText(text, buttonElement);
-    }, 2000);
+    };
+
+    utterance.onerror = (e) => {
+      console.warn('SpeechSynthesis error:', e);
+      buttonElement.innerHTML = '🔊';
+      currentUtterance = null;
+      buttonElement.onclick = () => speakText(text, buttonElement);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  } catch (error) {
+    console.error('SpeechSynthesis failed:', error);
+    buttonElement.innerHTML = '🔊';
+    buttonElement.disabled = false;
+    buttonElement.onclick = () => speakText(text, buttonElement);
   }
 }
 
@@ -968,14 +956,14 @@ async function loadAI(){
   try{
     const webllm=await import('https://esm.run/@mlc-ai/web-llm@0.2.84');
     engine=await webllm.CreateMLCEngine('SmolLM2-360M-Instruct-q4f16_1-MLC',{initProgressCallback:p=>{const pct=Math.round((p.progress||0)*100);progressEl.style.width=`${pct}%`;statusEl.textContent=`${p.text||'LOADING MODEL'} · ${pct}%`}});
-    ready=true;busy=false;gate.style.display='none';input.disabled=false;send.disabled=false;addMessage('I’m ready. What would you like to know?');input.focus();
+    ready=true;busy=false;gate.style.display='none';input.disabled=false;send.disabled=false;if(micBtn)micBtn.disabled=false;addMessage('I’m ready. What would you like to know?');input.focus();
     if(pendingPrompt){input.value=pendingPrompt;pendingPrompt='';form.requestSubmit()}
   }catch(err){busy=false;start.disabled=false;statusEl.textContent='MODEL COULD NOT LOAD · TRY AGAIN';addMessage('The local model could not start. Check WebGPU support and available device memory, then try again.');console.error(err)}
 }
 start.addEventListener('click',loadAI);
 suggestions.addEventListener('click',e=>{if(e.target.tagName!=='BUTTON')return;if(!ready){pendingPrompt=e.target.textContent;if(apiType==='local'){loadAI()}else{initAI()}}else{input.value=e.target.textContent;form.requestSubmit()}});
 form.addEventListener('submit',async e=>{
-  e.preventDefault();const text=input.value.trim();if(!text||!ready||busy)return;input.value='';addMessage(text,'user');history.push({role:'user',content:text});busy=true;input.disabled=true;send.disabled=true;
+  e.preventDefault();const text=input.value.trim();if(!text||!ready||busy)return;input.value='';addMessage(text,'user');history.push({role:'user',content:text});busy=true;input.disabled=true;send.disabled=true;if(micBtn)micBtn.disabled=true;
   
   const typingRow = addTypingIndicator();
   let out = null;
@@ -1041,6 +1029,10 @@ form.addEventListener('submit',async e=>{
       if (typingRow.parentNode) typingRow.remove();
       if (!out) out = addMessage(answer || 'No response.');
       history.push({role:'assistant',content:answer});
+      if (autoSpeakResponse) {
+        autoSpeakResponse = false;
+        speakBrowserTTS(answer);
+      }
     } catch(err) {
       if (typingRow.parentNode) typingRow.remove();
       if (!out) out = addMessage('');
@@ -1053,7 +1045,7 @@ form.addEventListener('submit',async e=>{
       if (modelSelect) modelSelect.style.display = 'none';
       if (gate) gate.style.display = 'block';
     } finally {
-      busy=false;input.disabled=false;send.disabled=false;input.focus();
+      busy=false;input.disabled=false;send.disabled=false;if(micBtn)micBtn.disabled=false;input.focus();
     }
   } else {
     try{
@@ -1074,6 +1066,10 @@ form.addEventListener('submit',async e=>{
       if (typingRow.parentNode) typingRow.remove();
       if (!out) out = addMessage(answer || 'No response.');
       history.push({role:'assistant',content:answer});
+      if (autoSpeakResponse) {
+        autoSpeakResponse = false;
+        speakBrowserTTS(answer);
+      }
     }
     catch(err){
       if (typingRow.parentNode) typingRow.remove();
@@ -1081,7 +1077,7 @@ form.addEventListener('submit',async e=>{
       out.textContent='I hit a local inference error. Please try once more.';
       console.error(err);
     }
-    finally{busy=false;input.disabled=false;send.disabled=false;input.focus()}
+    finally{busy=false;input.disabled=false;send.disabled=false;if(micBtn)micBtn.disabled=false;input.focus()}
   }
 });
 
@@ -1253,4 +1249,74 @@ addEventListener('appinstalled', () => {
   
   addEventListener('scroll', handleScroll, {passive: true});
   handleScroll(); // Initial run on load
+})();
+
+// Browser-Inbuilt Speech-to-Speech Integration
+let autoSpeakResponse = false;
+
+function speakBrowserTTS(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const cleanText = text.replace(/[*_`#\-]/g, '').trim();
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  const voices = window.speechSynthesis.getVoices();
+  const englishVoice = voices.find(v => v.lang.includes('en-US') && v.name.includes('Google')) ||
+                       voices.find(v => v.lang.includes('en')) ||
+                       voices[0];
+  if (englishVoice) utterance.voice = englishVoice;
+  utterance.rate = 1.05;
+  window.speechSynthesis.speak(utterance);
+}
+
+(function() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognition = null;
+  let isListening = false;
+
+  if (SpeechRecognition && micBtn) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      isListening = true;
+      micBtn.classList.add('recording');
+      micBtn.innerHTML = '🛑';
+      input.placeholder = 'Listening...';
+    };
+
+    recognition.onend = () => {
+      isListening = false;
+      micBtn.classList.remove('recording');
+      micBtn.innerHTML = '🎙️';
+      input.placeholder = 'Ask about my work…';
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      input.value = transcript;
+      autoSpeakResponse = true;
+      form.requestSubmit();
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      isListening = false;
+      micBtn.classList.remove('recording');
+      micBtn.innerHTML = '🎙️';
+      input.placeholder = 'Ask about my work…';
+    };
+
+    micBtn.addEventListener('click', () => {
+      if (isListening) {
+        recognition.stop();
+      } else {
+        window.speechSynthesis.cancel();
+        recognition.start();
+      }
+    });
+  } else if (micBtn) {
+    micBtn.style.display = 'none';
+  }
 })();
