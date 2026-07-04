@@ -9,8 +9,11 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="interactive.css">
   <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="static/images/logo.svg">
+  <link rel="shortcut icon" href="static/images/logo.svg">
   <meta name="theme-color" content="#171915">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="static/images/icon-192.png">
 </head>
@@ -269,7 +272,8 @@
         </div>
       </div>
       <select id="model-select" class="model-select" style="background:var(--ink);color:var(--acid);border:1px solid var(--acid);font-family:'DM Mono',monospace;font-size:10px;padding:2px 4px;border-radius:2px;outline:none;cursor:pointer;margin-left:auto;margin-right:10px;display:none;"></select>
-      <button id="toggle-voice-mode" class="header-mode-btn" aria-label="Toggle voice mode" style="background:none;border:none;color:var(--acid);cursor:pointer;margin-left:auto;margin-right:12px;opacity:0.85;transition:opacity 0.2s;display:flex;align-items:center;padding:4px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg></button>
+      <button id="clear-chat" class="header-clear-btn" aria-label="Clear chat" title="Clear chat history" style="background:none;border:none;color:var(--muted);cursor:pointer;opacity:0.6;transition:opacity 0.2s;display:flex;align-items:center;padding:4px;margin-right:8px;"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+      <button id="toggle-voice-mode" class="header-mode-btn" aria-label="Toggle voice mode" style="background:none;border:none;color:var(--acid);cursor:pointer;opacity:0.85;transition:opacity 0.2s;display:flex;align-items:center;padding:4px;"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg></button>
       <button id="chat-close" aria-label="Close assistant">×</button>
     </div>
     <div class="voice-mode-container" id="voice-mode-container">

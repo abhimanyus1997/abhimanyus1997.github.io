@@ -798,7 +798,7 @@ fetch('/static/images/pilot_sync.svg')
 
 
 
-const launch=document.querySelector('#chat-launch'),panel=document.querySelector('#chat-panel'),close=document.querySelector('#chat-close'),start=document.querySelector('#start-ai'),statusEl=document.querySelector('#model-status'),progressEl=document.querySelector('#model-progress'),gate=document.querySelector('#model-gate'),form=document.querySelector('#chat-form'),input=document.querySelector('#chat-input'),send=form.querySelector('button'),messages=document.querySelector('#chat-messages'),suggestions=document.querySelector('#suggestions'),micBtn=document.querySelector('#mic-btn');
+const launch=document.querySelector('#chat-launch'),panel=document.querySelector('#chat-panel'),close=document.querySelector('#chat-close'),clearBtn=document.querySelector('#clear-chat'),start=document.querySelector('#start-ai'),statusEl=document.querySelector('#model-status'),progressEl=document.querySelector('#model-progress'),gate=document.querySelector('#model-gate'),form=document.querySelector('#chat-form'),input=document.querySelector('#chat-input'),send=form.querySelector('button'),messages=document.querySelector('#chat-messages'),suggestions=document.querySelector('#suggestions'),micBtn=document.querySelector('#mic-btn');
 const modeLabel = document.querySelector('#chat-mode-label');
 const modelSelect = document.querySelector('#model-select');
 const chatNote = document.querySelector('#chat-note');
@@ -898,6 +898,22 @@ const apiKey = import.meta.env.VITE_LITELLM_API_KEY || '';
 // TTS Direct API Configuration (from curl command)
 const TTS_DIRECT_URL = 'http://13.126.102.204:5555/tts';
 
+
+function typeOutAnimation(element, text) {
+  if (!element || !text) return;
+  element.textContent = '';
+  const chars = text.split('');
+  let i = 0;
+  const interval = setInterval(() => {
+    if (i < chars.length) {
+      element.textContent += chars[i];
+      i++;
+    } else {
+      clearInterval(interval);
+    }
+  }, 30); // 30ms delay between characters
+}
+
 const systemPrompt = `You are the concise portfolio assistant for ${profile.name}. Use only these facts.
 Title: ${profile.title}
 Location: ${profile.location}
@@ -927,10 +943,12 @@ async function initAI() {
   busy = true;
   if (modeLabel) modeLabel.textContent = 'CONNECTING AI...';
 
-  // 1. Try Backend API Proxy
+  // 1. Try Backend API Proxy (no auth needed for proxy)
   try {
     const res = await fetch('/api/models');
-    if (res.ok) {
+    if (res.status === 401) {
+      console.warn('Proxy returned 401, trying direct API...');
+    } else if (res.ok) {
       const data = await res.json();
       if (data.data && data.data.length > 0) {
         apiType = 'proxy';
@@ -940,16 +958,16 @@ async function initAI() {
       }
     }
   } catch (e) {
-    console.warn('Backend proxy models API failed/unavailable. Trying direct LiteLLM...', e);
+    console.warn('Backend proxy models API failed:', e.message);
   }
 
-  // 2. Try direct LiteLLM API
+  // 2. Try direct LiteLLM API (may have auth)
   try {
-    const res = await fetch(`${baseUrl}/v1/models`, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`
-      }
-    });
+    const headers = { 'Content-Type': 'application/json' };
+    if (apiKey) {
+      headers['Authorization'] = `Bearer ${apiKey}`;
+    }
+    const res = await fetch(`${baseUrl}/v1/models`, { headers });
     if (res.ok) {
       const data = await res.json();
       if (data.data && data.data.length > 0) {
@@ -958,9 +976,11 @@ async function initAI() {
         setupCloudAI('LITELLM CLOUD AI');
         return;
       }
+    } else if (res.status === 401 && !apiKey) {
+      console.warn('Direct API requires auth key. Set VITE_LITELLM_API_KEY env var.');
     }
   } catch (e) {
-    console.warn('Direct LiteLLM connection failed/blocked:', e);
+    console.warn('Direct LiteLLM connection failed:', e.message);
   }
 
   // 3. Fallback to Local WebGPU AI
@@ -1039,6 +1059,11 @@ function toggle(open){
 
 launch.addEventListener('click',()=>toggle(true));
 close.addEventListener('click',()=>toggle(false));
+if (clearBtn) {
+  clearBtn.addEventListener('click', clearChat);
+  clearBtn.addEventListener('mouseenter', () => { clearBtn.style.opacity = '1'; clearBtn.style.color = 'var(--acid)'; });
+  clearBtn.addEventListener('mouseleave', () => { clearBtn.style.opacity = '0.6'; clearBtn.style.color = 'var(--muted)'; });
+}
 addEventListener('keydown',e=>{if(e.key==='Escape')toggle(false)});
 
 // Voice mode toggle header button
@@ -1080,6 +1105,114 @@ if (switchToTextBtn) {
 }
 
 let currentAudio = null;
+let streamingPlayer = null;
+
+// Streaming WAV Player - plays audio as it's being generated
+class StreamingWavPlayer {
+  constructor() {
+    this.audioContext = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: "playback" });
+    this.sampleRate = 0;
+    this.numChannels = 0;
+    this.headerParsed = false;
+    this.headerBuffer = new Uint8Array(44);
+    this.headerBytesReceived = 0;
+    this.nextStartTime = 0;
+    this.isPlaying = false;
+    this.minBufferSize = 8192; // Lower threshold for faster startup
+    this.pcmData = new Uint8Array(0);
+    this.onFirstAudio = null;
+    this.onEnded = null;
+    this.stopped = false;
+  }
+
+  parseWavHeader(header) {
+    const view = new DataView(header.buffer);
+    const riff = String.fromCharCode.apply(null, Array.from(header.slice(0, 4)));
+    const wave = String.fromCharCode.apply(null, Array.from(header.slice(8, 12)));
+    if (riff !== 'RIFF' || wave !== 'WAVE') {
+      throw new Error('Invalid WAV file');
+    }
+    this.numChannels = view.getUint16(22, true);
+    this.sampleRate = view.getUint32(24, true);
+    this.headerParsed = true;
+  }
+
+  appendPcmData(newData) {
+    const newBuffer = new Uint8Array(this.pcmData.length + newData.length);
+    newBuffer.set(this.pcmData);
+    newBuffer.set(newData, this.pcmData.length);
+    this.pcmData = newBuffer;
+  }
+
+  async tryPlayBuffer() {
+    if (!this.headerParsed || this.pcmData.length < this.minBufferSize || this.stopped) return;
+
+    const bytesPerSample = this.numChannels * 2;
+    const samplesToPlay = Math.floor(this.pcmData.length / bytesPerSample);
+    const bytesToPlay = samplesToPlay * bytesPerSample;
+    if (bytesToPlay === 0) return;
+
+    const dataToPlay = this.pcmData.slice(0, bytesToPlay);
+    this.pcmData = this.pcmData.slice(bytesToPlay);
+
+    const audioBuffer = this.audioContext.createBuffer(this.numChannels, samplesToPlay, this.sampleRate);
+    const int16Data = new Int16Array(dataToPlay.buffer, dataToPlay.byteOffset, samplesToPlay * this.numChannels);
+
+    for (let channel = 0; channel < this.numChannels; channel++) {
+      const channelData = audioBuffer.getChannelData(channel);
+      for (let i = 0; i < samplesToPlay; i++) {
+        channelData[i] = int16Data[i * this.numChannels + channel] / 32768;
+      }
+    }
+
+    const source = this.audioContext.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(this.audioContext.destination);
+
+    const currentTime = this.audioContext.currentTime;
+    const startTime = Math.max(currentTime, this.nextStartTime);
+    source.start(startTime);
+
+    if (!this.firstAudioPlayed && this.onFirstAudio) {
+      this.firstAudioPlayed = true;
+      this.onFirstAudio();
+    }
+
+    this.nextStartTime = startTime + audioBuffer.duration;
+    this.isPlaying = true;
+
+    if (this.pcmData.length >= this.minBufferSize && !this.stopped) {
+      setTimeout(() => this.tryPlayBuffer(), 10);
+    }
+  }
+
+  addChunk(chunk) {
+    if (this.stopped) return;
+    if (!this.headerParsed) {
+      const headerBytesNeeded = 44 - this.headerBytesReceived;
+      const bytesToCopy = Math.min(headerBytesNeeded, chunk.length);
+      this.headerBuffer.set(chunk.slice(0, bytesToCopy), this.headerBytesReceived);
+      this.headerBytesReceived += bytesToCopy;
+      if (this.headerBytesReceived >= 44) {
+        this.parseWavHeader(this.headerBuffer);
+        if (chunk.length > bytesToCopy) {
+          this.appendPcmData(chunk.slice(bytesToCopy));
+        }
+      }
+    } else {
+      this.appendPcmData(chunk);
+    }
+    this.tryPlayBuffer();
+  }
+
+  stop() {
+    this.stopped = true;
+    this.isPlaying = false;
+    if (this.audioContext.state !== 'closed') {
+      this.audioContext.close();
+    }
+  }
+}
 
 function speakNative(text) {
   if (!window.speechSynthesis) return;
@@ -1090,97 +1223,178 @@ function speakNative(text) {
   const preferred = voices.find(v => v.name.includes('Google') || v.name.includes('Daniel') || v.name.includes('Samantha'));
   if (preferred) utter.voice = preferred;
   utter.onend = () => {
-    if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getSpeakerIcon(); }
+    if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getSpeakerIcon({animated: false}); }
     if (isVoiceModeActive && autoListenAfterSpeak) startVoiceListening();
   };
   utter.onerror = () => {
-    if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getSpeakerIcon(); }
+    if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getSpeakerIcon({animated: false}); }
   };
   window.speechSynthesis.speak(utter);
 }
 
 async function speakText(text, buttonElement) {
   // Stop any current playback
+  if (streamingPlayer) {
+    streamingPlayer.stop();
+    streamingPlayer = null;
+    if (buttonElement) buttonElement.innerHTML = getSpeakerIcon({animated: false});
+    if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
+    return;
+  }
   if (currentAudio) {
-    currentAudio.pause(); currentAudio = null;
-    if (buttonElement) buttonElement.innerHTML = getSpeakerIcon();
+    currentAudio.pause();
+    currentAudio = null;
+    if (buttonElement) buttonElement.innerHTML = getSpeakerIcon({animated: false});
     if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
     return;
   }
   if (window.speechSynthesis && window.speechSynthesis.speaking) {
     window.speechSynthesis.cancel();
-    if (buttonElement) buttonElement.innerHTML = getSpeakerIcon();
+    if (buttonElement) buttonElement.innerHTML = getSpeakerIcon({animated: false});
     if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
     return;
   }
 
-  if (buttonElement) { buttonElement.innerHTML = '⏳'; buttonElement.disabled = true; }
-  if (isVoiceModeActive && centralMicBtn) { centralMicBtn.classList.add('speaking'); centralMicBtn.innerHTML = getSpeakerIcon(); }
+  // Stop voice recognition while speaking to prevent hearing itself
+  if (voiceListeningActive) {
+    stopVoiceListening();
+  }
+
+  // Show loading state
+  if (buttonElement) { buttonElement.innerHTML = getLoadingIcon(); buttonElement.disabled = true; }
+  if (isVoiceModeActive && centralMicBtn) { centralMicBtn.classList.add('speaking'); centralMicBtn.innerHTML = getSpeakerIcon({animated: true}); }
 
   const cleanText = text.replace(/[*_`#\-]/g, '').trim();
-  const TTS_TIMEOUT_MS = 10000;
+
+  // Show text with typing animation immediately
+  let messageP = null;
+  if (buttonElement) {
+    messageP = buttonElement.parentElement.querySelector('p');
+  } else {
+    const lastBotMessage = messages.querySelector('.message.bot:last-of-type');
+    if (lastBotMessage) {
+      const p = lastBotMessage.querySelector('p');
+      if (p && p.textContent.trim() === cleanText) {
+        messageP = p;
+      }
+    }
+  }
+  if (messageP) {
+    typeOutAnimation(messageP, cleanText);
+  }
+
+  const TTS_TIMEOUT_MS = 15000;
 
   let response = null;
 
   try {
-    // Attempt 1: Hosted TTS proxy
+    const formData = new FormData();
+    formData.append('text', cleanText);
+
+    // Try proxy first (avoids CORS issues in development)
     try {
-      const params = new URLSearchParams(); params.append('text', cleanText);
-      const proxyFetchPromise = fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString()
-      });
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('tts_timeout')), TTS_TIMEOUT_MS));
-      response = await Promise.race([proxyFetchPromise, timeoutPromise]);
-      if (!response.ok) throw new Error(`Proxy failed with status ${response.status}`);
-    } catch (proxyError) {
-      console.warn('Hosted TTS proxy failed or timed out:', proxyError.message);
-      // Attempt 2: Direct TTS
-      const formData = new FormData();
-      formData.append('text', cleanText);
-      const directFetchPromise = fetch(TTS_DIRECT_URL, {
+      const proxyPromise = fetch('/api/tts', {
         method: 'POST',
         body: formData
       });
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('tts_timeout')), TTS_TIMEOUT_MS));
-      response = await Promise.race([directFetchPromise, timeoutPromise]);
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Proxy timeout')), TTS_TIMEOUT_MS));
+      response = await Promise.race([proxyPromise, timeoutPromise]);
+      if (!response.ok) throw new Error(`Proxy failed with status ${response.status}`);
+    } catch (proxyError) {
+      console.warn('TTS proxy failed, trying direct:', proxyError.message);
+      // Try direct TTS (may fail due to CORS in development)
+      const directPromise = fetch(TTS_DIRECT_URL, {
+        method: 'POST',
+        body: formData,
+        mode: 'cors'
+      });
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Direct timeout')), TTS_TIMEOUT_MS));
+      response = await Promise.race([directPromise, timeoutPromise]);
       if (!response.ok) throw new Error(`Direct TTS failed with status ${response.status}`);
     }
 
-    // If we reached here, either proxy or direct succeeded.
-    // The `response` object should be valid and `ok`.
-    // If both failed, an error would have been thrown and caught by the outer catch block.
+    // Use streaming player for immediate playback
+    const reader = response.body.getReader();
+    streamingPlayer = new StreamingWavPlayer();
 
-    const blob = await response.blob();
-    const audioUrl = URL.createObjectURL(blob);
-    currentAudio = new Audio(audioUrl);
+    streamingPlayer.onFirstAudio = () => {
+      // First audio chunk received - update UI
+      if (buttonElement) { buttonElement.innerHTML = getStopIcon(); buttonElement.disabled = false; }
+      if (centralMicBtn) { centralMicBtn.classList.add('speaking'); centralMicBtn.innerHTML = getStopIcon(); }
+    };
 
-    if (buttonElement) { buttonElement.innerHTML = '⏹'; buttonElement.disabled = false; buttonElement.onclick = () => speakText(text, buttonElement); }
-
-    currentAudio.addEventListener('ended', () => {
-      if (buttonElement) { buttonElement.innerHTML = getSpeakerIcon(); buttonElement.onclick = () => speakText(text, buttonElement); }
+    streamingPlayer.onEnded = () => {
+      if (buttonElement) { buttonElement.innerHTML = getSpeakerIcon({animated: false}); buttonElement.disabled = false; }
       if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
-      currentAudio = null;
+      streamingPlayer = null;
       if (isVoiceModeActive && autoListenAfterSpeak) startVoiceListening();
-    });
-    await currentAudio.play();
+    };
+
+    // Process stream
+    const processStream = async () => {
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            // Stream complete - wait for audio to finish
+            setTimeout(() => {
+              if (streamingPlayer && !streamingPlayer.stopped) {
+                streamingPlayer.onEnded?.();
+              }
+            }, 500);
+            break;
+          }
+          if (value && streamingPlayer) {
+            streamingPlayer.addChunk(value);
+          }
+        }
+      } catch (e) {
+        console.error('Stream error:', e);
+        streamingPlayer?.stop();
+        streamingPlayer = null;
+      }
+    };
+
+    processStream();
+
   } catch (error) {
-    console.warn('Hosted TTS error, falling back to native:', error);
-    // Final fallback: Native speech synthesis if all other attempts failed
-    if (buttonElement) { buttonElement.innerHTML = getSpeakerIcon(); buttonElement.disabled = false; buttonElement.onclick = () => speakText(text, buttonElement); }
+    console.warn('Streaming TTS failed, falling back to native:', error);
+    if (buttonElement) { buttonElement.innerHTML = getSpeakerIcon({animated: false}); buttonElement.disabled = false; }
     if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
+    streamingPlayer = null;
     speakNative(cleanText);
   }
 }
 
-// Helper: return SVG mic icon
+// SVG Icon Helpers with animations
 function getMicIcon() {
-  return `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg>`;
+  return `<svg class="mic-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg>`;
 }
-// Helper: return SVG speaker icon
-function getSpeakerIcon() {
-  return `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`;
+
+function getSpeakerIcon({animated = false} = {}) {
+  const animClass = animated ? 'animating' : '';
+  return `<svg class="speaker-icon ${animClass}" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path class="wave1" d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path class="wave2" d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`;
+}
+
+function getLoadingIcon() {
+  return `<svg class="loading-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="32"><animate attributeName="stroke-dashoffset" values="32;0" dur="1s" repeatCount="indefinite"/></circle></svg>`;
+}
+
+function getStopIcon() {
+  return `<svg class="stop-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>`;
+}
+
+function getClearIcon() {
+  return `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>`;
+}
+
+// Clear chat history
+function clearChat() {
+  history.length = 1; // Keep only system prompt
+  history.push({ role: 'system', content: systemPrompt });
+  messages.innerHTML = '';
+  addMessage('Chat cleared. How can I help you?');
+  Sfx.playClick();
 }
 
 function addMessage(text,who='bot'){
@@ -1196,11 +1410,8 @@ function addMessage(text,who='bot'){
   if(who==='bot'&&text){
     const ttsBtn=document.createElement('button');
     ttsBtn.className='tts-btn';
-    ttsBtn.innerHTML=getSpeakerIcon();
+    ttsBtn.innerHTML=getSpeakerIcon({animated: false});
     ttsBtn.title='Speak text';
-    ttsBtn.style.cssText='background:none;border:none;color:var(--acid);cursor:pointer;padding:3px;opacity:0.6;transition:opacity 0.2s;margin-top:2px;flex-shrink:0;display:flex;align-items:center;';
-    ttsBtn.addEventListener('mouseenter',()=>ttsBtn.style.opacity='1');
-    ttsBtn.addEventListener('mouseleave',()=>ttsBtn.style.opacity='0.6');
     ttsBtn.onclick=()=>speakText(text,ttsBtn);
     row.append(ttsBtn);
   }
