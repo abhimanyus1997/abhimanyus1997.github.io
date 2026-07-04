@@ -6,6 +6,7 @@
   <meta name="description" content="Abhimanyu Singh builds production AI systems across generative AI, computer vision and robotics.">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="interactive.css">
   <link rel="manifest" href="manifest.json">
@@ -19,9 +20,51 @@
 </head>
 <body>
   <div class="noise"></div>
+
+  <!-- Biometric Navigation Confirmation Overlay -->
+  <div class="hud-confirm-overlay" id="hudConfirmOverlay">
+    <div class="hud-confirm-box">
+      <div class="hud-confirm-header">NEURAL CORRELATION CONFIRMED</div>
+      <div class="hud-confirm-body">
+        <div class="hud-confirm-target" id="hudConfirmTarget">TARGET: PROJECTS</div>
+        <div class="hud-confirm-countdown" id="hudConfirmCountdown">TRANSFERRING DATA IN 3s...</div>
+      </div>
+      <div class="hud-confirm-footer">
+        <button class="hud-confirm-btn confirm" id="hudConfirmProceed">INITIATE NOW</button>
+        <button class="hud-confirm-btn cancel" id="hudConfirmCancel">ABORT ROUTE</button>
+      </div>
+    </div>
+  </div>
   <div class="cinematic-intro" id="cinematic-intro">
     <div class="intro-scan"></div>
     
+    <!-- Top HUD Bar -->
+    <div class="hud-top-bar">
+      <div class="hud-logo">NEURAL_SYNC_v1.0.8</div>
+      <div class="hud-title">BIOMETRIC CORRELATION ENGINE</div>
+      <div class="hud-stats">PING: 14ms // DATA CORE: ACTIVE // NODE: PRIMARY</div>
+    </div>
+
+    <!-- Left HUD Panel: Scrolling Logs -->
+    <div class="hud-left-panel">
+      <div class="hud-section-title">SYSTEM REGISTRY</div>
+      <div class="hud-log-stream" id="hudLogs">
+[03:00:01] BOOTING NEURAL NETWORK...
+[03:00:02] INITIALIZING BIOMETRIC LINK...
+[03:00:03] STANDBY FOR COGNITIVE SYNC...</div>
+    </div>
+
+    <!-- Right HUD Panel: Live Biometrics -->
+    <div class="hud-right-panel">
+      <div class="hud-section-title">LIVE BIOMETRICS</div>
+      <div class="hud-bio-row" id="hud-identity">IDENTITY: ACQUIRING...</div>
+      <div class="hud-bio-row" id="hud-confidence">MATCH LEVEL: 00%</div>
+      <div class="hud-bio-row" id="hud-gender">GENDER: PENDING</div>
+      <div class="hud-bio-row" id="hud-age">AGE ESTIMATE: PENDING</div>
+      <div class="hud-bio-row" id="hud-expression">EXPRESSION: ANALYZING</div>
+      <div class="hud-bio-row" id="hud-sync-level">CORRELATION: 0%</div>
+    </div>
+
     <div class="intro-grid">
       <div class="intro-col-left">
         <!-- Slide 1: System Init -->
@@ -48,12 +91,85 @@
       
       <div class="intro-col-right">
         <div class="pilot-sync-container">
-          <div class="pilot-hud-overlay"></div>
-          <div class="pilot-sync-svg-container"></div>
-          <img src="./static/images/pilot_sync.png" alt="Pilot Neural Sync" class="pilot-sync-img">
-          <div class="pilot-sync-status">
-            <span class="sync-bar"></span>
-            <span class="sync-label">NEURAL LINK: ESTABLISHED</span>
+          <div class="pilot-sync-split-screen">
+            <!-- Left Side: Database Pilot Reference (Fully Animated!) -->
+            <div class="pilot-sync-panel-db">
+              <div class="panel-header">DATABASE REGISTER // PILOT</div>
+              <div class="panel-media">
+                <img src="static/images/cyber_profile.png" alt="Profile" class="profile-img glitch" />
+                
+                <div class="pilot-sync-grid"></div>
+                <div class="pilot-sync-noise"></div>
+                <div class="pilot-sync-hud-border"></div>
+
+                <div class="pilot-sync-corner c1"></div>
+                <div class="pilot-sync-corner c2"></div>
+                <div class="pilot-sync-corner c3"></div>
+                <div class="pilot-sync-corner c4"></div>
+
+                <div class="pilot-sync-line"></div>
+                <div class="pilot-sync-glow"></div>
+
+                <div class="pilot-sync-face-box">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+
+                <div class="pilot-sync-particles">
+                  <i class="pilot-sync-particle"></i>
+                  <i class="pilot-sync-particle"></i>
+                  <i class="pilot-sync-particle"></i>
+                  <i class="pilot-sync-particle"></i>
+                  <i class="pilot-sync-particle"></i>
+                </div>
+              </div>
+              <div class="panel-hud-info">
+                <div>SYS_ID: AS_97</div>
+                <div>PILOT: ABHIMANYU</div>
+              </div>
+            </div>
+
+            <!-- Right Side: Live Subject Camera Scan (Fully Animated!) -->
+            <div class="pilot-sync-panel-live" id="scanCard">
+              <div class="panel-header">LIVE FEED // SUBJECT</div>
+              <div class="panel-media">
+                <video id="scanVideo" autoplay muted playsinline></video>
+                <canvas id="scanCanvas"></canvas>
+                
+                <div class="pilot-sync-grid"></div>
+                <div class="pilot-sync-noise"></div>
+                <div class="pilot-sync-hud-border"></div>
+
+                <div class="pilot-sync-corner c1"></div>
+                <div class="pilot-sync-corner c2"></div>
+                <div class="pilot-sync-corner c3"></div>
+                <div class="pilot-sync-corner c4"></div>
+
+                <div class="pilot-sync-line"></div>
+                <div class="pilot-sync-glow"></div>
+
+                <div class="pilot-sync-particles">
+                  <i class="pilot-sync-particle"></i>
+                  <i class="pilot-sync-particle"></i>
+                  <i class="pilot-sync-particle"></i>
+                  <i class="pilot-sync-particle"></i>
+                  <i class="pilot-sync-particle"></i>
+                </div>
+
+                <div class="live-fallback-media">
+                  <div class="scan-grid-lines"></div>
+                </div>
+                <div class="pilot-sync-progress-wrap">
+                  <div class="pilot-sync-progress"></div>
+                </div>
+              </div>
+              <div class="panel-hud-info">
+                <div id="scanStatus">SYSTEM STANDBY...</div>
+                <div id="verifiedText" style="opacity:0; transition:opacity 0.4s;">IDENTIFIED</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -88,7 +204,7 @@
           <button class="gamepad-btn boost-btn" id="boost-btn">BOOST</button>
         </div>
       </div>
-      <div class="hero-copy"><p class="eyebrow scramble-text">AI ENGINEER · DATA SCIENTIST · NOIDA, IN</p><h1 class="scramble-text">I build intelligence<br>that leaves the <em>lab.</em></h1><p class="lede scramble-text">Production-grade AI across language, vision, and physical systems—designed to solve real problems, not just win demos.</p><div class="actions"><a class="primary" href="#experience">Explore experience <svg class="ui-arrow" style="transform: rotate(90deg);" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M2 1 h7 v7 M9 1 L1 9" stroke="currentColor" stroke-width="1.2" fill="none"/></svg></a><a href="./static/resume.pdf" target="_blank">View résumé <svg class="ui-arrow" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M2 1 h7 v7 M9 1 L1 9" stroke="currentColor" stroke-width="1.2" fill="none"/></svg></a></div></div>
+      <div class="hero-copy"><p class="eyebrow scramble-text">AI ENGINEER · DATA SCIENTIST · NOIDA, IN</p><h1 class="scramble-text">I build intelligence<br>that leaves the <em>lab.</em></h1><p class="lede scramble-text">Production-grade AI across language, vision, and physical systems—designed to solve real problems, not just win demos.</p><div class="actions"><a class="primary" href="#experience">Explore experience <svg class="ui-arrow" style="transform: rotate(90deg);" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M2 1 h7 v7 M9 1 L1 9" stroke="currentColor" stroke-width="1.2" fill="none"/></svg></a><a href="static/resume.pdf" target="_blank">View résumé <svg class="ui-arrow" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M2 1 h7 v7 M9 1 L1 9" stroke="currentColor" stroke-width="1.2" fill="none"/></svg></a></div></div>
       <div class="visual" aria-hidden="true"><div class="visual-label"><span>PHYSICAL AI / 01</span><span>MOVE TO PILOT</span></div><div class="model-status" id="car-status"><i></i> INITIALIZING HOVERCAR</div><div class="orb-copy"><b>AI</b><small>INTELLIGENCE // IN MOTION</small></div></div>
       <div class="scroll">SCROLL TO DISCOVER <svg class="ui-arrow" style="transform: rotate(90deg);" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M1 5 h8 M6 2 L9 5 L6 8" stroke="currentColor" stroke-width="1.2" fill="none"/></svg></div>
     </section>

@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Abhimanyu Neural Face Scan</title>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+    <style>
+        :root {
+            --green: #a6ff2f;
+            --green2: #38ff7a;
+            --dark: #020702;
+            --panel: rgba(4, 20, 8, 0.78);
+            --soft: rgba(166, 255, 47, 0.18);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background:
+                radial-gradient(circle at center, rgba(90, 255, 60, 0.12), transparent 38%),
+                radial-gradient(circle at 20% 80%, rgba(166, 255, 47, 0.08), transparent 35%),
+                #020402;
+            color: var(--green);
+            font-family: "Courier New", monospace;
+            overflow: hidden;
+        }
+
+        .scanner {
+            position: relative;
+            width: min(900px, 96vw);
+            aspect-ratio: 16 / 9;
+            background: #000;
+            border: 1px solid rgba(166, 255, 47, 0.35);
+            overflow: hidden;
+            box-shadow:
+                0 0 40px rgba(166, 255, 47, 0.18),
+                inset 0 0 60px rgba(166, 255, 47, 0.08);
+            clip-path: polygon(3% 0, 97% 0,
+                    100% 5%, 100% 95%,
+                    97% 100%, 3% 100%,
+                    0 95%, 0 5%);
+        }
+
+        video,
+        canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        video {
+            filter: brightness(0.65) contrast(1.18) saturate(0.85);
+        }
+
+        canvas {
+            z-index: 5;
+        }
+
+        .vignette {
+            position: absolute;
+            inset: 0;
+            z-index: 7;
+            pointer-events: none;
+            background:
+                radial-gradient(circle at center, transparent 42%, rgba(0, 0, 0, 0.74) 100%),
+                linear-gradient(90deg, rgba(166, 255, 47, 0.08), transparent 18%, transparent 82%, rgba(166, 255, 47, 0.08));
+        }
+
+        .scanlines {
+            position: absolute;
+            inset: 0;
+            z-index: 8;
+            pointer-events: none;
+            background: linear-gradient(rgba(166, 255, 47, 0.045) 50%,
+                    rgba(0, 0, 0, 0.16) 50%);
+            background-size: 100% 4px;
+            mix-blend-mode: screen;
+            animation: scanlines 0.55s linear infinite;
+        }
+
+        .sweep {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 120px;
+            top: -150px;
+            z-index: 9;
+            pointer-events: none;
+            background: linear-gradient(to bottom,
+                    transparent,
+                    rgba(166, 255, 47, 0.24),
+                    rgba(166, 255, 47, 0.06),
+                    transparent);
+            animation: sweep 3s linear infinite;
+        }
+
+        .sweep::after {
+            content: "";
+            position: absolute;
+            left: 24px;
+            right: 24px;
+            top: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--green), #efffa4, var(--green), transparent);
+            box-shadow: 0 0 20px var(--green);
+        }
+
+        .hud {
+            position: absolute;
+            z-index: 12;
+            pointer-events: none;
+            color: var(--green);
+            text-shadow: 0 0 10px rgba(166, 255, 47, 0.9);
+            letter-spacing: 1.5px;
+            font-size: 12px;
+        }
+
+        .top-left {
+            top: 22px;
+            left: 28px;
+        }
+
+        .top-right {
+            top: 22px;
+            right: 28px;
+            text-align: right;
+        }
+
+        .bottom-left {
+            bottom: 24px;
+            left: 28px;
+        }
+
+        .bottom-right {
+            bottom: 24px;
+            right: 28px;
+            text-align: right;
+        }
+
+        .corner {
+            position: absolute;
+            z-index: 13;
+            width: 56px;
+            height: 56px;
+            border-color: var(--green);
+            border-style: solid;
+            filter: drop-shadow(0 0 10px var(--green));
+            pointer-events: none;
+        }
+
+        .c1 {
+            top: 18px;
+            left: 18px;
+            border-width: 2px 0 0 2px;
+        }
+
+        .c2 {
+            top: 18px;
+            right: 18px;
+            border-width: 2px 2px 0 0;
+        }
+
+        .c3 {
+            bottom: 18px;
+            left: 18px;
+            border-width: 0 0 2px 2px;
+        }
+
+        .c4 {
+            bottom: 18px;
+            right: 18px;
+            border-width: 0 2px 2px 0;
+        }
+
+        .panel {
+            position: absolute;
+            z-index: 11;
+            width: 180px;
+            height: 100px;
+            border: 1px solid rgba(166, 255, 47, 0.22);
+            background: rgba(6, 35, 12, 0.18);
+            box-shadow: inset 0 0 20px rgba(166, 255, 47, 0.08);
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .panel::before {
+            content: "";
+            position: absolute;
+            left: 12px;
+            right: 12px;
+            top: 14px;
+            height: 1px;
+            background: rgba(166, 255, 47, 0.75);
+            box-shadow:
+                0 12px rgba(166, 255, 47, 0.55),
+                0 24px rgba(166, 255, 47, 0.4),
+                0 36px rgba(166, 255, 47, 0.28),
+                0 48px rgba(166, 255, 47, 0.18);
+            animation: codeMove 1.6s linear infinite;
+        }
+
+        .panel-left {
+            top: 90px;
+            left: 28px;
+        }
+
+        .panel-right {
+            bottom: 84px;
+            right: 28px;
+        }
+
+        .status-pill {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 6px 10px;
+            border: 1px solid rgba(166, 255, 47, 0.4);
+            background: rgba(166, 255, 47, 0.08);
+            box-shadow: inset 0 0 14px rgba(166, 255, 47, 0.08);
+        }
+
+        .identified {
+            color: #f3ffe9;
+            animation: pulse 1.2s ease-in-out infinite;
+        }
+
+        .controls {
+            position: absolute;
+            z-index: 30;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            background: radial-gradient(circle, rgba(166, 255, 47, 0.16), rgba(0, 0, 0, 0.88) 58%);
+            transition: 0.45s ease;
+        }
+
+        .controls.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 14px 20px;
+            border: 1px solid rgba(166, 255, 47, 0.55);
+            background: rgba(0, 0, 0, 0.55);
+            color: var(--green);
+            font-family: inherit;
+            letter-spacing: 2px;
+            box-shadow:
+                0 0 25px rgba(166, 255, 47, 0.22),
+                inset 0 0 18px rgba(166, 255, 47, 0.1);
+            text-shadow: 0 0 8px var(--green);
+        }
+
+        .error {
+            position: absolute;
+            z-index: 40;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ff7979;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 80, 80, 0.4);
+            padding: 10px 14px;
+            display: none;
+            max-width: 88%;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        @keyframes scanlines {
+            to {
+                background-position-y: 8px;
+            }
+        }
+
+        @keyframes sweep {
+            from {
+                top: -150px;
+                opacity: 0;
+            }
+
+            12% {
+                opacity: 1;
+            }
+
+            88% {
+                opacity: 1;
+            }
+
+            to {
+                top: 100%;
+                opacity: 0;
+            }
+        }
+
+        @keyframes codeMove {
+            from {
+                transform: translateY(-18px);
+                opacity: 0.4;
+            }
+
+            to {
+                transform: translateY(22px);
+                opacity: 1;
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 0.75;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .center-top {
+            top: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            z-index: 50;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            background: radial-gradient(circle, rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.98));
+            transition: 0.4s ease;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loading-box {
+            width: 340px;
+            padding: 28px;
+            border: 1px solid rgba(166, 255, 47, 0.4);
+            background: rgba(4, 20, 8, 0.85);
+            box-shadow: 0 0 40px rgba(166, 255, 47, 0.15), inset 0 0 30px rgba(166, 255, 47, 0.08);
+            position: relative;
+        }
+
+        .loading-box::before,
+        .loading-box::after {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-color: var(--green);
+            border-style: solid;
+        }
+
+        .loading-box::before {
+            top: -1px;
+            left: -1px;
+            border-width: 2px 0 0 2px;
+        }
+
+        .loading-box::after {
+            bottom: -1px;
+            right: -1px;
+            border-width: 0 2px 2px 0;
+        }
+
+        .loading-header {
+            color: var(--green);
+            font-size: 14px;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px var(--green);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .loading-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(166, 255, 47, 0.15);
+            border: 1px solid rgba(166, 255, 47, 0.3);
+            margin-bottom: 18px;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--green), var(--green2));
+            box-shadow: 0 0 12px var(--green);
+            transition: width 0.3s ease;
+        }
+
+        .loading-text {
+            color: var(--green);
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-align: center;
+            margin-bottom: 18px;
+            text-shadow: 0 0 8px var(--green);
+        }
+
+        .loading-items {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .loading-item {
+            color: rgba(166, 255, 47, 0.4);
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            padding: 4px 8px;
+            background: rgba(166, 255, 47, 0.05);
+            border-left: 2px solid rgba(166, 255, 47, 0.2);
+            transition: all 0.25s ease;
+        }
+
+        .loading-item.loading {
+            color: var(--green);
+            background: rgba(166, 255, 47, 0.12);
+            border-left-color: var(--green);
+            text-shadow: 0 0 6px var(--green);
+        }
+
+        .loading-item.loaded {
+            color: var(--green2);
+            background: rgba(56, 255, 122, 0.08);
+            border-left-color: var(--green2);
+        }
+
+        .loading-item.loaded::after {
+            content: " ✓";
+            color: var(--green2);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                min-height: 100dvh;
+                padding: 10px;
+                overflow: hidden;
+            }
+
+            .scanner {
+                width: 100vw;
+                height: 100dvh;
+                aspect-ratio: auto;
+                border-radius: 0;
+                clip-path: none;
+                border-left: none;
+                border-right: none;
+            }
+
+            video,
+            canvas {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .hud {
+                font-size: 9px;
+                letter-spacing: 1px;
+            }
+
+            .top-left {
+                top: 14px;
+                left: 14px;
+                max-width: 44vw;
+            }
+
+            .top-right {
+                top: 14px;
+                right: 14px;
+                max-width: 44vw;
+            }
+
+            .center-top {
+                top: 58px;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+
+            .bottom-left {
+                left: 14px;
+                bottom: 16px;
+                max-width: 48vw;
+            }
+
+            .bottom-right {
+                right: 14px;
+                bottom: 16px;
+                max-width: 48vw;
+            }
+
+            .status-pill {
+                padding: 4px 6px;
+                font-size: 8px;
+            }
+
+            .corner {
+                width: 34px;
+                height: 34px;
+            }
+
+            .c1 {
+                top: 10px;
+                left: 10px;
+            }
+
+            .c2 {
+                top: 10px;
+                right: 10px;
+            }
+
+            .c3 {
+                bottom: 10px;
+                left: 10px;
+            }
+
+            .c4 {
+                bottom: 10px;
+                right: 10px;
+            }
+
+            .panel {
+                display: none;
+            }
+
+            .loading-box {
+                width: min(330px, 88vw);
+                padding: 22px;
+            }
+
+            .loading-header {
+                font-size: 12px;
+            }
+
+            .loading-text,
+            .loading-item {
+                font-size: 9px;
+            }
+
+            button {
+                max-width: 86vw;
+                font-size: 11px;
+                padding: 13px 16px;
+                line-height: 1.4;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hud {
+                font-size: 8px;
+            }
+
+            .top-right {
+                display: none;
+            }
+
+            .bottom-left {
+                bottom: 54px;
+                max-width: 90vw;
+            }
+
+            .bottom-right {
+                bottom: 16px;
+                left: 14px;
+                right: auto;
+                text-align: left;
+                max-width: 90vw;
+            }
+
+            .center-top {
+                top: 46px;
+            }
+
+            .sweep {
+                height: 90px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="scanner">
+        <video id="video" autoplay muted playsinline></video>
+        <canvas id="overlay"></canvas>
+
+        <div class="vignette"></div>
+        <div class="scanlines"></div>
+        <div class="sweep"></div>
+
+        <div class="corner c1"></div>
+        <div class="corner c2"></div>
+        <div class="corner c3"></div>
+        <div class="corner c4"></div>
+
+        <div class="panel panel-left"></div>
+        <div class="panel panel-right"></div>
+
+
+        <div class="hud center-top" id="faceCount">FACES: 0</div>
+        <div class="hud top-left">
+            USER_ID: ABHIMANYU<br />
+            <span class="status-pill" id="matchStatus">WAITING FOR SCAN</span>
+        </div>
+
+        <div class="hud top-right">
+            NEURAL_FACE_TRACKING<br />
+            LANDMARKS + EXPRESSIONS
+        </div>
+
+        <div class="hud bottom-left" id="expressionText">
+            EXPRESSION: --
+        </div>
+
+        <div class="hud bottom-right">
+            <span id="ageGenderText">AGE/GENDER: --</span><br />
+            <span class="identified" id="identifiedText">IDENTIFIED: --</span>
+        </div>
+
+        <div class="controls" id="controls">
+            <button id="startBtn">INITIALIZE WEBCAM SCAN</button>
+        </div>
+
+        <div class="loading-overlay hidden" id="loadingOverlay">
+            <div class="loading-box">
+                <div class="loading-header">SYSTEM INITIALIZATION</div>
+                <div class="loading-bar">
+                    <div class="loading-progress" id="loadingProgress"></div>
+                </div>
+                <div class="loading-text" id="loadingText">INITIALIZING...</div>
+                <div class="loading-items" id="loadingItems">
+                    <div class="loading-item" data-item="detector">TINY_FACE_DETECTOR</div>
+                    <div class="loading-item" data-item="landmarks">FACE_LANDMARKS_68</div>
+                    <div class="loading-item" data-item="recognition">FACE_RECOGNITION</div>
+                    <div class="loading-item" data-item="expression">FACE_EXPRESSIONS</div>
+                    <div class="loading-item" data-item="agegender">AGE_GENDER_NET</div>
+                    <div class="loading-item" data-item="reference">REFERENCE_MATCHER</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="error" id="errorBox"></div>
+    </main>
+
+    <script>
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("overlay");
+        const ctx = canvas.getContext("2d");
+
+        const startBtn = document.getElementById("startBtn");
+        const controls = document.getElementById("controls");
+        const loadingOverlay = document.getElementById("loadingOverlay");
+        const loadingProgress = document.getElementById("loadingProgress");
+        const loadingText = document.getElementById("loadingText");
+        const loadingItems = document.getElementById("loadingItems");
+
+        const matchStatus = document.getElementById("matchStatus");
+        const expressionText = document.getElementById("expressionText");
+        const ageGenderText = document.getElementById("ageGenderText");
+        const identifiedText = document.getElementById("identifiedText");
+        const errorBox = document.getElementById("errorBox");
+
+        const MODEL_URL = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights";
+
+        /*
+          Put your reference face image in the same folder:
+          abhimanyu-reference.jpg
+    
+          This is used to identify the live webcam face as Abhimanyu.
+          If this file is missing, tracking still works, but matching will show REFERENCE IMAGE MISSING.
+        */
+        const REFERENCE_IMAGE = "./abhimanyu-reference.jpg";
+        const MATCH_THRESHOLD = 0.52;
+
+        let faceMatcher = null;
+        let audioCtx = null;
+        let lastBeep = 0;
+
+        let lastKnownLabel = "UNKNOWN";
+        let stableMatchCount = 0;
+        let stableUnknownCount = 0;
+        const REQUIRED_STABLE_FRAMES = 3;
+
+        function showError(message) {
+            errorBox.style.display = "block";
+            errorBox.textContent = message;
+        }
+
+        function hideError() {
+            errorBox.style.display = "none";
+            errorBox.textContent = "";
+        }
+
+        function initSound() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function beep(freq = 880, duration = 0.05, gain = 0.04) {
+            if (!audioCtx) return;
+
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+
+            osc.type = "square";
+            osc.frequency.value = freq;
+
+            g.gain.setValueAtTime(0.0001, now);
+            g.gain.exponentialRampToValueAtTime(gain, now + 0.01);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+            osc.connect(g);
+            g.connect(audioCtx.destination);
+
+            osc.start(now);
+            osc.stop(now + duration + 0.02);
+        }
+
+        function verifiedSound() {
+            beep(523, 0.08, 0.04);
+            setTimeout(() => beep(659, 0.08, 0.04), 100);
+            setTimeout(() => beep(880, 0.14, 0.045), 210);
+        }
+
+        function setItemStatus(itemName, status) {
+            const item = loadingItems.querySelector(`[data-item="${itemName}"]`);
+            if (item) {
+                item.classList.remove("loading", "loaded");
+                if (status) item.classList.add(status);
+            }
+        }
+
+        function updateProgress(percent, text) {
+            loadingProgress.style.width = `${percent}%`;
+            loadingText.textContent = text;
+        }
+
+        async function loadModels() {
+            updateProgress(0, "LOADING NEURAL MODELS...");
+
+            // Load each model sequentially for visual feedback
+            setItemStatus("detector", "loading");
+            await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+            setItemStatus("detector", "loaded");
+            updateProgress(16, "TINY_FACE_DETECTOR LOADED");
+
+            setItemStatus("landmarks", "loading");
+            await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+            setItemStatus("landmarks", "loaded");
+            updateProgress(32, "FACE_LANDMARKS_68 LOADED");
+
+            setItemStatus("recognition", "loading");
+            await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+            setItemStatus("recognition", "loaded");
+            updateProgress(48, "FACE_RECOGNITION LOADED");
+
+            setItemStatus("expression", "loading");
+            await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+            setItemStatus("expression", "loaded");
+            updateProgress(64, "FACE_EXPRESSIONS LOADED");
+
+            setItemStatus("agegender", "loading");
+            await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
+            setItemStatus("agegender", "loaded");
+            updateProgress(80, "AGE_GENDER_NET LOADED");
+
+            matchStatus.textContent = "MODELS READY";
+        }
+
+        async function createFaceMatcher() {
+            updateProgress(85, "LOADING REFERENCE IMAGE...");
+            setItemStatus("reference", "loading");
+
+            try {
+                const img = await faceapi.fetchImage(REFERENCE_IMAGE);
+
+                const referenceDetection = await faceapi
+                    .detectSingleFace(img, new faceapi.TinyFaceDetectorOptions({
+                        inputSize: 416,
+                        scoreThreshold: 0.5
+                    }))
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
+
+                if (!referenceDetection) {
+                    matchStatus.textContent = "REFERENCE FACE NOT FOUND";
+                    updateProgress(100, "REFERENCE FACE NOT FOUND");
+                    return;
+                }
+
+                const labeledDescriptor = new faceapi.LabeledFaceDescriptors("ABHIMANYU", [
+                    referenceDetection.descriptor
+                ]);
+
+                faceMatcher = new faceapi.FaceMatcher(labeledDescriptor, MATCH_THRESHOLD);
+                matchStatus.textContent = "REFERENCE LOADED";
+                setItemStatus("reference", "loaded");
+                updateProgress(100, "SYSTEM READY");
+            } catch (error) {
+                console.warn(error);
+                matchStatus.textContent = "REFERENCE IMAGE MISSING";
+                setItemStatus("reference", "loaded");
+                updateProgress(100, "SYSTEM READY (NO REFERENCE)");
+            }
+        }
+
+        async function startWebcam() {
+            const isMobile = window.matchMedia("(max-width: 768px)").matches;
+
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: "user",
+                    width: { ideal: isMobile ? 720 : 1280 },
+                    height: { ideal: isMobile ? 1280 : 720 }
+                },
+                audio: false
+            });
+
+            video.srcObject = stream;
+
+            await new Promise((resolve) => {
+                video.onloadedmetadata = resolve;
+            });
+
+            await video.play();
+        }
+
+        function resizeCanvas() {
+            const rect = video.getBoundingClientRect();
+
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+
+            ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+        }
+
+        function dominantExpression(expressions) {
+            return Object.entries(expressions)
+                .sort((a, b) => b[1] - a[1])[0];
+        }
+
+        function drawCyberBox(box, label, confidence, expression, age, gender, distanceText) {
+            const displayWidth = canvas.clientWidth;
+
+            // mirror because video is CSS mirrored
+            const x = displayWidth - box.x - box.width;
+            const y = box.y;
+            const w = box.width;
+            const h = box.height;
+
+            const cx = x + w / 2;
+            const cy = y + h / 2;
+
+            const isKnown = label === "ABHIMANYU";
+            const color = isKnown ? "#a6ff2f" : "#ffcc33";
+            const glow = isKnown ? "#a6ff2f" : "#ffcc33";
+
+            ctx.save();
+
+            // outer glow box - FULL BOUNDING BOX
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.shadowColor = glow;
+            ctx.shadowBlur = 20;
+
+            // Draw full bounding box
+            ctx.strokeRect(x, y, w, h);
+
+            // Draw corner accents for cyber effect
+            const corner = 24;
+
+            ctx.beginPath();
+
+            // top-left
+            ctx.moveTo(x, y + corner);
+            ctx.lineTo(x, y);
+            ctx.lineTo(x + corner, y);
+
+            // top-right
+            ctx.moveTo(x + w - corner, y);
+            ctx.lineTo(x + w, y);
+            ctx.lineTo(x + w, y + corner);
+
+            // bottom-right
+            ctx.moveTo(x + w, y + h - corner);
+            ctx.lineTo(x + w, y + h);
+            ctx.lineTo(x + w - corner, y + h);
+
+            // bottom-left
+            ctx.moveTo(x + corner, y + h);
+            ctx.lineTo(x, y + h);
+            ctx.lineTo(x, y + h - corner);
+
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // inner glow box for extra visibility
+            ctx.shadowBlur = 8;
+            ctx.strokeStyle = "rgba(166, 255, 47, 0.5)";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x + 2, y + 2, w - 4, h - 4);
+
+            // animated small scan ticks around box
+            const tickOffset = (Date.now() / 20) % 30;
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+
+            for (let i = 0; i < w; i += 30) {
+                ctx.beginPath();
+                ctx.moveTo(x + i + tickOffset, y - 7);
+                ctx.lineTo(x + i + tickOffset + 12, y - 7);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(x + i + tickOffset, y + h + 7);
+                ctx.lineTo(x + i + tickOffset + 12, y + h + 7);
+                ctx.stroke();
+            }
+
+            for (let i = 0; i < h; i += 30) {
+                ctx.beginPath();
+                ctx.moveTo(x - 7, y + i + tickOffset);
+                ctx.lineTo(x - 7, y + i + tickOffset + 12);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(x + w + 7, y + i + tickOffset);
+                ctx.lineTo(x + w + 7, y + i + tickOffset + 12);
+                ctx.stroke();
+            }
+
+            // center crosshair
+            ctx.shadowBlur = 10;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+
+            ctx.beginPath();
+            ctx.moveTo(cx - 18, cy);
+            ctx.lineTo(cx - 5, cy);
+            ctx.moveTo(cx + 5, cy);
+            ctx.lineTo(cx + 18, cy);
+            ctx.moveTo(cx, cy - 18);
+            ctx.lineTo(cx, cy - 5);
+            ctx.moveTo(cx, cy + 5);
+            ctx.lineTo(cx, cy + 18);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 24, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+
+            // label tag
+            const tagWidth = isKnown ? 245 : 190;
+            const tagHeight = 58;
+            const tagX = x;
+            const tagY = Math.max(10, y - tagHeight - 12);
+
+            ctx.shadowBlur = 12;
+            ctx.fillStyle = "rgba(0, 0, 0, 0.72)";
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+
+            ctx.fillRect(tagX, tagY, tagWidth, tagHeight);
+            ctx.strokeRect(tagX, tagY, tagWidth, tagHeight);
+
+            ctx.fillStyle = isKnown ? "#f4ffe9" : "#ffcc33";
+            ctx.font = "bold 13px Courier New";
+            ctx.fillText(
+                isKnown ? "IDENTIFIED: ABHIMANYU" : "UNKNOWN SUBJECT",
+                tagX + 10,
+                tagY + 18
+            );
+
+            ctx.fillStyle = color;
+            ctx.font = "10px Courier New";
+            ctx.fillText(`DETECTION_CONF: ${confidence}`, tagX + 10, tagY + 34);
+            ctx.fillText(`MATCH_DISTANCE: ${distanceText}`, tagX + 10, tagY + 48);
+
+            // side telemetry panel
+            const panelW = 175;
+            const panelH = 96;
+            let panelX = x + w + 16;
+            let panelY = y + 8;
+
+            if (panelX + panelW > canvas.clientWidth - 18) {
+                panelX = x - panelW - 16;
+            }
+
+            if (panelX < 18) {
+                panelX = 18;
+            }
+
+            ctx.fillStyle = "rgba(0, 0, 0, 0.58)";
+            ctx.strokeStyle = "rgba(166, 255, 47, 0.45)";
+            ctx.shadowBlur = 8;
+
+            ctx.fillRect(panelX, panelY, panelW, panelH);
+            ctx.strokeRect(panelX, panelY, panelW, panelH);
+
+            ctx.fillStyle = "#a6ff2f";
+            ctx.font = "10px Courier New";
+
+            ctx.fillText("LIVE_FACE_TELEMETRY", panelX + 10, panelY + 16);
+            ctx.fillText(`BOX_W: ${Math.round(w)}px`, panelX + 10, panelY + 34);
+            ctx.fillText(`BOX_H: ${Math.round(h)}px`, panelX + 10, panelY + 48);
+            ctx.fillText(`EXPR: ${expression.toUpperCase()}`, panelX + 10, panelY + 62);
+            ctx.fillText(`AGE: ${Math.round(age)} | ${gender.toUpperCase()}`, panelX + 10, panelY + 76);
+
+            // connector line from telemetry panel to face
+            ctx.beginPath();
+            ctx.moveTo(panelX, panelY + panelH / 2);
+            ctx.lineTo(cx, cy);
+            ctx.strokeStyle = "rgba(166, 255, 47, 0.45)";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // box coordinate anchors
+            ctx.fillStyle = color;
+            ctx.font = "9px Courier New";
+            ctx.fillText(`X:${Math.round(x)} Y:${Math.round(y)}`, x, y + h + 24);
+
+            ctx.restore();
+        }
+
+        function drawLandmarks(landmarks) {
+            const displayWidth = canvas.clientWidth;
+            const positions = landmarks.positions;
+
+            ctx.save();
+
+            ctx.fillStyle = "#38ff7a";
+            ctx.strokeStyle = "rgba(56, 255, 122, 0.45)";
+            ctx.shadowColor = "#38ff7a";
+            ctx.shadowBlur = 8;
+            ctx.lineWidth = 1;
+
+            // landmark dots
+            for (const point of positions) {
+                const x = displayWidth - point.x;
+                const y = point.y;
+
+                ctx.beginPath();
+                ctx.arc(x, y, 2.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // connect landmark groups for a more cyber mesh look
+            function connectRange(start, end, close = false) {
+                ctx.beginPath();
+
+                for (let i = start; i <= end; i++) {
+                    const p = positions[i];
+                    const px = displayWidth - p.x;
+                    const py = p.y;
+
+                    if (i === start) {
+                        ctx.moveTo(px, py);
+                    } else {
+                        ctx.lineTo(px, py);
+                    }
+                }
+
+                if (close) {
+                    const p = positions[start];
+                    ctx.lineTo(displayWidth - p.x, p.y);
+                }
+
+                ctx.stroke();
+            }
+
+            // jawline
+            connectRange(0, 16, false);
+
+            // eyebrows
+            connectRange(17, 21, false);
+            connectRange(22, 26, false);
+
+            // nose bridge and nose base
+            connectRange(27, 30, false);
+            connectRange(31, 35, false);
+
+            // eyes
+            connectRange(36, 41, true);
+            connectRange(42, 47, true);
+
+            // mouth
+            connectRange(48, 59, true);
+            connectRange(60, 67, true);
+
+            ctx.restore();
+        }
+
+        function getDetectorOptions() {
+            const isMobile = window.matchMedia("(max-width: 768px)").matches;
+
+            return new faceapi.TinyFaceDetectorOptions({
+                inputSize: isMobile ? 224 : 416,
+                scoreThreshold: isMobile ? 0.45 : 0.5
+            });
+        }
+
+        async function detectLoop() {
+            resizeCanvas();
+
+            const options = getDetectorOptions();
+
+            const detections = await faceapi
+                .detectAllFaces(video, options)
+                .withFaceLandmarks()
+                .withFaceExpressions()
+                .withAgeAndGender()
+                .withFaceDescriptors();
+
+            ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+            const dims = {
+                width: canvas.clientWidth,
+                height: canvas.clientHeight
+            };
+
+            const resized = faceapi.resizeResults(detections, dims);
+
+            document.getElementById("faceCount").textContent = `FACES: ${resized.length}`;
+
+            if (!resized.length) {
+                matchStatus.textContent = "SEARCHING FACE...";
+                expressionText.textContent = "EXPRESSION: --";
+                ageGenderText.textContent = "AGE/GENDER: --";
+                identifiedText.textContent = "IDENTIFIED: --";
+            }
+
+            for (const result of resized) {
+                const box = result.detection.box;
+                const [expr, exprScore] = dominantExpression(result.expressions);
+
+                let label = "UNKNOWN";
+                let distanceText = "--";
+
+                if (faceMatcher) {
+                    const bestMatch = faceMatcher.findBestMatch(result.descriptor);
+                    distanceText = bestMatch.distance.toFixed(2);
+
+                    if (bestMatch.label === "ABHIMANYU" && bestMatch.distance <= MATCH_THRESHOLD) {
+                        stableMatchCount++;
+                        stableUnknownCount = 0;
+                    } else {
+                        stableUnknownCount++;
+                        stableMatchCount = 0;
+                    }
+
+                    if (stableMatchCount >= REQUIRED_STABLE_FRAMES) {
+                        lastKnownLabel = "ABHIMANYU";
+                    }
+
+                    if (stableUnknownCount >= REQUIRED_STABLE_FRAMES) {
+                        lastKnownLabel = "UNKNOWN";
+                    }
+
+                    label = lastKnownLabel;
+                }
+
+                const confidence = `${Math.round(result.detection.score * 100)}%`;
+
+                drawCyberBox(
+                    box,
+                    label,
+                    confidence,
+                    expr,
+                    result.age,
+                    result.gender,
+                    distanceText
+                );
+
+                drawLandmarks(result.landmarks);
+
+                expressionText.textContent =
+                    `EXPRESSION: ${expr.toUpperCase()} ${(exprScore * 100).toFixed(1)}%`;
+
+                ageGenderText.textContent =
+                    `AGE/GENDER: ${Math.round(result.age)} / ${result.gender.toUpperCase()}`;
+
+                if (label === "ABHIMANYU") {
+                    matchStatus.textContent = `MATCH FOUND | DIST: ${distanceText}`;
+                    identifiedText.textContent = "IDENTIFIED: ABHIMANYU";
+
+                    const now = Date.now();
+                    if (now - lastBeep > 3500) {
+                        verifiedSound();
+                        lastBeep = now;
+                    }
+                } else {
+                    matchStatus.textContent = faceMatcher
+                        ? `UNKNOWN | DIST: ${distanceText}`
+                        : "TRACKING ONLY";
+                    identifiedText.textContent = "IDENTIFIED: UNKNOWN";
+                }
+
+                const now = Date.now();
+                if (now - lastBeep > 1300 && label !== "ABHIMANYU") {
+                    beep(920, 0.035, 0.018);
+                    lastBeep = now;
+                }
+            }
+
+            requestAnimationFrame(detectLoop);
+        }
+
+        startBtn.addEventListener("click", async () => {
+            try {
+                hideError();
+                controls.classList.add("hidden");
+                loadingOverlay.classList.remove("hidden");
+                initSound();
+
+                await loadModels();
+                await createFaceMatcher();
+                await startWebcam();
+
+                loadingOverlay.classList.add("hidden");
+                matchStatus.textContent = "LIVE TRACKING ACTIVE";
+                beep(440, 0.08, 0.04);
+                setTimeout(() => beep(720, 0.08, 0.04), 120);
+
+                detectLoop();
+            } catch (error) {
+                console.error(error);
+                loadingOverlay.classList.add("hidden");
+                controls.classList.remove("hidden");
+                showError(
+                    "Could not start scan. Use localhost/HTTPS and allow webcam permission."
+                );
+            }
+        });
+
+        window.addEventListener("resize", resizeCanvas);
+    </script>
+</body>
+
+</html>

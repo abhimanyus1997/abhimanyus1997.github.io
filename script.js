@@ -1,4 +1,5 @@
 import profile from './profile.json';
+import { initFaceScanner } from './static/js/face-scanner.js';
 const canvas = document.querySelector('#field');
 document.documentElement.dataset.portfolioJs = 'ready';
 
@@ -317,9 +318,9 @@ async function initThree() {
     const particleGeo = new THREE.BufferGeometry(); particleGeo.setAttribute('position', new THREE.Float32BufferAttribute(particleData, 3));
     const orbit = new THREE.Points(particleGeo, new THREE.PointsMaterial({ color: 0x242920, size: .045, transparent: true, opacity: 0.5 })); group.add(orbit);
 
-    const ring1 = new THREE.Mesh(new THREE.TorusGeometry(2.15, .008, 3, 72), new THREE.MeshBasicMaterial({ color: 0x536146, transparent: true, opacity: .45 }));
+    const ring1 = new THREE.Mesh(new THREE.TorusGeometry(2.75, .008, 3, 72), new THREE.MeshBasicMaterial({ color: 0x536146, transparent: true, opacity: .45 }));
     ring1.rotation.x = 1.08; group.add(ring1);
-    const ring2 = ring1.clone(); ring2.scale.setScalar(1.22); ring2.rotation.set(.4, .8, 0); group.add(ring2);
+    const ring2 = ring1.clone(); ring2.scale.setScalar(1.25); ring2.rotation.set(.4, .8, 0); group.add(ring2);
     const carRig = new THREE.Group(); carRig.visible = false; scene.add(carRig); let mixer = null;
     let gearAction = null; let gearOpen = true;
     const shadow = new THREE.Mesh(new THREE.CircleGeometry(1, 48), new THREE.MeshBasicMaterial({ color: 0x11130f, transparent: true, opacity: .13, depthWrite: false })); shadow.scale.set(2.2, .42, 1); shadow.rotation.x = -Math.PI / 2; scene.add(shadow);
@@ -327,7 +328,7 @@ async function initThree() {
     keyLight = new THREE.DirectionalLight(0xffffff, 2.6); keyLight.position.set(-4, 5, 6); scene.add(keyLight);
     rimLight = new THREE.PointLight(0xffa31a, 5.5, 12); rimLight.position.set(3, -1, 3); scene.add(rimLight);
     const carStatus = document.querySelector('#car-status');
-    new THREE.GLTFLoader().load('/static/models/hovercar.glb', gltf => {
+    new THREE.GLTFLoader().load('static/models/hovercar.glb', gltf => {
       const car = gltf.scene; const box = new THREE.Box3().setFromObject(car), size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
       const scale = 5.1 / Math.max(size.x, size.y, size.z); car.scale.setScalar(scale); car.position.copy(center).multiplyScalar(-scale); car.rotation.y = Math.PI / 2 - .22;
       car.traverse(node => { if (node.isMesh) { node.frustumCulled = false; const mats = Array.isArray(node.material) ? node.material : [node.material]; mats.forEach(m => { if (!m) return; const name = (m.name || '').toLowerCase(); const tone = name.includes('body') ? 0x34383d : name.includes('metal') ? 0x202326 : name.includes('plastic') ? 0x111315 : null; if (tone !== null) { if (m.color) m.color.setHex(tone); if (m.uniforms?.diffuse?.value) m.uniforms.diffuse.value.setHex(tone) } if (m.map) m.map.encoding = THREE.sRGBEncoding; if (m.emissiveMap) m.emissiveMap.encoding = THREE.sRGBEncoding; m.side = THREE.DoubleSide; m.needsUpdate = true }) } });
@@ -599,15 +600,17 @@ async function initThree() {
       previousX = x;
 
       // Landing gear: open when boosting, close at footer (sp > 0.88)
+      // Landing gear: open at top (sp < 0.05) or bottom (sp > 0.88), close during flight transit or when boosting
       if (gearAction) {
-        const nearFooter = sp > 0.88;
-        if ((boost > 0.45 || nearFooter) && gearOpen) {
+        const inTransit = sp >= 0.05 && sp <= 0.88;
+        const shouldClose = inTransit || boost > 0.45;
+        if (shouldClose && gearOpen) {
           gearOpen = false;
           gearAction.paused = false;
           gearAction.timeScale = -1; // Retract
           gearAction.play();
-          if (!nearFooter) Sfx.playGear(false);
-        } else if (boost === 0 && !nearFooter && !gearOpen) {
+          Sfx.playGear(false);
+        } else if (!shouldClose && !gearOpen) {
           gearOpen = true;
           gearAction.paused = false;
           gearAction.timeScale = 1; // Extend
@@ -624,10 +627,17 @@ async function initThree() {
         group.position.set(0, 0, -1.5);
         group.scale.setScalar(isMobile ? 0.65 : 0.95);
       } else {
-        shadow.visible = true;
+        // Shadow fades out in transit flight (between sp 0.08 and 0.88)
+        let shadowFade = 0;
+        if (sp < 0.08) {
+          shadowFade = 1 - (sp / 0.08);
+        } else if (sp > 0.88) {
+          shadowFade = (sp - 0.88) / 0.12;
+        }
+        shadow.visible = shadowFade > 0.01;
         shadow.position.set(x, y - (isMobile ? .44 : .62), z - .15);
         shadow.scale.set(1.9 * s * (1 + boost * .25), .34 * s, 1);
-        shadow.material.opacity = .12 * ease * (1 - boost * .4);
+        shadow.material.opacity = .12 * ease * (1 - boost * .4) * shadowFade;
 
         group.visible = true;
         group.rotation.y = t * .05;
@@ -749,10 +759,12 @@ async function runBootSequence() {
 
   let currentSlideIdx = 0;
   let sequenceFinished = false;
+  let autoSkipTimer = setTimeout(finishIntro, 30000);
 
   function finishIntro() {
     if (sequenceFinished) return;
     sequenceFinished = true;
+    clearTimeout(autoSkipTimer);
     window.scrollTo(0, 0);
     document.body.classList.add('cinematic-ready');
     entryStart = performance.now() + 1800;
@@ -775,6 +787,19 @@ async function runBootSequence() {
 
   // Play startup triple-beep
   Sfx.playStartup();
+
+  // Start the modular face scanner component with voice route callback
+  initFaceScanner((sectionHash) => {
+    finishIntro();
+    if (sectionHash && sectionHash !== '#top') {
+      setTimeout(() => {
+        const el = document.querySelector(sectionHash);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 950);
+    }
+  });
 
   const slideDuration = 2400; // 2.4s per slide
 
@@ -820,13 +845,11 @@ async function runBootSequence() {
     await sleep(slideDuration);
     currentSlideIdx++;
   }
-
-  finishIntro();
 }
 
 runBootSequence();
 
-fetch('/static/images/pilot_sync.svg')
+fetch('static/images/pilot_sync.svg')
   .then(r => r.text())
   .then(svgText => {
     const container = document.querySelector('.pilot-sync-svg-container');
@@ -1868,13 +1891,18 @@ addEventListener('appinstalled', () => {
   const timelineArticles = document.querySelectorAll('.timeline article');
 
   function handleScroll() {
-    // 1. Timeline progress and active state tracking
-    if (timeline && progressLine) {
-      const rect = timeline.getBoundingClientRect();
-      const timelineHeight = rect.height;
+    // 1. Timeline progress and active state tracking (smoothly bound to first/last items)
+    if (timeline && progressLine && timelineArticles.length > 0) {
+      const firstArt = timelineArticles[0];
+      const lastArt = timelineArticles[timelineArticles.length - 1];
+      const firstRect = firstArt.getBoundingClientRect();
+      const lastRect = lastArt.getBoundingClientRect();
+      
       const startActiveY = window.innerHeight * 0.65;
-      const passed = Math.max(0, Math.min(timelineHeight, startActiveY - rect.top));
-      const percent = (passed / timelineHeight) * 100;
+      
+      const totalHeight = lastRect.bottom - firstRect.top;
+      const passed = Math.max(0, Math.min(totalHeight, startActiveY - firstRect.top));
+      const percent = (passed / totalHeight) * 100;
       progressLine.style.height = `${percent}%`;
 
       let currentActive = null;
@@ -1892,6 +1920,38 @@ addEventListener('appinstalled', () => {
           article.classList.remove('active-role');
         }
       });
+    }
+
+    // 2. Active header navigation scroll spy highlight
+    const sections = ['experience', 'work', 'about'];
+    let activeSec = null;
+    sections.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight * 0.4 && rect.bottom > window.innerHeight * 0.15) {
+          activeSec = id;
+        }
+      }
+    });
+
+    const navLinks = document.querySelectorAll('header nav a');
+    navLinks.forEach(link => {
+      const href = link.getAttribute('href');
+      if (activeSec && href === `#${activeSec}`) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+
+    const headerEl = document.querySelector('header');
+    if (headerEl) {
+      if (activeSec === 'experience') {
+        headerEl.classList.add('dark-header');
+      } else {
+        headerEl.classList.remove('dark-header');
+      }
     }
 
     // 2. Hero 3D spaceship scroll parallax
