@@ -282,7 +282,7 @@ async function initThree(){
     const key=new THREE.DirectionalLight(0xffffff,2.6);key.position.set(-4,5,6);scene.add(key);
     const rim=new THREE.PointLight(0xffa31a,5.5,12);rim.position.set(3,-1,3);scene.add(rim);
     const carStatus=document.querySelector('#car-status');
-    new THREE.GLTFLoader().load('./static/models/hovercar.glb',gltf=>{
+    new THREE.GLTFLoader().load('/static/models/hovercar.glb',gltf=>{
       const car=gltf.scene;const box=new THREE.Box3().setFromObject(car),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
       const scale=5.1/Math.max(size.x,size.y,size.z);car.scale.setScalar(scale);car.position.copy(center).multiplyScalar(-scale);car.rotation.y=Math.PI/2-.22;
       car.traverse(node=>{if(node.isMesh){node.frustumCulled=false;const mats=Array.isArray(node.material)?node.material:[node.material];mats.forEach(m=>{if(!m)return;const name=(m.name||'').toLowerCase();const tone=name.includes('body')?0x34383d:name.includes('metal')?0x202326:name.includes('plastic')?0x111315:null;if(tone!==null){if(m.color)m.color.setHex(tone);if(m.uniforms?.diffuse?.value)m.uniforms.diffuse.value.setHex(tone)}if(m.map)m.map.encoding=THREE.sRGBEncoding;if(m.emissiveMap)m.emissiveMap.encoding=THREE.sRGBEncoding;m.side=THREE.DoubleSide;m.needsUpdate=true})}});
@@ -743,7 +743,7 @@ async function runBootSequence() {
 
 runBootSequence();
 
-fetch('./static/images/pilot_sync.svg')
+fetch('/static/images/pilot_sync.svg')
   .then(r => r.text())
   .then(svgText => {
     const container = document.querySelector('.pilot-sync-svg-container');
@@ -756,13 +756,193 @@ fetch('./static/images/pilot_sync.svg')
 
 
 const launch=document.querySelector('#chat-launch'),panel=document.querySelector('#chat-panel'),close=document.querySelector('#chat-close'),start=document.querySelector('#start-ai'),statusEl=document.querySelector('#model-status'),progressEl=document.querySelector('#model-progress'),gate=document.querySelector('#model-gate'),form=document.querySelector('#chat-form'),input=document.querySelector('#chat-input'),send=form.querySelector('button'),messages=document.querySelector('#chat-messages'),suggestions=document.querySelector('#suggestions');
+const modeLabel = document.querySelector('#chat-mode-label');
+const modelSelect = document.querySelector('#model-select');
+const chatNote = document.querySelector('#chat-note');
+
 let engine=null,ready=false,busy=false,pendingPrompt='';
+let apiType = 'local'; // 'vercel' | 'direct' | 'local'
+let selectedModel = '';
+let availableModels = [];
+
+const baseUrl = import.meta.env.VITE_LITELLM_BASE_URL || 'http://13.126.102.204:4000';
+const apiKey = import.meta.env.VITE_LITELLM_API_KEY || 'sk-ONyS5ZITbsCtHZZGZa4VHg';
+
 const history=[{role:'system',content:`You are the concise portfolio assistant for Abhimanyu Singh. Use only these facts. He is a Data Scientist Manager and AI/robotics engineer in Noida with 4+ years of industry and 2 years of research experience. HDFC Bank (Dec 2025-present): building Neev Agent Catalogue over LiteLLM and an internal Streamlit MLOps annotation platform. Quantiphi (Sep-Nov 2025): GCP Vertex AI Document OCR pipeline for financial documents. Alphadroid (Jun 2024-Sep 2025): lift-PLC and GeoJSON robot navigation, multilingual RAG on SageMaker, Flutter/TFLite MobileFaceNet at 99.5% accuracy, MQTT/ECR/Vault fleet systems. IIT Guwahati (Jun 2023-May 2024): GroundingDINO underwater data pipelines improved quality 35%; ONNX reduced latency 3-4 seconds. HealthView (2019-2021): NLP curation and D3.js dashboards. Projects: MicroClaw agentic ESP32 firmware using C++, FreeRTOS, Gemini/Groq and FastAPI; HealthBuddy with Flutter, Health Connect, Groq and BYOK; Resume JD Matcher with Gemini 2.5, LangChain, TF-IDF and Plotly; Langchain One multimodal OCR assistant. Education: M.Tech Automation and Robotics at DIAT/DRDO, CGPA 8.47; B.Tech Mechanical Engineering at LNMIIT, CGPA 8.16. Published an IndiaAI object-detection article and presented subaqueous crack detection at RCRM 2024. Contact: abhimanyus1997@gmail.com. GitHub and LinkedIn: abhimanyus1997. If asked beyond these facts, say you do not know and suggest emailing him. Never invent claims. Keep answers under 100 words.`}];
-function toggle(open){panel.classList.toggle('open',open);panel.setAttribute('aria-hidden',String(!open));launch.setAttribute('aria-expanded',String(open));launch.style.visibility=open?'hidden':'visible';if(open&&ready)input.focus()}
+
+async function initAI() {
+  if (ready || busy) return;
+  busy = true;
+  if (modeLabel) modeLabel.textContent = 'CONNECTING AI...';
+
+  // 1. Try Vercel Serverless API
+  try {
+    const res = await fetch('/api/models');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.data && data.data.length > 0) {
+        apiType = 'vercel';
+        availableModels = data.data.map(m => m.id);
+        setupCloudAI('VERCEL CLOUD AI');
+        return;
+      }
+    }
+  } catch (e) {
+    console.warn('Vercel backend models API failed/unavailable. Trying direct LiteLLM...', e);
+  }
+
+  // 2. Try direct LiteLLM API
+  try {
+    const res = await fetch(`${baseUrl}/v1/models`, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`
+      }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.data && data.data.length > 0) {
+        apiType = 'direct';
+        availableModels = data.data.map(m => m.id);
+        setupCloudAI('LITELLM CLOUD AI');
+        return;
+      }
+    }
+  } catch (e) {
+    console.warn('Direct LiteLLM connection failed/blocked:', e);
+  }
+
+  // 3. Fallback to Local WebGPU AI
+  apiType = 'local';
+  busy = false;
+  if (modeLabel) modeLabel.textContent = 'LOCAL PRIVATE AI';
+  if (chatNote) chatNote.textContent = 'ON-DEVICE AI · NO MESSAGES LEAVE YOUR BROWSER';
+  if (gate) gate.style.display = 'block';
+}
+
+function setupCloudAI(labelName) {
+  ready = true;
+  busy = false;
+  if (modeLabel) modeLabel.textContent = labelName;
+  if (chatNote) chatNote.textContent = `POWERED BY LITELLM & ${apiType === 'vercel' ? 'VERCEL' : 'DIRECT'}`;
+  
+  if (gate) gate.style.display = 'none';
+  input.disabled = false;
+  send.disabled = false;
+
+  if (modelSelect && availableModels.length > 0) {
+    modelSelect.innerHTML = '';
+    availableModels.forEach(modelId => {
+      const opt = document.createElement('option');
+      opt.value = modelId;
+      opt.textContent = modelId;
+      modelSelect.appendChild(opt);
+    });
+    // Default model preference
+    const preferred = availableModels.find(m => m.includes('deepseek') || m.includes('glm-5'));
+    selectedModel = preferred || availableModels[0];
+    modelSelect.value = selectedModel;
+    modelSelect.style.display = 'block';
+
+    modelSelect.addEventListener('change', (e) => {
+      selectedModel = e.target.value;
+    });
+  }
+
+  addMessage(`Connected to ${labelName}. Ready to chat.`);
+  if (pendingPrompt) {
+    input.value = pendingPrompt;
+    pendingPrompt = '';
+    form.requestSubmit();
+  }
+}
+
+function toggle(open){
+  panel.classList.toggle('open',open);
+  panel.setAttribute('aria-hidden',String(!open));
+  launch.setAttribute('aria-expanded',String(open));
+  launch.style.visibility=open?'hidden':'visible';
+  if (open) {
+    if (!ready && !busy && apiType === 'local') {
+      initAI();
+    }
+    if(ready) input.focus();
+  }
+}
+
 launch.addEventListener('click',()=>toggle(true));
 close.addEventListener('click',()=>toggle(false));
 addEventListener('keydown',e=>{if(e.key==='Escape')toggle(false)});
-function addMessage(text,who='bot'){const row=document.createElement('div');row.className=`message ${who}`;const badge=document.createElement('span');badge.textContent=who==='bot'?'AI':'YOU';const p=document.createElement('p');p.textContent=text;row.append(badge,p);messages.append(row);messages.scrollTop=messages.scrollHeight;return p}
+let currentAudio = null;
+async function speakText(text, buttonElement) {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  
+  buttonElement.innerHTML = '⏳';
+  buttonElement.disabled = true;
+
+  try {
+    let response;
+    try {
+      response = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+    } catch (e) {
+      console.warn('Vercel TTS proxy failed, trying direct...', e);
+    }
+
+    if (!response || !response.ok) {
+      const formData = new FormData();
+      formData.append('text', text);
+      
+      response = await fetch('http://13.126.102.204:5555/tts', {
+        method: 'POST',
+        body: formData
+      });
+    }
+
+    if (!response.ok) {
+      throw new Error(`TTS request failed with status ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    const audioUrl = URL.createObjectURL(blob);
+    currentAudio = new Audio(audioUrl);
+    
+    buttonElement.innerHTML = '🛑';
+    buttonElement.disabled = false;
+
+    currentAudio.addEventListener('ended', () => {
+      buttonElement.innerHTML = '🔊';
+      currentAudio = null;
+      buttonElement.onclick = () => speakText(text, buttonElement);
+    });
+
+    buttonElement.onclick = () => {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+        buttonElement.innerHTML = '🔊';
+        buttonElement.onclick = () => speakText(text, buttonElement);
+      }
+    };
+
+    await currentAudio.play();
+  } catch (error) {
+    console.error('TTS error:', error);
+    buttonElement.innerHTML = '❌';
+    setTimeout(() => {
+      buttonElement.innerHTML = '🔊';
+      buttonElement.disabled = false;
+      buttonElement.onclick = () => speakText(text, buttonElement);
+    }, 2000);
+  }
+}
+
+function addMessage(text,who='bot'){const row=document.createElement('div');row.className=`message ${who}`;row.style.display='flex';row.style.alignItems='flex-start';row.style.gap='8px';row.style.marginBottom='12px';const badge=document.createElement('span');badge.textContent=who==='bot'?'AI':'YOU';const p=document.createElement('p');p.textContent=text;p.style.flex='1';p.style.margin='0';row.append(badge,p);if(who==='bot'&&text){const ttsBtn=document.createElement('button');ttsBtn.className='tts-btn';ttsBtn.innerHTML='🔊';ttsBtn.title='Speak text';ttsBtn.style.cssText='background:none;border:none;color:var(--acid);cursor:pointer;font-size:12px;padding:2px;opacity:0.6;transition:opacity 0.2s;margin-top:2px;flex-shrink:0;';ttsBtn.addEventListener('mouseenter',()=>ttsBtn.style.opacity='1');ttsBtn.addEventListener('mouseleave',()=>ttsBtn.style.opacity='0.6');ttsBtn.onclick=()=>speakText(text,ttsBtn);row.append(ttsBtn)}messages.append(row);messages.scrollTop=messages.scrollHeight;return p}
 async function loadAI(){
   if(ready||busy)return;
   if(!('gpu'in navigator)){statusEl.textContent='WEBGPU IS NOT AVAILABLE IN THIS BROWSER';addMessage('This browser cannot run the local model. Chrome or Edge with WebGPU enabled is recommended. You can still reach Abhimanyu by email.');return}
@@ -770,17 +950,84 @@ async function loadAI(){
   try{
     const webllm=await import('https://esm.run/@mlc-ai/web-llm@0.2.84');
     engine=await webllm.CreateMLCEngine('SmolLM2-360M-Instruct-q4f16_1-MLC',{initProgressCallback:p=>{const pct=Math.round((p.progress||0)*100);progressEl.style.width=`${pct}%`;statusEl.textContent=`${p.text||'LOADING MODEL'} · ${pct}%`}});
-    ready=true;busy=false;gate.remove();input.disabled=false;send.disabled=false;addMessage('I’m ready. What would you like to know?');input.focus();
+    ready=true;busy=false;gate.style.display='none';input.disabled=false;send.disabled=false;addMessage('I’m ready. What would you like to know?');input.focus();
     if(pendingPrompt){input.value=pendingPrompt;pendingPrompt='';form.requestSubmit()}
   }catch(err){busy=false;start.disabled=false;statusEl.textContent='MODEL COULD NOT LOAD · TRY AGAIN';addMessage('The local model could not start. Check WebGPU support and available device memory, then try again.');console.error(err)}
 }
 start.addEventListener('click',loadAI);
-suggestions.addEventListener('click',e=>{if(e.target.tagName!=='BUTTON')return;if(!ready){pendingPrompt=e.target.textContent;loadAI()}else{input.value=e.target.textContent;form.requestSubmit()}});
+suggestions.addEventListener('click',e=>{if(e.target.tagName!=='BUTTON')return;if(!ready){pendingPrompt=e.target.textContent;if(apiType==='local'){loadAI()}else{initAI()}}else{input.value=e.target.textContent;form.requestSubmit()}});
 form.addEventListener('submit',async e=>{
   e.preventDefault();const text=input.value.trim();if(!text||!ready||busy)return;input.value='';addMessage(text,'user');history.push({role:'user',content:text});busy=true;input.disabled=true;send.disabled=true;const out=addMessage('');
-  try{const stream=await engine.chat.completions.create({messages:history,temperature:.25,max_tokens:180,stream:true});let answer='';for await(const chunk of stream){answer+=chunk.choices[0]?.delta?.content||'';out.textContent=answer;messages.scrollTop=messages.scrollHeight}history.push({role:'assistant',content:answer})}
-  catch(err){out.textContent='I hit a local inference error. Please try once more.';console.error(err)}
-  finally{busy=false;input.disabled=false;send.disabled=false;input.focus()}
+  
+  if (apiType === 'vercel' || apiType === 'direct') {
+    try {
+      const endpoint = apiType === 'vercel' ? '/api/chat' : `${baseUrl}/v1/chat/completions`;
+      const headers = { 'Content-Type': 'application/json' };
+      if (apiType === 'direct') {
+        headers['Authorization'] = `Bearer ${apiKey}`;
+      }
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({
+          model: selectedModel,
+          messages: history,
+          stream: true,
+          temperature: 0.25,
+          max_tokens: 180
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Cloud API returned status ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let answer = '';
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          const cleaned = line.trim();
+          if (!cleaned) continue;
+          if (cleaned.startsWith('data: ')) {
+            const dataStr = cleaned.slice(6).trim();
+            if (dataStr === '[DONE]') continue;
+            try {
+              const parsed = JSON.parse(dataStr);
+              answer += parsed.choices[0]?.delta?.content || '';
+              out.textContent = answer;
+              messages.scrollTop = messages.scrollHeight;
+            } catch (e) {}
+          }
+        }
+      }
+      history.push({role:'assistant',content:answer});
+    } catch(err) {
+      out.textContent = 'Cloud AI error. Falling back to local/webgpu option...';
+      console.error(err);
+      ready = false;
+      apiType = 'local';
+      if (modeLabel) modeLabel.textContent = 'LOCAL PRIVATE AI';
+      if (chatNote) chatNote.textContent = 'ON-DEVICE AI · NO MESSAGES LEAVE YOUR BROWSER';
+      if (modelSelect) modelSelect.style.display = 'none';
+      if (gate) gate.style.display = 'block';
+    } finally {
+      busy=false;input.disabled=false;send.disabled=false;input.focus();
+    }
+  } else {
+    try{const stream=await engine.chat.completions.create({messages:history,temperature:.25,max_tokens:180,stream:true});let answer='';for await(const chunk of stream){answer+=chunk.choices[0]?.delta?.content||'';out.textContent=answer;messages.scrollTop=messages.scrollHeight}history.push({role:'assistant',content:answer})}
+    catch(err){out.textContent='I hit a local inference error. Please try once more.';console.error(err)}
+    finally{busy=false;input.disabled=false;send.disabled=false;input.focus()}
+  }
 });
 
 // Service Worker Registration for PWA

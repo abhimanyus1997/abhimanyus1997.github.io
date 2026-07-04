@@ -32,3 +32,10 @@ node_modules/
 # Temp files
 *.tmp
 *.log
+
+# Vite build and environment files
+dist/
+.env
+.env.local
+.env.*.local
+
