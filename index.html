@@ -22,11 +22,18 @@
   <!-- Mobile Auth Redirect Check -->
   <script>
     (function() {
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      // Detect mobile devices
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
+
+      // Check if auth is done (session based)
       const authDone = sessionStorage.getItem('auth_done');
+
+      // Check if we're already on auth page
       const isAuthPage = window.location.pathname.startsWith('/auth');
 
+      // Redirect mobile users to /auth on first visit
       if (isMobile && !authDone && !isAuthPage) {
+        console.log('Mobile device detected, redirecting to /auth');
         window.location.href = '/auth';
       }
     })();
