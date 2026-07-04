@@ -2,6 +2,20 @@ import profile from './profile.json';
 const canvas=document.querySelector('#field');
 document.documentElement.dataset.portfolioJs='ready';
 
+window.addEventListener('error', (event) => {
+  console.error('[Global Error]', {
+    message: event.message,
+    source: event.filename,
+    line: event.lineno,
+    column: event.colno,
+    error: event.error
+  });
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('[Unhandled Promise Rejection]', event.reason);
+});
+
 let entryStart = 0;
 let modelLoaded = false;
 let modelFailed = false;
@@ -15,226 +29,252 @@ let rimLight = null;
 const Sfx = {
   ctx: null,
   init() {
-    if (this.ctx) return;
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (AudioContext) this.ctx = new AudioContext();
+    try {
+      if (this.ctx) return;
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) this.ctx = new AudioContext();
+    } catch (e) {
+      console.warn('[Sfx] AudioContext init failed:', e);
+    }
   },
   playClick() {
-    this.init();
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(1000, now);
-    osc.frequency.exponentialRampToValueAtTime(150, now + 0.08);
-    gain.gain.setValueAtTime(0.06, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.08);
-  },
-  playHover() {
-    this.init();
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(460, now);
-    osc.frequency.setValueAtTime(580, now + 0.02);
-    gain.gain.setValueAtTime(0.02, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.05);
-  },
-  playScramble() {
-    this.init();
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(1200 + Math.random() * 1800, now);
-    gain.gain.setValueAtTime(0.016, now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.015);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.015);
-  },
-  playSlide() {
-    this.init();
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(120, now);
-    osc.frequency.exponentialRampToValueAtTime(700, now + 0.4);
-    gain.gain.setValueAtTime(0.04, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.4);
-  },
-  playBoost() {
-    this.init();
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    const filter = this.ctx.createBiquadFilter();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(75, now);
-    osc.frequency.linearRampToValueAtTime(220, now + 0.65);
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(250, now);
-    gain.gain.setValueAtTime(0.12, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.7);
-  },
-  playGear(isOpen) {
-    this.init();
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'square';
-    const startFreq = isOpen ? 500 : 250;
-    const endFreq = isOpen ? 250 : 500;
-    osc.frequency.setValueAtTime(startFreq, now);
-    osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.22);
-    gain.gain.setValueAtTime(0.03, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.22);
-  },
-  playArrival() {
-    this.init();
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const osc1 = this.ctx.createOscillator();
-    const osc2 = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    const filter = this.ctx.createBiquadFilter();
-    
-    osc1.type = 'sawtooth';
-    osc2.type = 'triangle';
-    
-    osc1.frequency.setValueAtTime(180, now);
-    osc1.frequency.exponentialRampToValueAtTime(65, now + 2.0);
-    
-    osc2.frequency.setValueAtTime(184, now);
-    osc2.frequency.exponentialRampToValueAtTime(67, now + 2.0);
-    
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(400, now);
-    filter.frequency.exponentialRampToValueAtTime(150, now + 2.0);
-    
-    gain.gain.setValueAtTime(0.001, now);
-    gain.gain.linearRampToValueAtTime(0.18, now + 0.5);
-    gain.gain.exponentialRampToValueAtTime(0.03, now + 2.0);
-    
-    osc1.connect(filter);
-    osc2.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.ctx.destination);
-    
-    osc1.start(now);
-    osc2.start(now);
-    
-    gain.gain.setValueAtTime(0.03, now + 2.0);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 3.0);
-    osc1.stop(now + 3.0);
-    osc2.stop(now + 3.0);
-  },
-  playManeuver() {
-    this.init();
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    const filter = this.ctx.createBiquadFilter();
-    
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(90, now);
-    osc.frequency.linearRampToValueAtTime(45, now + 0.15);
-    
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(120, now);
-    
-    gain.gain.setValueAtTime(0.08, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-    
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.ctx.destination);
-    
-    osc.start(now);
-    osc.stop(now + 0.15);
-  },
-  playStartup() {
-    this.init();
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    [0, 0.1, 0.2].forEach((delay, idx) => {
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
       osc.type = 'sine';
-      const pitch = idx === 2 ? 1600 : 1200;
-      osc.frequency.setValueAtTime(pitch, now + delay);
-      gain.gain.setValueAtTime(0.02, now + delay);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.06);
-      osc.connect(gain);
-      gain.connect(this.ctx.destination);
-      osc.start(now + delay);
-      osc.stop(now + delay + 0.06);
-    });
-  },
-  playGlitch() {
-    this.init();
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
-    osc.type = 'square';
-    osc.frequency.setValueAtTime(3000 + Math.random() * 2000, now);
-    gain.gain.setValueAtTime(0.008, now);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.01);
-    osc.connect(gain);
-    gain.connect(this.ctx.destination);
-    osc.start(now);
-    osc.stop(now + 0.01);
-  },
-  playChime() {
-    this.init();
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const freqs = [523.25, 659.25, 783.99, 1046.5];
-    freqs.forEach((f, idx) => {
-      const osc = this.ctx.createOscillator();
-      const gain = this.ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(f, now);
-      gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.03, now + idx * 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.8 + idx * 0.1);
+      osc.frequency.setValueAtTime(1000, now);
+      osc.frequency.exponentialRampToValueAtTime(150, now + 0.08);
+      gain.gain.setValueAtTime(0.06, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
       osc.connect(gain);
       gain.connect(this.ctx.destination);
       osc.start(now);
-      osc.stop(now + 1.2 + idx * 0.1);
-    });
+      osc.stop(now + 0.08);
+    } catch (e) { console.warn('[Sfx] playClick failed:', e); }
+  },
+  playHover() {
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(460, now);
+      osc.frequency.setValueAtTime(580, now + 0.02);
+      gain.gain.setValueAtTime(0.02, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.05);
+    } catch (e) { console.warn('[Sfx] playHover failed:', e); }
+  },
+  playScramble() {
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(1200 + Math.random() * 1800, now);
+      gain.gain.setValueAtTime(0.016, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.015);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.015);
+    } catch (e) { console.warn('[Sfx] playScramble failed:', e); }
+  },
+  playSlide() {
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(120, now);
+      osc.frequency.exponentialRampToValueAtTime(700, now + 0.4);
+      gain.gain.setValueAtTime(0.04, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.4);
+    } catch (e) { console.warn('[Sfx] playSlide failed:', e); }
+  },
+  playBoost() {
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(75, now);
+      osc.frequency.linearRampToValueAtTime(220, now + 0.65);
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(250, now);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.7);
+    } catch (e) { console.warn('[Sfx] playBoost failed:', e); }
+  },
+  playGear(isOpen) {
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      const startFreq = isOpen ? 500 : 250;
+      const endFreq = isOpen ? 250 : 500;
+      osc.frequency.setValueAtTime(startFreq, now);
+      osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.22);
+      gain.gain.setValueAtTime(0.03, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.22);
+    } catch (e) { console.warn('[Sfx] playGear failed:', e); }
+  },
+  playArrival() {
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      const osc1 = this.ctx.createOscillator();
+      const osc2 = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+
+      osc1.type = 'sawtooth';
+      osc2.type = 'triangle';
+
+      osc1.frequency.setValueAtTime(180, now);
+      osc1.frequency.exponentialRampToValueAtTime(65, now + 2.0);
+
+      osc2.frequency.setValueAtTime(184, now);
+      osc2.frequency.exponentialRampToValueAtTime(67, now + 2.0);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(400, now);
+      filter.frequency.exponentialRampToValueAtTime(150, now + 2.0);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.18, now + 0.5);
+      gain.gain.exponentialRampToValueAtTime(0.03, now + 2.0);
+
+      osc1.connect(filter);
+      osc2.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc1.start(now);
+      osc2.start(now);
+
+      gain.gain.setValueAtTime(0.03, now + 2.0);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 3.0);
+      osc1.stop(now + 3.0);
+      osc2.stop(now + 3.0);
+    } catch (e) { console.warn('[Sfx] playArrival failed:', e); }
+  },
+  playManeuver() {
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(90, now);
+      osc.frequency.linearRampToValueAtTime(45, now + 0.15);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(120, now);
+
+      gain.gain.setValueAtTime(0.08, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.15);
+    } catch (e) { console.warn('[Sfx] playManeuver failed:', e); }
+  },
+  playStartup() {
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      [0, 0.1, 0.2].forEach((delay, idx) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        const pitch = idx === 2 ? 1600 : 1200;
+        osc.frequency.setValueAtTime(pitch, now + delay);
+        gain.gain.setValueAtTime(0.02, now + delay);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.06);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now + delay);
+        osc.stop(now + delay + 0.06);
+      });
+    } catch (e) { console.warn('[Sfx] playStartup failed:', e); }
+  },
+  playGlitch() {
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(3000 + Math.random() * 2000, now);
+      gain.gain.setValueAtTime(0.008, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.01);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.01);
+    } catch (e) { console.warn('[Sfx] playGlitch failed:', e); }
+  },
+  playChime() {
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const now = this.ctx.currentTime;
+      const freqs = [523.25, 659.25, 783.99, 1046.5];
+      freqs.forEach((f, idx) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f, now);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.03, now + idx * 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.8 + idx * 0.1);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 1.2 + idx * 0.1);
+      });
+    } catch (e) { console.warn('[Sfx] playChime failed:', e); }
   }
 };
 
@@ -819,71 +859,97 @@ let recognition = null;
 let voiceListeningActive = false;
 
 function startVoiceListening() {
-  if (!ready || voiceListeningActive) return;
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    if (voiceStatus) voiceStatus.textContent = 'Speech recognition not supported';
-    return;
+  try {
+    if (!ready || voiceListeningActive) return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      if (voiceStatus) voiceStatus.textContent = 'Speech recognition not supported';
+      console.warn('[Voice] SpeechRecognition not available');
+      return;
+    }
+    if (recognition) { try { recognition.stop(); } catch(e) { console.warn('[Voice] Stop previous recognition failed:', e); } }
+    recognition = new SR();
+    recognition.lang = 'en-US';
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+    recognition.continuous = false;
+    voiceListeningActive = true;
+    if (centralMicBtn) { centralMicBtn.classList.add('listening'); centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); centralMicBtn.disabled = false; }
+    if (voiceStatus) voiceStatus.textContent = 'Listening...';
+    if (voiceTranscript) voiceTranscript.textContent = '...';
+    recognition.onresult = (e) => {
+      try {
+        let interim = ''; let final = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          if (e.results[i].isFinal) { final += e.results[i][0].transcript; }
+          else { interim += e.results[i][0].transcript; }
+        }
+        if (voiceTranscript) voiceTranscript.textContent = final || interim || '...';
+        if (final) {
+          input.value = final;
+          console.log('[Voice] Final transcript:', final);
+        }
+      } catch (err) { console.warn('[Voice] onresult error:', err); }
+    };
+    recognition.onend = () => {
+      try {
+        voiceListeningActive = false;
+        if (centralMicBtn) centralMicBtn.classList.remove('listening');
+        const spoken = input.value.trim();
+        if (spoken && ready) {
+          autoSpeakResponse = true;
+          form.requestSubmit();
+        } else if (isVoiceModeActive) {
+          if (voiceStatus) voiceStatus.textContent = 'Tap mic to speak';
+        }
+      } catch (err) { console.warn('[Voice] onend error:', err); }
+    };
+    recognition.onerror = (e) => {
+      try {
+        voiceListeningActive = false;
+        if (centralMicBtn) centralMicBtn.classList.remove('listening');
+        if (voiceStatus) voiceStatus.textContent = e.error === 'not-allowed' ? 'Mic permission denied' : 'Try again';
+        console.warn('[Voice] SpeechRecognition error:', e.error);
+      } catch (err) { console.warn('[Voice] onerror handler failed:', err); }
+    };
+    recognition.start();
+    console.log('[Voice] Recognition started');
+  } catch (e) {
+    console.warn('[Voice] startVoiceListening failed:', e);
+    voiceListeningActive = false;
   }
-  if (recognition) { try { recognition.stop(); } catch(e) {} }
-  recognition = new SR();
-  recognition.lang = 'en-US';
-  recognition.interimResults = true;
-  recognition.maxAlternatives = 1;
-  recognition.continuous = false;
-  voiceListeningActive = true;
-  if (centralMicBtn) { centralMicBtn.classList.add('listening'); centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = '🎙️'; centralMicBtn.disabled = false; }
-  if (voiceStatus) voiceStatus.textContent = 'Listening...';
-  if (voiceTranscript) voiceTranscript.textContent = '...';
-  recognition.onresult = (e) => {
-    let interim = ''; let final = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) { final += e.results[i][0].transcript; }
-      else { interim += e.results[i][0].transcript; }
-    }
-    if (voiceTranscript) voiceTranscript.textContent = final || interim || '...';
-    if (final) {
-      input.value = final;
-    }
-  };
-  recognition.onend = () => {
-    voiceListeningActive = false;
-    if (centralMicBtn) centralMicBtn.classList.remove('listening');
-    const spoken = input.value.trim();
-    if (spoken && ready) {
-      autoSpeakResponse = true;
-      form.requestSubmit();
-    } else if (isVoiceModeActive) {
-      if (voiceStatus) voiceStatus.textContent = 'Tap mic to speak';
-    }
-  };
-  recognition.onerror = (e) => {
-    voiceListeningActive = false;
-    if (centralMicBtn) centralMicBtn.classList.remove('listening');
-    if (voiceStatus) voiceStatus.textContent = e.error === 'not-allowed' ? 'Mic permission denied' : 'Try again';
-    console.warn('SpeechRecognition error', e.error);
-  };
-  try { recognition.start(); } catch(e) { voiceListeningActive = false; }
 }
 
 function stopVoiceListening() {
-  voiceListeningActive = false;
-  if (recognition) { try { recognition.stop(); } catch(e) {} recognition = null; }
-  if (centralMicBtn) { centralMicBtn.classList.remove('listening'); centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = '🎙️'; }
-  if (voiceStatus) voiceStatus.textContent = 'Voice paused';
+  try {
+    voiceListeningActive = false;
+    if (recognition) {
+      try { recognition.stop(); } catch(e) { console.warn('[Voice] Stop recognition failed:', e); }
+      recognition = null;
+    }
+    if (centralMicBtn) { centralMicBtn.classList.remove('listening'); centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
+    if (voiceStatus) voiceStatus.textContent = 'Voice paused';
+    console.log('[Voice] Recognition stopped');
+  } catch (e) {
+    console.warn('[Voice] stopVoiceListening failed:', e);
+  }
 }
 
 function updateModeUI() {
-  if (isVoiceModeActive) {
-    if (voiceModeContainer) voiceModeContainer.style.display = 'flex';
-    if (messages) messages.style.display = 'none';
-    if (document.querySelector('.suggestions')) document.querySelector('.suggestions').style.display = 'none';
-    if (toggleVoiceModeBtn) { toggleVoiceModeBtn.title = 'Switch to keyboard mode'; toggleVoiceModeBtn.innerHTML = '⌨️'; }
-  } else {
-    if (voiceModeContainer) voiceModeContainer.style.display = 'none';
-    if (messages) messages.style.display = 'flex';
-    if (document.querySelector('.suggestions')) document.querySelector('.suggestions').style.display = 'flex';
-    if (toggleVoiceModeBtn) { toggleVoiceModeBtn.title = 'Switch to voice mode'; toggleVoiceModeBtn.innerHTML = '🎙️'; }
+  try {
+    if (isVoiceModeActive) {
+      if (voiceModeContainer) voiceModeContainer.style.display = 'flex';
+      if (messages) messages.style.display = 'none';
+      if (document.querySelector('.suggestions')) document.querySelector('.suggestions').style.display = 'none';
+      if (toggleVoiceModeBtn) { toggleVoiceModeBtn.title = 'Switch to keyboard mode'; toggleVoiceModeBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></svg>`; }
+    } else {
+      if (voiceModeContainer) voiceModeContainer.style.display = 'none';
+      if (messages) messages.style.display = 'flex';
+      if (document.querySelector('.suggestions')) document.querySelector('.suggestions').style.display = 'flex';
+      if (toggleVoiceModeBtn) { toggleVoiceModeBtn.title = 'Switch to voice mode'; toggleVoiceModeBtn.innerHTML = getMicIcon(); }
+    }
+  } catch (e) {
+    console.warn('[Voice] updateModeUI failed:', e);
   }
 }
 
@@ -892,26 +958,70 @@ let apiType = 'local'; // 'proxy' | 'direct' | 'local'
 let selectedModel = '';
 let availableModels = [];
 
-const baseUrl = import.meta.env.VITE_LITELLM_BASE_URL || 'http://13.126.102.204:4000';
-const apiKey = import.meta.env.VITE_LITELLM_API_KEY || '';
+const TTS_FALLBACK_URL = 'http://13.126.102.204:5555/tts';
 
-// TTS Direct API Configuration (from curl command)
-const TTS_DIRECT_URL = 'http://13.126.102.204:5555/tts';
+const getEnvValue = (key, fallback = '') => {
+  try {
+    return import.meta?.env?.[key] || fallback;
+  } catch (err) {
+    console.warn(`[Config] Could not read env ${key}:`, err);
+    return fallback;
+  }
+};
+
+const normalizeTtsUrl = (url) => {
+  try {
+    const value = String(url || '').trim();
+
+    if (!value) {
+      console.warn('[Config] Empty TTS URL. Using fallback:', TTS_FALLBACK_URL);
+      return TTS_FALLBACK_URL;
+    }
+
+    if (value.includes('localhost') || value.includes('127.0.0.1')) {
+      console.warn('[Config] Localhost TTS URL blocked. Using fallback:', TTS_FALLBACK_URL);
+      return TTS_FALLBACK_URL;
+    }
+
+    return value;
+  } catch (err) {
+    console.warn('[Config] normalizeTtsUrl failed. Using fallback:', err);
+    return TTS_FALLBACK_URL;
+  }
+};
+
+const baseUrl = getEnvValue('VITE_LITELLM_BASE_URL', 'http://13.126.102.204:4000');
+const apiKey = getEnvValue('VITE_LITELLM_API_KEY', '');
+const TTS_DIRECT_URL = normalizeTtsUrl(
+  getEnvValue('VITE_TTS_BACKEND_URL', TTS_FALLBACK_URL)
+);
+
+console.log('[Config] TTS URL:', TTS_DIRECT_URL);
+console.log('[Config] LiteLLM URL:', baseUrl);
 
 
 function typeOutAnimation(element, text) {
-  if (!element || !text) return;
-  element.textContent = '';
-  const chars = text.split('');
-  let i = 0;
-  const interval = setInterval(() => {
-    if (i < chars.length) {
-      element.textContent += chars[i];
-      i++;
-    } else {
-      clearInterval(interval);
-    }
-  }, 30); // 30ms delay between characters
+  try {
+    if (!element || !text) return;
+    element.textContent = '';
+    const chars = text.split('');
+    let i = 0;
+    const interval = setInterval(() => {
+      try {
+        if (i < chars.length) {
+          element.textContent += chars[i];
+          i++;
+        } else {
+          clearInterval(interval);
+        }
+      } catch (e) {
+        clearInterval(interval);
+        console.warn('[Animation] typeOutAnimation interval error:', e);
+      }
+    }, 30); // 30ms delay between characters
+  } catch (e) {
+    console.warn('[Animation] typeOutAnimation failed:', e);
+  }
 }
 
 const systemPrompt = `You are the concise portfolio assistant for ${profile.name}. Use only these facts.
@@ -939,87 +1049,102 @@ If asked beyond these facts, say you do not know and suggest emailing him at ${p
 const history = [{ role: 'system', content: systemPrompt }];
 
 async function initAI() {
-  if (ready || busy) return;
-  busy = true;
-  if (modeLabel) modeLabel.textContent = 'CONNECTING AI...';
-
-  // 1. Try Backend API Proxy (no auth needed for proxy)
   try {
-    const res = await fetch('/api/models');
-    if (res.status === 401) {
-      console.warn('Proxy returned 401, trying direct API...');
-    } else if (res.ok) {
-      const data = await res.json();
-      if (data.data && data.data.length > 0) {
-        apiType = 'proxy';
-        availableModels = data.data.map(m => m.id);
-        setupCloudAI('PORTFOLIO CLOUD AI');
-        return;
-      }
-    }
-  } catch (e) {
-    console.warn('Backend proxy models API failed:', e.message);
-  }
+    if (ready || busy) return;
+    busy = true;
+    if (modeLabel) modeLabel.textContent = 'CONNECTING AI...';
+    console.log('[AI] Initializing AI connection...');
 
-  // 2. Try direct LiteLLM API (may have auth)
-  try {
-    const headers = { 'Content-Type': 'application/json' };
-    if (apiKey) {
-      headers['Authorization'] = `Bearer ${apiKey}`;
-    }
-    const res = await fetch(`${baseUrl}/v1/models`, { headers });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.data && data.data.length > 0) {
-        apiType = 'direct';
-        availableModels = data.data.map(m => m.id);
-        setupCloudAI('LITELLM CLOUD AI');
-        return;
+    // 1. Try Backend API Proxy (no auth needed for proxy)
+    try {
+      console.log('[AI] Trying proxy /api/models...');
+      const res = await fetch('/api/models');
+      if (res.status === 401) {
+        console.warn('[AI] Proxy returned 401, trying direct API...');
+      } else if (res.ok) {
+        const data = await res.json();
+        if (data.data && data.data.length > 0) {
+          apiType = 'proxy';
+          availableModels = data.data.map(m => m.id);
+          console.log('[AI] Proxy connected, models:', availableModels.length);
+          setupCloudAI('PORTFOLIO CLOUD AI');
+          return;
+        }
       }
-    } else if (res.status === 401 && !apiKey) {
-      console.warn('Direct API requires auth key. Set VITE_LITELLM_API_KEY env var.');
+    } catch (e) {
+      console.warn('[AI] Backend proxy models API failed:', e.message);
     }
-  } catch (e) {
-    console.warn('Direct LiteLLM connection failed:', e.message);
-  }
 
-  // 3. Fallback to Local WebGPU AI
-  apiType = 'local';
-  busy = false;
-  if (modeLabel) modeLabel.textContent = 'LOCAL PRIVATE AI';
-  if (chatNote) chatNote.textContent = 'ON-DEVICE AI · NO MESSAGES LEAVE YOUR BROWSER';
-  if (gate) gate.style.display = 'block';
+    // 2. Try direct LiteLLM API (may have auth)
+    try {
+      console.log('[AI] Trying direct LiteLLM at:', baseUrl);
+      const headers = { 'Content-Type': 'application/json' };
+      if (apiKey) {
+        headers['Authorization'] = `Bearer ${apiKey}`;
+      }
+      const res = await fetch(`${baseUrl}/v1/models`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.data && data.data.length > 0) {
+          apiType = 'direct';
+          availableModels = data.data.map(m => m.id);
+          console.log('[AI] Direct API connected, models:', availableModels.length);
+          setupCloudAI('LITELLM CLOUD AI');
+          return;
+        }
+      } else if (res.status === 401 && !apiKey) {
+        console.warn('[AI] Direct API requires auth key. Set VITE_LITELLM_API_KEY env var.');
+      }
+    } catch (e) {
+      console.warn('[AI] Direct LiteLLM connection failed:', e.message);
+    }
+
+    // 3. Fallback to Local WebGPU AI
+    console.log('[AI] Falling back to local WebGPU AI');
+    apiType = 'local';
+    busy = false;
+    if (modeLabel) modeLabel.textContent = 'LOCAL PRIVATE AI';
+    if (chatNote) chatNote.textContent = 'ON-DEVICE AI · NO MESSAGES LEAVE YOUR BROWSER';
+    if (gate) gate.style.display = 'block';
+  } catch (e) {
+    console.error('[AI] initAI failed completely:', e);
+    busy = false;
+    apiType = 'local';
+    if (modeLabel) modeLabel.textContent = 'AI ERROR';
+    if (chatNote) chatNote.textContent = 'Failed to initialize AI';
+  }
 }
 
 function setupCloudAI(labelName) {
-  ready = true;
-  busy = false;
-  if (modeLabel) modeLabel.textContent = labelName;
-  if (chatNote) chatNote.textContent = `POWERED BY LITELLM & ${apiType === 'proxy' ? 'BACKEND PROXY' : 'DIRECT'}`;
-  
-  if (gate) gate.style.display = 'none';
-  input.disabled = false;
-  send.disabled = false;
-  if (micBtn) micBtn.disabled = false;
-  if (centralMicBtn) {
-    centralMicBtn.disabled = false;
-    if (voiceStatus) voiceStatus.textContent = 'Voice Mode Connected';
-    if (voiceTranscript) voiceTranscript.textContent = 'Tap to start speaking';
-  }
+  try {
+    ready = true;
+    busy = false;
+    if (modeLabel) modeLabel.textContent = labelName;
+    if (chatNote) chatNote.textContent = `POWERED BY LITELLM & ${apiType === 'proxy' ? 'BACKEND PROXY' : 'DIRECT'}`;
 
-  if (modelSelect && availableModels.length > 0) {
-    modelSelect.innerHTML = '';
-    availableModels.forEach(modelId => {
-      const opt = document.createElement('option');
-      opt.value = modelId;
-      opt.textContent = modelId;
-      modelSelect.appendChild(opt);
-    });
-    // Default model preference
-    const preferred = availableModels.find(m => m.includes('deepseek') || m.includes('glm-5'));
-    selectedModel = preferred || availableModels[0];
-    modelSelect.value = selectedModel;
-    modelSelect.style.display = 'block';
+    if (gate) gate.style.display = 'none';
+    input.disabled = false;
+    send.disabled = false;
+    if (micBtn) micBtn.disabled = false;
+    if (centralMicBtn) {
+      centralMicBtn.disabled = false;
+      if (voiceStatus) voiceStatus.textContent = 'Voice Mode Connected';
+      if (voiceTranscript) voiceTranscript.textContent = 'Tap to start speaking';
+    }
+
+    if (modelSelect && availableModels.length > 0) {
+      modelSelect.innerHTML = '';
+      availableModels.forEach(modelId => {
+        const opt = document.createElement('option');
+        opt.value = modelId;
+        opt.textContent = modelId;
+        modelSelect.appendChild(opt);
+      });
+      // Default model preference
+      const preferred = availableModels.find(m => m.includes('deepseek') || m.includes('glm-5'));
+      selectedModel = preferred || availableModels[0];
+      modelSelect.value = selectedModel;
+      modelSelect.style.display = 'block';
 
     modelSelect.addEventListener('change', (e) => {
       selectedModel = e.target.value;
@@ -1032,28 +1157,38 @@ function setupCloudAI(labelName) {
     pendingPrompt = '';
     form.requestSubmit();
   }
+  console.log('[AI] Cloud AI setup complete:', labelName);
+  } catch (e) {
+    console.error('[AI] setupCloudAI failed:', e);
+    ready = false;
+    busy = false;
+  }
 }
 
 function toggle(open){
-  panel.classList.toggle('open',open);
-  panel.setAttribute('aria-hidden',String(!open));
-  launch.setAttribute('aria-expanded',String(open));
-  launch.style.visibility=open?'hidden':'visible';
-  if (open) {
-    if (!ready && !busy && apiType === 'local') {
-      initAI();
+  try {
+    panel.classList.toggle('open',open);
+    panel.setAttribute('aria-hidden',String(!open));
+    launch.setAttribute('aria-expanded',String(open));
+    launch.style.visibility=open?'hidden':'visible';
+    if (open) {
+      if (!ready && !busy && apiType === 'local') {
+        initAI();
+      }
+      updateModeUI();
+      if (isVoiceModeActive && ready) {
+        setTimeout(startVoiceListening, 400);
+      }
+      if(ready && !isVoiceModeActive) input.focus();
+    } else {
+      stopVoiceListening();
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
     }
-    updateModeUI();
-    if (isVoiceModeActive && ready) {
-      setTimeout(startVoiceListening, 400);
-    }
-    if(ready && !isVoiceModeActive) input.focus();
-  } else {
-    stopVoiceListening();
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio = null;
-    }
+  } catch (e) {
+    console.warn('[UI] toggle failed:', e);
   }
 }
 
@@ -1215,105 +1350,126 @@ class StreamingWavPlayer {
 }
 
 function speakNative(text) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.rate = 1.05; utter.pitch = 1.0; utter.lang = 'en-US';
-  const voices = window.speechSynthesis.getVoices();
-  const preferred = voices.find(v => v.name.includes('Google') || v.name.includes('Daniel') || v.name.includes('Samantha'));
-  if (preferred) utter.voice = preferred;
-  utter.onend = () => {
-    if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getSpeakerIcon({animated: false}); }
-    if (isVoiceModeActive && autoListenAfterSpeak) startVoiceListening();
-  };
-  utter.onerror = () => {
-    if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getSpeakerIcon({animated: false}); }
-  };
-  window.speechSynthesis.speak(utter);
+  try {
+    if (!window.speechSynthesis) {
+      console.warn('[TTS] speechSynthesis not available');
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 1.05; utter.pitch = 1.0; utter.lang = 'en-US';
+    const voices = window.speechSynthesis.getVoices();
+    const preferred = voices.find(v => v.name.includes('Google') || v.name.includes('Daniel') || v.name.includes('Samantha'));
+    if (preferred) utter.voice = preferred;
+    utter.onend = () => {
+      try {
+        if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getSpeakerIcon({animated: false}); }
+        if (isVoiceModeActive && autoListenAfterSpeak) startVoiceListening();
+      } catch (e) { console.warn('[TTS] speakNative onend error:', e); }
+    };
+    utter.onerror = (e) => {
+      console.warn('[TTS] speakNative error:', e);
+      if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getSpeakerIcon({animated: false}); }
+    };
+    window.speechSynthesis.speak(utter);
+    console.log('[TTS] Native speech started');
+  } catch (e) {
+    console.error('[TTS] speakNative failed:', e);
+  }
 }
 
 async function speakText(text, buttonElement) {
-  // Stop any current playback
-  if (streamingPlayer) {
-    streamingPlayer.stop();
-    streamingPlayer = null;
-    if (buttonElement) buttonElement.innerHTML = getSpeakerIcon({animated: false});
-    if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
-    return;
-  }
-  if (currentAudio) {
-    currentAudio.pause();
-    currentAudio = null;
-    if (buttonElement) buttonElement.innerHTML = getSpeakerIcon({animated: false});
-    if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
-    return;
-  }
-  if (window.speechSynthesis && window.speechSynthesis.speaking) {
-    window.speechSynthesis.cancel();
-    if (buttonElement) buttonElement.innerHTML = getSpeakerIcon({animated: false});
-    if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
-    return;
-  }
+  try {
+    // Stop any current playback
+    if (streamingPlayer) {
+      streamingPlayer.stop();
+      streamingPlayer = null;
+      if (buttonElement) buttonElement.innerHTML = getSpeakerIcon({animated: false});
+      if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
+      return;
+    }
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+      if (buttonElement) buttonElement.innerHTML = getSpeakerIcon({animated: false});
+      if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
+      return;
+    }
+    if (window.speechSynthesis && window.speechSynthesis.speaking) {
+      window.speechSynthesis.cancel();
+      if (buttonElement) buttonElement.innerHTML = getSpeakerIcon({animated: false});
+      if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
+      return;
+    }
 
-  // Stop voice recognition while speaking to prevent hearing itself
-  if (voiceListeningActive) {
-    stopVoiceListening();
-  }
+    // Stop voice recognition while speaking to prevent hearing itself
+    if (voiceListeningActive) {
+      stopVoiceListening();
+    }
 
-  // Show loading state
-  if (buttonElement) { buttonElement.innerHTML = getLoadingIcon(); buttonElement.disabled = true; }
-  if (isVoiceModeActive && centralMicBtn) { centralMicBtn.classList.add('speaking'); centralMicBtn.innerHTML = getSpeakerIcon({animated: true}); }
+    // Show loading state
+    if (buttonElement) { buttonElement.innerHTML = getLoadingIcon(); buttonElement.disabled = true; }
+    if (isVoiceModeActive && centralMicBtn) { centralMicBtn.classList.add('speaking'); centralMicBtn.innerHTML = getSpeakerIcon({animated: true}); }
 
-  const cleanText = text.replace(/[*_`#\-]/g, '').trim();
+    const cleanText = text.replace(/[*_`#\-]/g, '').trim();
+    console.log('[TTS] Starting TTS for:', cleanText.substring(0, 50) + '...');
 
-  // Show text with typing animation immediately
-  let messageP = null;
-  if (buttonElement) {
-    messageP = buttonElement.parentElement.querySelector('p');
-  } else {
-    const lastBotMessage = messages.querySelector('.message.bot:last-of-type');
-    if (lastBotMessage) {
-      const p = lastBotMessage.querySelector('p');
-      if (p && p.textContent.trim() === cleanText) {
-        messageP = p;
+    // Show text with typing animation immediately
+    let messageP = null;
+    if (buttonElement) {
+      messageP = buttonElement.parentElement.querySelector('p');
+    } else {
+      const lastBotMessage = messages.querySelector('.message.bot:last-of-type');
+      if (lastBotMessage) {
+        const p = lastBotMessage.querySelector('p');
+        if (p && p.textContent.trim() === cleanText) {
+          messageP = p;
+        }
       }
     }
-  }
-  if (messageP) {
-    typeOutAnimation(messageP, cleanText);
-  }
-
-  const TTS_TIMEOUT_MS = 15000;
-
-  let response = null;
-
-  try {
-    const formData = new FormData();
-    formData.append('text', cleanText);
-
-    // Try proxy first (avoids CORS issues in development)
-    try {
-      const proxyPromise = fetch('/api/tts', {
-        method: 'POST',
-        body: formData
-      });
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Proxy timeout')), TTS_TIMEOUT_MS));
-      response = await Promise.race([proxyPromise, timeoutPromise]);
-      if (!response.ok) throw new Error(`Proxy failed with status ${response.status}`);
-    } catch (proxyError) {
-      console.warn('TTS proxy failed, trying direct:', proxyError.message);
-      // Try direct TTS (may fail due to CORS in development)
-      const directPromise = fetch(TTS_DIRECT_URL, {
-        method: 'POST',
-        body: formData,
-        mode: 'cors'
-      });
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Direct timeout')), TTS_TIMEOUT_MS));
-      response = await Promise.race([directPromise, timeoutPromise]);
-      if (!response.ok) throw new Error(`Direct TTS failed with status ${response.status}`);
+    if (messageP) {
+      typeOutAnimation(messageP, cleanText);
     }
 
-    // Use streaming player for immediate playback
+    const TTS_TIMEOUT_MS = 15000;
+
+    let response = null;
+
+    try {
+      const formData = new FormData();
+      formData.append('text', cleanText);
+
+      // Try proxy first (avoids CORS issues in development)
+      try {
+        console.log('[TTS] Trying proxy /api/tts...');
+        const proxyPromise = fetch('/api/tts', {
+          method: 'POST',
+          body: formData
+        });
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Proxy timeout')), TTS_TIMEOUT_MS));
+        response = await Promise.race([proxyPromise, timeoutPromise]);
+        if (!response.ok) throw new Error(`Proxy failed with status ${response.status}`);
+        console.log('[TTS] Proxy connected');
+      } catch (proxyError) {
+        console.warn('[TTS] Proxy failed, trying direct:', proxyError.message);
+        // Try direct TTS (may fail due to CORS in development)
+        console.log('[TTS] Trying direct TTS at:', TTS_DIRECT_URL);
+        const directPromise = fetch(TTS_DIRECT_URL, {
+          method: 'POST',
+          body: formData,
+          mode: 'cors'
+        });
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Direct timeout')), TTS_TIMEOUT_MS));
+        response = await Promise.race([directPromise, timeoutPromise]);
+        if (!response.ok) throw new Error(`Direct TTS failed with status ${response.status}`);
+        console.log('[TTS] Direct TTS connected');
+      }
+
+      // Use streaming player for immediate playback
+    if (!response?.body) {
+      throw new Error('TTS response body is empty or not streamable');
+    }
+
     const reader = response.body.getReader();
     streamingPlayer = new StreamingWavPlayer();
 
@@ -1355,14 +1511,20 @@ async function speakText(text, buttonElement) {
       }
     };
 
-    processStream();
+      processStream();
 
-  } catch (error) {
-    console.warn('Streaming TTS failed, falling back to native:', error);
+    } catch (error) {
+      console.warn('[TTS] Streaming TTS failed, falling back to native:', error);
+      if (buttonElement) { buttonElement.innerHTML = getSpeakerIcon({animated: false}); buttonElement.disabled = false; }
+      if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
+      streamingPlayer = null;
+      speakNative(cleanText);
+    }
+  } catch (e) {
+    console.error('[TTS] speakText failed completely:', e);
     if (buttonElement) { buttonElement.innerHTML = getSpeakerIcon({animated: false}); buttonElement.disabled = false; }
     if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
-    streamingPlayer = null;
-    speakNative(cleanText);
+    speakNative(text.replace(/[*_`#\-]/g, '').trim());
   }
 }
 
@@ -1390,34 +1552,43 @@ function getClearIcon() {
 
 // Clear chat history
 function clearChat() {
-  history.length = 1; // Keep only system prompt
-  history.push({ role: 'system', content: systemPrompt });
-  messages.innerHTML = '';
-  addMessage('Chat cleared. How can I help you?');
-  Sfx.playClick();
+  try {
+    history.length = 1; // Keep only system prompt
+    messages.innerHTML = '';
+    addMessage('Chat cleared. How can I help you?');
+    Sfx.playClick();
+    console.log('[Chat] Chat cleared');
+  } catch (e) {
+    console.error('[Chat] clearChat failed:', e);
+  }
 }
 
 function addMessage(text,who='bot'){
-  const row=document.createElement('div');
-  row.className=`message ${who}`;
-  row.style.cssText='display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;';
-  const badge=document.createElement('span');
-  badge.textContent=who==='bot'?'AI':'YOU';
-  const p=document.createElement('p');
-  p.style.flex='1';p.style.margin='0';
-  if(text) p.textContent=text;
-  row.append(badge,p);
-  if(who==='bot'&&text){
-    const ttsBtn=document.createElement('button');
-    ttsBtn.className='tts-btn';
-    ttsBtn.innerHTML=getSpeakerIcon({animated: false});
-    ttsBtn.title='Speak text';
-    ttsBtn.onclick=()=>speakText(text,ttsBtn);
-    row.append(ttsBtn);
+  try {
+    const row=document.createElement('div');
+    row.className=`message ${who}`;
+    row.style.cssText='display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;';
+    const badge=document.createElement('span');
+    badge.textContent=who==='bot'?'AI':'YOU';
+    const p=document.createElement('p');
+    p.style.flex='1';p.style.margin='0';
+    if(text) p.textContent=text;
+    row.append(badge,p);
+    if(who==='bot'&&text){
+      const ttsBtn=document.createElement('button');
+      ttsBtn.className='tts-btn';
+      ttsBtn.innerHTML=getSpeakerIcon({animated: false});
+      ttsBtn.title='Speak text';
+      ttsBtn.onclick=()=>speakText(text,ttsBtn);
+      row.append(ttsBtn);
+    }
+    messages.append(row);
+    messages.scrollTop=messages.scrollHeight;
+    return p;
+  } catch (e) {
+    console.error('[Chat] addMessage failed:', e);
+    return null;
   }
-  messages.append(row);
-  messages.scrollTop=messages.scrollHeight;
-  return p;
 }
 function addTypingIndicator() {
   const row=document.createElement('div');
