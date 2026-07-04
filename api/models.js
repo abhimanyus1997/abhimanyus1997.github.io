@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   }
 
   const baseUrl = process.env.LITELLM_BASE_URL || process.env.VITE_LITELLM_BASE_URL || 'http://13.126.102.204:4000';
-  const apiKey = process.env.LITELLM_API_KEY || process.env.VITE_LITELLM_API_KEY || 'sk-ONyS5ZITbsCtHZZGZa4VHg';
+  const apiKey = process.env.LITELLM_API_KEY || process.env.VITE_LITELLM_API_KEY;
 
   try {
     const response = await fetch(`${baseUrl}/v1/models`, {

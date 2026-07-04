@@ -761,12 +761,12 @@ const modelSelect = document.querySelector('#model-select');
 const chatNote = document.querySelector('#chat-note');
 
 let engine=null,ready=false,busy=false,pendingPrompt='';
-let apiType = 'local'; // 'vercel' | 'direct' | 'local'
+let apiType = 'local'; // 'proxy' | 'direct' | 'local'
 let selectedModel = '';
 let availableModels = [];
 
 const baseUrl = import.meta.env.VITE_LITELLM_BASE_URL || 'http://13.126.102.204:4000';
-const apiKey = import.meta.env.VITE_LITELLM_API_KEY || 'sk-ONyS5ZITbsCtHZZGZa4VHg';
+const apiKey = import.meta.env.VITE_LITELLM_API_KEY || '';
 
 const history=[{role:'system',content:`You are the concise portfolio assistant for Abhimanyu Singh. Use only these facts. He is a Data Scientist Manager and AI/robotics engineer in Noida with 4+ years of industry and 2 years of research experience. HDFC Bank (Dec 2025-present): building Neev Agent Catalogue over LiteLLM and an internal Streamlit MLOps annotation platform. Quantiphi (Sep-Nov 2025): GCP Vertex AI Document OCR pipeline for financial documents. Alphadroid (Jun 2024-Sep 2025): lift-PLC and GeoJSON robot navigation, multilingual RAG on SageMaker, Flutter/TFLite MobileFaceNet at 99.5% accuracy, MQTT/ECR/Vault fleet systems. IIT Guwahati (Jun 2023-May 2024): GroundingDINO underwater data pipelines improved quality 35%; ONNX reduced latency 3-4 seconds. HealthView (2019-2021): NLP curation and D3.js dashboards. Projects: MicroClaw agentic ESP32 firmware using C++, FreeRTOS, Gemini/Groq and FastAPI; HealthBuddy with Flutter, Health Connect, Groq and BYOK; Resume JD Matcher with Gemini 2.5, LangChain, TF-IDF and Plotly; Langchain One multimodal OCR assistant. Education: M.Tech Automation and Robotics at DIAT/DRDO, CGPA 8.47; B.Tech Mechanical Engineering at LNMIIT, CGPA 8.16. Published an IndiaAI object-detection article and presented subaqueous crack detection at RCRM 2024. Contact: abhimanyus1997@gmail.com. GitHub and LinkedIn: abhimanyus1997. If asked beyond these facts, say you do not know and suggest emailing him. Never invent claims. Keep answers under 100 words.`}];
 
@@ -775,20 +775,20 @@ async function initAI() {
   busy = true;
   if (modeLabel) modeLabel.textContent = 'CONNECTING AI...';
 
-  // 1. Try Vercel Serverless API
+  // 1. Try Backend API Proxy
   try {
     const res = await fetch('/api/models');
     if (res.ok) {
       const data = await res.json();
       if (data.data && data.data.length > 0) {
-        apiType = 'vercel';
+        apiType = 'proxy';
         availableModels = data.data.map(m => m.id);
-        setupCloudAI('VERCEL CLOUD AI');
+        setupCloudAI('PORTFOLIO CLOUD AI');
         return;
       }
     }
   } catch (e) {
-    console.warn('Vercel backend models API failed/unavailable. Trying direct LiteLLM...', e);
+    console.warn('Backend proxy models API failed/unavailable. Trying direct LiteLLM...', e);
   }
 
   // 2. Try direct LiteLLM API
@@ -823,7 +823,7 @@ function setupCloudAI(labelName) {
   ready = true;
   busy = false;
   if (modeLabel) modeLabel.textContent = labelName;
-  if (chatNote) chatNote.textContent = `POWERED BY LITELLM & ${apiType === 'vercel' ? 'VERCEL' : 'DIRECT'}`;
+  if (chatNote) chatNote.textContent = `POWERED BY LITELLM & ${apiType === 'proxy' ? 'BACKEND PROXY' : 'DIRECT'}`;
   
   if (gate) gate.style.display = 'none';
   input.disabled = false;
@@ -891,7 +891,7 @@ async function speakText(text, buttonElement) {
         body: JSON.stringify({ text })
       });
     } catch (e) {
-      console.warn('Vercel TTS proxy failed, trying direct...', e);
+      console.warn('Backend TTS proxy failed, trying direct...', e);
     }
 
     if (!response || !response.ok) {
@@ -959,9 +959,9 @@ suggestions.addEventListener('click',e=>{if(e.target.tagName!=='BUTTON')return;i
 form.addEventListener('submit',async e=>{
   e.preventDefault();const text=input.value.trim();if(!text||!ready||busy)return;input.value='';addMessage(text,'user');history.push({role:'user',content:text});busy=true;input.disabled=true;send.disabled=true;const out=addMessage('');
   
-  if (apiType === 'vercel' || apiType === 'direct') {
+  if (apiType === 'proxy' || apiType === 'direct') {
     try {
-      const endpoint = apiType === 'vercel' ? '/api/chat' : `${baseUrl}/v1/chat/completions`;
+      const endpoint = apiType === 'proxy' ? '/api/chat' : `${baseUrl}/v1/chat/completions`;
       const headers = { 'Content-Type': 'application/json' };
       if (apiType === 'direct') {
         headers['Authorization'] = `Bearer ${apiKey}`;
