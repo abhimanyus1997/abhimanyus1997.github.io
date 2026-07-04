@@ -895,6 +895,9 @@ let availableModels = [];
 const baseUrl = import.meta.env.VITE_LITELLM_BASE_URL || 'http://13.126.102.204:4000';
 const apiKey = import.meta.env.VITE_LITELLM_API_KEY || '';
 
+// TTS Direct API Configuration (from curl command)
+const TTS_DIRECT_URL = 'http://13.126.102.204:5555/tts';
+
 const systemPrompt = `You are the concise portfolio assistant for ${profile.name}. Use only these facts.
 Title: ${profile.title}
 Location: ${profile.location}
@@ -1117,44 +1120,37 @@ async function speakText(text, buttonElement) {
   const cleanText = text.replace(/[*_`#\-]/g, '').trim();
   const TTS_TIMEOUT_MS = 10000;
 
+  let response = null;
+
   try {
-    // Race: hosted TTS vs timeout fallback
-    const hostedFetch = (async () => {
-      const params = new URLSearchParams(); params.append('text', cleanText);
-      const res = await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() });
-      if (!res.ok) throw new Error('proxy failed');
-      return res;
-    })();
-
-    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('tts_timeout')), TTS_TIMEOUT_MS));
-
-    let response;
+    // Attempt 1: Hosted TTS proxy
     try {
-      response = await Promise.race([hostedFetch, timeout]);
-    } catch (raceErr) {
-      if (raceErr.message === 'tts_timeout') {
-        console.info('TTS timeout — using browser speech synthesis');
-        if (buttonElement) { buttonElement.innerHTML = getSpeakerIcon(); buttonElement.disabled = false; buttonElement.onclick = () => speakText(text, buttonElement); }
-        speakNative(cleanText);
-        return;
-      }
-      // proxy failed, try direct
       const params = new URLSearchParams(); params.append('text', cleanText);
-      const directTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('tts_timeout')), TTS_TIMEOUT_MS));
-      try {
-        response = await Promise.race([
-          fetch('http://13.126.102.204:5555', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() }),
-          directTimeout
-        ]);
-      } catch {
-        // Direct also failed/timed out — native fallback
-        if (buttonElement) { buttonElement.innerHTML = getSpeakerIcon(); buttonElement.disabled = false; buttonElement.onclick = () => speakText(text, buttonElement); }
-        speakNative(cleanText);
-        return;
-      }
+      const proxyFetchPromise = fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
+      });
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('tts_timeout')), TTS_TIMEOUT_MS));
+      response = await Promise.race([proxyFetchPromise, timeoutPromise]);
+      if (!response.ok) throw new Error(`Proxy failed with status ${response.status}`);
+    } catch (proxyError) {
+      console.warn('Hosted TTS proxy failed or timed out:', proxyError.message);
+      // Attempt 2: Direct TTS
+      const formData = new FormData();
+      formData.append('text', cleanText);
+      const directFetchPromise = fetch(TTS_DIRECT_URL, {
+        method: 'POST',
+        body: formData
+      });
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('tts_timeout')), TTS_TIMEOUT_MS));
+      response = await Promise.race([directFetchPromise, timeoutPromise]);
+      if (!response.ok) throw new Error(`Direct TTS failed with status ${response.status}`);
     }
 
-    if (!response || !response.ok) throw new Error('bad response');
+    // If we reached here, either proxy or direct succeeded.
+    // The `response` object should be valid and `ok`.
+    // If both failed, an error would have been thrown and caught by the outer catch block.
 
     const blob = await response.blob();
     const audioUrl = URL.createObjectURL(blob);
@@ -1171,6 +1167,7 @@ async function speakText(text, buttonElement) {
     await currentAudio.play();
   } catch (error) {
     console.warn('Hosted TTS error, falling back to native:', error);
+    // Final fallback: Native speech synthesis if all other attempts failed
     if (buttonElement) { buttonElement.innerHTML = getSpeakerIcon(); buttonElement.disabled = false; buttonElement.onclick = () => speakText(text, buttonElement); }
     if (centralMicBtn) { centralMicBtn.classList.remove('speaking'); centralMicBtn.innerHTML = getMicIcon(); }
     speakNative(cleanText);
@@ -1547,4 +1544,3 @@ if (micBtn) {
     startVoiceListening();
   });
 }
-
