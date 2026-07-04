@@ -1143,7 +1143,7 @@ async function speakText(text, buttonElement) {
       const directTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('tts_timeout')), TTS_TIMEOUT_MS));
       try {
         response = await Promise.race([
-          fetch('http://13.126.102.204:5555/tts', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() }),
+          fetch('http://13.126.102.204:5555', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() }),
           directTimeout
         ]);
       } catch {
