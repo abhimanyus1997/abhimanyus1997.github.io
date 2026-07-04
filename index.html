@@ -24,10 +24,10 @@
     (function() {
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       const authDone = sessionStorage.getItem('auth_done');
-      const isAuthPage = window.location.pathname.includes('auth.html');
+      const isAuthPage = window.location.pathname.startsWith('/auth');
 
       if (isMobile && !authDone && !isAuthPage) {
-        window.location.href = '/auth.html';
+        window.location.href = '/auth';
       }
     })();
   </script>
