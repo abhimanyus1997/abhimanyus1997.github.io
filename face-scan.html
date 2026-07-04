@@ -3,7 +3,9 @@
 
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <title>Abhimanyu Neural Face Scan</title>
 
     <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
@@ -49,6 +51,38 @@
                     100% 5%, 100% 95%,
                     97% 100%, 3% 100%,
                     0 95%, 0 5%);
+        }
+
+        /* Mobile-specific styles */
+        @media (max-width: 768px) {
+            .scanner {
+                width: 100vw;
+                height: 100vh;
+                aspect-ratio: auto;
+            }
+
+            .hud {
+                font-size: 10px !important;
+            }
+
+            .panel {
+                width: 100px !important;
+                height: 60px !important;
+            }
+
+            .loading-box {
+                width: 90vw !important;
+                padding: 18px !important;
+            }
+
+            .loading-item {
+                font-size: 9px !important;
+            }
+
+            button {
+                padding: 18px 28px !important;
+                font-size: 14px !important;
+            }
         }
 
         video,
@@ -268,18 +302,29 @@
 
         .error {
             position: absolute;
-            z-index: 40;
+            z-index: 100;
             bottom: 18px;
             left: 50%;
             transform: translateX(-50%);
             color: #ff7979;
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid rgba(255, 80, 80, 0.4);
-            padding: 10px 14px;
+            background: rgba(20, 0, 0, 0.95);
+            border: 1px solid rgba(255, 80, 80, 0.6);
+            padding: 14px 20px;
             display: none;
-            max-width: 88%;
+            max-width: 92%;
             text-align: center;
             font-size: 12px;
+            line-height: 1.5;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .error {
+                font-size: 11px;
+                padding: 12px 16px;
+                bottom: 10px;
+            }
         }
 
         @keyframes scanlines {
@@ -698,8 +743,14 @@
         let faceMatcher = null;
         let audioCtx = null;
         let lastBeep = 0;
-
         let lastKnownLabel = "UNKNOWN";
+
+        // Check if face-api is loaded
+        function checkFaceApiLoaded() {
+            if (typeof faceapi === 'undefined') {
+                throw new Error("Face API library failed to load. Check internet connection.");
+            }
+        }
         let stableMatchCount = 0;
         let stableUnknownCount = 0;
         const REQUIRED_STABLE_FRAMES = 3;
@@ -829,23 +880,50 @@
 
         async function startWebcam() {
             const isMobile = window.matchMedia("(max-width: 768px)").matches;
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-            const stream = await navigator.mediaDevices.getUserMedia({
+            // Mobile-specific constraints
+            const constraints = {
                 video: {
                     facingMode: "user",
-                    width: { ideal: isMobile ? 720 : 1280 },
-                    height: { ideal: isMobile ? 1280 : 720 }
+                    width: { ideal: isMobile ? 640 : 1280 },
+                    height: { ideal: isMobile ? 480 : 720 }
                 },
                 audio: false
-            });
+            };
+
+            // iOS Safari specific handling
+            if (isIOS && isSafari) {
+                constraints.video.width = { ideal: 640 };
+                constraints.video.height = { ideal: 480 };
+            }
+
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
             video.srcObject = stream;
 
-            await new Promise((resolve) => {
-                video.onloadedmetadata = resolve;
+            // Important for iOS: need to wait for video to be ready
+            await new Promise((resolve, reject) => {
+                video.onloadedmetadata = () => {
+                    // Set initial dimensions
+                    video.setAttribute('playsinline', '');
+                    resolve();
+                };
+                video.onerror = reject;
             });
 
-            await video.play();
+            // Ensure video plays on mobile
+            try {
+                await video.play();
+            } catch (playError) {
+                // Fallback for browsers that require user interaction
+                console.warn("Autoplay prevented, waiting for interaction");
+                video.muted = true;
+                await video.play().catch(() => {
+                    throw new Error("Video playback failed. Please tap the screen to start.");
+                });
+            }
         }
 
         function resizeCanvas() {
@@ -1234,12 +1312,27 @@
             requestAnimationFrame(detectLoop);
         }
 
-        startBtn.addEventListener("click", async () => {
+        async function startScan() {
             try {
                 hideError();
+
+                // Check if face-api.js loaded
+                checkFaceApiLoaded();
+
                 controls.classList.add("hidden");
                 loadingOverlay.classList.remove("hidden");
                 initSound();
+
+                // Check if HTTPS or localhost (required for camera)
+                const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+                if (!isSecure) {
+                    throw new Error("Camera requires HTTPS. Please use https:// or localhost");
+                }
+
+                // Check if getUserMedia is available
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error("Camera not supported on this device/browser");
+                }
 
                 await loadModels();
                 await createFaceMatcher();
@@ -1255,10 +1348,32 @@
                 console.error(error);
                 loadingOverlay.classList.add("hidden");
                 controls.classList.remove("hidden");
-                showError(
-                    "Could not start scan. Use localhost/HTTPS and allow webcam permission."
-                );
+
+                // More specific error messages
+                let errorMsg = "Could not start scan. ";
+                if (error.name === 'NotAllowedError') {
+                    errorMsg = "Camera permission denied. Please allow camera access and retry.";
+                } else if (error.name === 'NotFoundError') {
+                    errorMsg = "No camera found. Please connect a camera and retry.";
+                } else if (error.name === 'NotReadableError') {
+                    errorMsg = "Camera is in use by another application.";
+                } else if (error.name === 'OverconstrainedError') {
+                    errorMsg = "Camera does not meet requirements. Try a different device.";
+                } else if (!location.protocol.startsWith('https') && location.hostname !== 'localhost') {
+                    errorMsg = "Camera requires HTTPS connection. Use: https://" + location.host;
+                } else {
+                    errorMsg = error.message || "Unknown error. Please use HTTPS and allow camera permission.";
+                }
+
+                showError(errorMsg);
             }
+        }
+
+        // Support both click and touch events for mobile
+        startBtn.addEventListener("click", startScan);
+        startBtn.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            startScan();
         });
 
         window.addEventListener("resize", resizeCanvas);
