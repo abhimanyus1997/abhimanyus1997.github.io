@@ -1449,7 +1449,10 @@ async function speakText(text, buttonElement) {
         console.log('[TTS] Trying proxy /api/tts...');
         const proxyPromise = fetch('/api/tts', {
           method: 'POST',
-          body: formData
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ text: cleanText })
         });
         const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Proxy timeout')), TTS_TIMEOUT_MS));
         response = await Promise.race([proxyPromise, timeoutPromise]);

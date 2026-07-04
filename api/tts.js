@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Text is required' });
   }
 
-  const ttsUrl = process.env.TTS_BASE_URL || 'http://13.126.102.204:5555/tts';
+  const ttsUrl = process.env.TTS_BASE_URL || process.env.VITE_TTS_BACKEND_URL || 'https://tts.abhimanyu.fyi/tts';
 
   try {
     const params = new URLSearchParams();
