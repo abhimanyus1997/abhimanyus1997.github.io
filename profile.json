@@ -1,0 +1,105 @@
+{
+  "name": "Abhimanyu Singh",
+  "title": "Data Scientist Manager & AI Engineer",
+  "location": "Noida, India",
+  "email": "abhimanyus1997@gmail.com",
+  "github": "https://github.com/abhimanyus1997",
+  "linkedin": "https://www.linkedin.com/in/abhimanyus1997",
+  "twitter": "https://www.x.com/abhimanyus1997",
+  "kaggle": "https://www.kaggle.com/abhimanyus1997",
+  "bio": "Data Scientist Manager and AI Engineer passionate about building real-world AI-powered solutions spanning Generative AI, Agentic Systems, Computer Vision, Industrial IoT, and Robotics.",
+  "experience": {
+    "industry": "4+ years",
+    "research": "2 years"
+  },
+  "roles": [
+    {
+      "company": "HDFC Bank",
+      "period": "Dec 2025 - Present",
+      "achievements": [
+        "Building Neev Agent Catalogue over LiteLLM",
+        "Developing an internal Streamlit MLOps annotation platform"
+      ]
+    },
+    {
+      "company": "Quantiphi",
+      "period": "Sep 2025 - Nov 2025",
+      "achievements": [
+        "Built GCP Vertex AI Document OCR pipeline for financial documents"
+      ]
+    },
+    {
+      "company": "Alphadroid",
+      "period": "Jun 2024 - Sep 2025",
+      "achievements": [
+        "Implemented lift-PLC and GeoJSON robot navigation",
+        "Developed multilingual RAG on SageMaker",
+        "Created Flutter/TFLite MobileFaceNet with 99.5% accuracy",
+        "Maintained MQTT/ECR/Vault fleet systems"
+      ]
+    },
+    {
+      "company": "IIT Guwahati (TIDF)",
+      "period": "Jun 2023 - May 2024",
+      "achievements": [
+        "Developed GroundingDINO underwater data pipelines improving quality by 35%",
+        "Integrated ONNX reducing inference latency by 3-4 seconds"
+      ]
+    },
+    {
+      "company": "HealthView",
+      "period": "2019 - 2021",
+      "achievements": [
+        "Developed NLP curation pipelines and D3.js dashboards"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "MicroClaw",
+      "description": "Agentic ESP32 firmware using C++, FreeRTOS, Gemini/Groq, and FastAPI"
+    },
+    {
+      "name": "HealthBuddy",
+      "description": "Flutter-based health tracker with Google Health Connect, Groq, and BYOK"
+    },
+    {
+      "name": "Resume JD Matcher",
+      "description": "Match resume to Job Description using Gemini 2.5, LangChain, TF-IDF, and Plotly"
+    },
+    {
+      "name": "Langchain One",
+      "description": "Multimodal OCR assistant built using LangChain"
+    },
+    {
+      "name": "Meet AI Scheduler",
+      "description": "Voice-enabled AI agent that schedules meetings using Google Calendar and natural conversations"
+    },
+    {
+      "name": "Waste Classifier Robot",
+      "description": "Garbage pickup robot using Computer Vision and IoT"
+    }
+  ],
+  "education": [
+    {
+      "degree": "M.Tech in Automation and Robotics",
+      "institution": "DIAT / DRDO",
+      "gpa": "8.47 / 10"
+    },
+    {
+      "degree": "B.Tech in Mechanical Engineering",
+      "institution": "LNMIIT",
+      "gpa": "8.16 / 10"
+    }
+  ],
+  "publications_articles": [
+    "Published an IndiaAI object-detection article",
+    "Presented subaqueous crack detection at RCRM 2024"
+  ],
+  "skills": {
+    "agentic_ai": ["CrewAI", "LangGraph", "Google Gemini", "Groq", "Llama 3"],
+    "edge_hardware": ["ESP32", "FreeRTOS", "PlatformIO", "TFLite"],
+    "cloud_mlops": ["AWS", "GCP", "MLFlow", "Docker"],
+    "full_stack_ai": ["FastAPI", "Flask", "Streamlit", "Flutter"]
+  }
+}

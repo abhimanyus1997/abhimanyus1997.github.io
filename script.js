@@ -1,3 +1,4 @@
+import profile from './profile.json';
 const canvas=document.querySelector('#field');
 document.documentElement.dataset.portfolioJs='ready';
 
@@ -793,7 +794,29 @@ let availableModels = [];
 const baseUrl = import.meta.env.VITE_LITELLM_BASE_URL || 'http://13.126.102.204:4000';
 const apiKey = import.meta.env.VITE_LITELLM_API_KEY || '';
 
-const history=[{role:'system',content:`You are the concise portfolio assistant for Abhimanyu Singh. Use only these facts. He is a Data Scientist Manager and AI/robotics engineer in Noida with 4+ years of industry and 2 years of research experience. HDFC Bank (Dec 2025-present): building Neev Agent Catalogue over LiteLLM and an internal Streamlit MLOps annotation platform. Quantiphi (Sep-Nov 2025): GCP Vertex AI Document OCR pipeline for financial documents. Alphadroid (Jun 2024-Sep 2025): lift-PLC and GeoJSON robot navigation, multilingual RAG on SageMaker, Flutter/TFLite MobileFaceNet at 99.5% accuracy, MQTT/ECR/Vault fleet systems. IIT Guwahati (Jun 2023-May 2024): GroundingDINO underwater data pipelines improved quality 35%; ONNX reduced latency 3-4 seconds. HealthView (2019-2021): NLP curation and D3.js dashboards. Projects: MicroClaw agentic ESP32 firmware using C++, FreeRTOS, Gemini/Groq and FastAPI; HealthBuddy with Flutter, Health Connect, Groq and BYOK; Resume JD Matcher with Gemini 2.5, LangChain, TF-IDF and Plotly; Langchain One multimodal OCR assistant. Education: M.Tech Automation and Robotics at DIAT/DRDO, CGPA 8.47; B.Tech Mechanical Engineering at LNMIIT, CGPA 8.16. Published an IndiaAI object-detection article and presented subaqueous crack detection at RCRM 2024. Contact: abhimanyus1997@gmail.com. GitHub and LinkedIn: abhimanyus1997. If asked beyond these facts, say you do not know and suggest emailing him. Never invent claims. Keep answers under 100 words.`}];
+const systemPrompt = `You are the concise portfolio assistant for ${profile.name}. Use only these facts.
+Title: ${profile.title}
+Location: ${profile.location}
+Bio: ${profile.bio}
+Experience: ${profile.experience.industry} industry, ${profile.experience.research} research.
+Contact: Email: ${profile.email}, GitHub: ${profile.github}, LinkedIn: ${profile.linkedin}.
+Roles:
+${profile.roles.map(r => `- ${r.company} (${r.period}): ${r.achievements.join(', ')}`).join('\n')}
+Projects:
+${profile.projects.map(p => `- ${p.name}: ${p.description}`).join('\n')}
+Education:
+${profile.education.map(e => `- ${e.degree} at ${e.institution} (GPA: ${e.gpa})`).join('\n')}
+Publications & Articles:
+${profile.publications_articles.map(p => `- ${p}`).join('\n')}
+Skills:
+- Agentic AI: ${profile.skills.agentic_ai.join(', ')}
+- Edge & Hardware: ${profile.skills.edge_hardware.join(', ')}
+- Cloud & MLOps: ${profile.skills.cloud_mlops.join(', ')}
+- Full-Stack AI: ${profile.skills.full_stack_ai.join(', ')}
+
+If asked beyond these facts, say you do not know and suggest emailing him at ${profile.email}. Never invent claims. Keep answers under 100 words.`;
+
+const history = [{ role: 'system', content: systemPrompt }];
 
 async function initAI() {
   if (ready || busy) return;
