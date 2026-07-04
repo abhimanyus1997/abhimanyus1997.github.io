@@ -318,7 +318,7 @@ async function initThree(){
       const controls = document.getElementById('flight-controls');
       if (controls) controls.style.display = 'none';
     });
-    let mx=0,my=0,manualYaw=0,manualPitch=0,manualRoll=0,userScale=1.1,autoRotate=true,boostUntil=0;
+    let mx=0,my=0,manualYaw=0,manualPitch=0,manualRoll=0,userScale=1.1,autoRotate=true,boostUntil=0,scrollProgress=0,smoothScroll=0;
     addEventListener('pointermove',e=>{mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5},{passive:true});
     const controlDock=document.querySelector('#flight-controls'),sizeControl=document.querySelector('#flight-size');
     if (controlDock) {
@@ -504,17 +504,30 @@ async function initThree(){
       const baseY=isMobile?-1.6:-.02;
       const baseScale=isMobile?0.82:0.78;
       
-      const x=baseX+(1-ease)*(isMobile?0:4.8)+mx*.24;
-      const y=baseY+(1-ease)*(isMobile?0:.65)-my*.12+Math.sin(boost*Math.PI)*.28;
-      const z=-.2+(1-ease)*(isMobile?0:-1.5)+boost*.45;
-      const s=baseScale*userScale*(.35+.65*ease)*(1+Math.sin(boost*Math.PI)*.08);
+      // Smoothly interpolate scroll progress for organic flight motions
+      smoothScroll = THREE.MathUtils.lerp(smoothScroll, scrollProgress, 0.05);
+
+      // Flight path offsets based on scroll progress (swooping, dipping, banking, scaling)
+      const flyX = Math.sin(smoothScroll * Math.PI) * -3.8 - smoothScroll * 1.5;
+      const flyY = -smoothScroll * 5.2 + Math.sin(smoothScroll * Math.PI * 1.5) * 1.0;
+      const flyZ = smoothScroll * 2.8;
+      const flyScale = 1.0 - smoothScroll * 0.35 + Math.sin(smoothScroll * Math.PI) * 0.25;
+
+      const flyPitch = Math.sin(smoothScroll * Math.PI * 2) * -0.38 + (smoothScroll > 0.1 && smoothScroll < 0.9 ? -0.15 : 0);
+      const flyYaw = smoothScroll * Math.PI * 1.5 - Math.sin(smoothScroll * Math.PI) * 0.8;
+      const flyRoll = Math.sin(smoothScroll * Math.PI * 2) * 0.55;
+
+      const x = baseX + (1 - ease) * (isMobile ? 0 : 4.8) + mx * .24 + (isMobile ? flyX * 0.5 : flyX);
+      const y = baseY + (1 - ease) * (isMobile ? 0 : .65) - my * .12 + Math.sin(boost * Math.PI) * .28 + (isMobile ? flyY * 0.5 : flyY);
+      const z = -.2 + (1 - ease) * (isMobile ? 0 : -1.5) + boost * .45 + flyZ;
+      const s = baseScale * userScale * (.35 + .65 * ease) * (1 + Math.sin(boost * Math.PI) * .08) * flyScale;
       
-      carRig.position.set(x,y+(!reduce?Math.sin(t*1.2)*.055:0),z);
+      carRig.position.set(x, y + (!reduce ? Math.sin(t * 1.2) * .055 : 0), z);
       carRig.scale.setScalar(s);
-      carRig.rotation.y=THREE.MathUtils.lerp(carRig.rotation.y,manualYaw+mx*.35+(autoRotate?t*.5:0)+(1-ease)*-1.15,.08);
-      carRig.rotation.z=THREE.MathUtils.lerp(carRig.rotation.z,manualRoll+(x-previousX)*-.18+Math.sin(t*.7)*.014,.08);
-      carRig.rotation.x=THREE.MathUtils.lerp(carRig.rotation.x,manualPitch-my*.14-boost*.12+(1-ease)*.12,.08);
-      previousX=x;
+      carRig.rotation.y = THREE.MathUtils.lerp(carRig.rotation.y, manualYaw + mx * .35 + (autoRotate ? t * .5 : 0) + (1 - ease) * -1.15 + flyYaw, .08);
+      carRig.rotation.z = THREE.MathUtils.lerp(carRig.rotation.z, manualRoll + (x - previousX) * -.18 + Math.sin(t * .7) * .014 + flyRoll, .08);
+      carRig.rotation.x = THREE.MathUtils.lerp(carRig.rotation.x, manualPitch - my * .14 - boost * .12 + (1 - ease) * .12 + flyPitch, .08);
+      previousX = x;
       
       // Automatic Landing Gear based on boost state
       if (gearAction) {
@@ -760,6 +773,18 @@ const modeLabel = document.querySelector('#chat-mode-label');
 const modelSelect = document.querySelector('#model-select');
 const chatNote = document.querySelector('#chat-note');
 
+// Voice Mode DOM elements
+const voiceModeContainer = document.querySelector('#voice-mode-container');
+const voiceStatus = document.querySelector('#voice-status');
+const voiceVisualizer = document.querySelector('#voice-visualizer');
+const centralMicBtn = document.querySelector('#central-mic-btn');
+const voiceTranscript = document.querySelector('#voice-transcript');
+const switchToTextBtn = document.querySelector('#switch-to-text');
+const toggleVoiceModeBtn = document.querySelector('#toggle-voice-mode');
+
+let isVoiceModeActive = true; // Voice Mode by default!
+let autoListenAfterSpeak = true;
+
 let engine=null,ready=false,busy=false,pendingPrompt='';
 let apiType = 'local'; // 'proxy' | 'direct' | 'local'
 let selectedModel = '';
@@ -829,6 +854,11 @@ function setupCloudAI(labelName) {
   input.disabled = false;
   send.disabled = false;
   if (micBtn) micBtn.disabled = false;
+  if (centralMicBtn) {
+    centralMicBtn.disabled = false;
+    if (voiceStatus) voiceStatus.textContent = 'Voice Mode Connected';
+    if (voiceTranscript) voiceTranscript.textContent = 'Tap to start speaking';
+  }
 
   if (modelSelect && availableModels.length > 0) {
     modelSelect.innerHTML = '';
@@ -866,68 +896,119 @@ function toggle(open){
     if (!ready && !busy && apiType === 'local') {
       initAI();
     }
-    if(ready) input.focus();
+    updateModeUI();
+    if (isVoiceModeActive && ready) {
+      setTimeout(startVoiceListening, 400);
+    }
+    if(ready && !isVoiceModeActive) input.focus();
+  } else {
+    stopVoiceListening();
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+    }
   }
 }
 
 launch.addEventListener('click',()=>toggle(true));
 close.addEventListener('click',()=>toggle(false));
 addEventListener('keydown',e=>{if(e.key==='Escape')toggle(false)});
-let currentUtterance = null;
+
+let currentAudio = null;
 async function speakText(text, buttonElement) {
-  if (window.speechSynthesis.speaking) {
-    window.speechSynthesis.cancel();
-    if (currentUtterance) {
-      currentUtterance = null;
-      buttonElement.innerHTML = '🔊';
-      return;
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+    if (buttonElement) buttonElement.innerHTML = '🔊';
+    if (centralMicBtn) {
+      centralMicBtn.classList.remove('speaking');
+      centralMicBtn.innerHTML = '🎙️';
     }
+    return;
   }
   
-  buttonElement.innerHTML = '⏳';
-  buttonElement.disabled = true;
+  if (buttonElement) {
+    buttonElement.innerHTML = '⏳';
+    buttonElement.disabled = true;
+  }
+  if (isVoiceModeActive && centralMicBtn) {
+    centralMicBtn.classList.add('speaking');
+    centralMicBtn.innerHTML = '🔊';
+  }
 
   try {
     const cleanText = text.replace(/[*_`#\-]/g, '').trim();
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    const voices = window.speechSynthesis.getVoices();
-    const englishVoice = voices.find(v => v.lang.includes('en-US') && v.name.includes('Google')) ||
-                         voices.find(v => v.lang.includes('en')) ||
-                         voices[0];
-    if (englishVoice) utterance.voice = englishVoice;
-    utterance.rate = 1.05;
-    
-    currentUtterance = utterance;
+    let response;
+    try {
+      const params = new URLSearchParams();
+      params.append('text', cleanText);
+      
+      response = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
+      });
+    } catch (e) {
+      console.warn('Backend TTS proxy failed, trying direct...', e);
+    }
 
-    utterance.onstart = () => {
+    if (!response || !response.ok) {
+      const params = new URLSearchParams();
+      params.append('text', cleanText);
+      
+      response = await fetch('http://13.126.102.204:5555/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
+      });
+    }
+
+    if (!response.ok) {
+      throw new Error(`TTS request failed with status ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    const audioUrl = URL.createObjectURL(blob);
+    currentAudio = new Audio(audioUrl);
+    
+    if (buttonElement) {
       buttonElement.innerHTML = '🛑';
       buttonElement.disabled = false;
-      buttonElement.onclick = () => {
-        window.speechSynthesis.cancel();
+      buttonElement.onclick = () => speakText(text, buttonElement);
+    }
+
+    currentAudio.addEventListener('ended', () => {
+      if (buttonElement) {
         buttonElement.innerHTML = '🔊';
         buttonElement.onclick = () => speakText(text, buttonElement);
-      };
-    };
+      }
+      if (centralMicBtn) {
+        centralMicBtn.classList.remove('speaking');
+        centralMicBtn.innerHTML = '🎙️';
+      }
+      currentAudio = null;
+      
+      // Auto-listen loop after speaking in Voice Mode
+      if (isVoiceModeActive && autoListenAfterSpeak) {
+        startVoiceListening();
+      }
+    });
 
-    utterance.onend = () => {
-      buttonElement.innerHTML = '🔊';
-      currentUtterance = null;
-      buttonElement.onclick = () => speakText(text, buttonElement);
-    };
-
-    utterance.onerror = (e) => {
-      console.warn('SpeechSynthesis error:', e);
-      buttonElement.innerHTML = '🔊';
-      currentUtterance = null;
-      buttonElement.onclick = () => speakText(text, buttonElement);
-    };
-
-    window.speechSynthesis.speak(utterance);
+    await currentAudio.play();
   } catch (error) {
-    console.error('SpeechSynthesis failed:', error);
-    buttonElement.innerHTML = '🔊';
-    buttonElement.disabled = false;
-    buttonElement.onclick = () => speakText(text, buttonElement);
+    console.error('TTS error:', error);
+    if (buttonElement) {
+      buttonElement.innerHTML = '❌';
+      setTimeout(() => {
+        buttonElement.innerHTML = '🔊';
+        buttonElement.disabled = false;
+        buttonElement.onclick = () => speakText(text, buttonElement);
+      }, 2000);
+    }
+    if (centralMicBtn) {
+      centralMicBtn.classList.remove('speaking');
+      centralMicBtn.innerHTML = '🎙️';
+    }
   }
 }
 
@@ -956,14 +1037,14 @@ async function loadAI(){
   try{
     const webllm=await import('https://esm.run/@mlc-ai/web-llm@0.2.84');
     engine=await webllm.CreateMLCEngine('SmolLM2-360M-Instruct-q4f16_1-MLC',{initProgressCallback:p=>{const pct=Math.round((p.progress||0)*100);progressEl.style.width=`${pct}%`;statusEl.textContent=`${p.text||'LOADING MODEL'} · ${pct}%`}});
-    ready=true;busy=false;gate.style.display='none';input.disabled=false;send.disabled=false;if(micBtn)micBtn.disabled=false;addMessage('I’m ready. What would you like to know?');input.focus();
+    ready=true;busy=false;gate.style.display='none';input.disabled=false;send.disabled=false;if(micBtn)micBtn.disabled=false;if(centralMicBtn){centralMicBtn.disabled=false;if(voiceStatus)voiceStatus.textContent='Voice Mode Connected';}addMessage('I’m ready. What would you like to know?');input.focus();
     if(pendingPrompt){input.value=pendingPrompt;pendingPrompt='';form.requestSubmit()}
   }catch(err){busy=false;start.disabled=false;statusEl.textContent='MODEL COULD NOT LOAD · TRY AGAIN';addMessage('The local model could not start. Check WebGPU support and available device memory, then try again.');console.error(err)}
 }
 start.addEventListener('click',loadAI);
 suggestions.addEventListener('click',e=>{if(e.target.tagName!=='BUTTON')return;if(!ready){pendingPrompt=e.target.textContent;if(apiType==='local'){loadAI()}else{initAI()}}else{input.value=e.target.textContent;form.requestSubmit()}});
 form.addEventListener('submit',async e=>{
-  e.preventDefault();const text=input.value.trim();if(!text||!ready||busy)return;input.value='';addMessage(text,'user');history.push({role:'user',content:text});busy=true;input.disabled=true;send.disabled=true;if(micBtn)micBtn.disabled=true;
+  e.preventDefault();const text=input.value.trim();if(!text||!ready||busy)return;input.value='';addMessage(text,'user');history.push({role:'user',content:text});busy=true;input.disabled=true;send.disabled=true;if(micBtn)micBtn.disabled=true;if(centralMicBtn)centralMicBtn.disabled=true;
   
   const typingRow = addTypingIndicator();
   let out = null;
@@ -1031,7 +1112,7 @@ form.addEventListener('submit',async e=>{
       history.push({role:'assistant',content:answer});
       if (autoSpeakResponse) {
         autoSpeakResponse = false;
-        speakBrowserTTS(answer);
+        speakText(answer, null);
       }
     } catch(err) {
       if (typingRow.parentNode) typingRow.remove();
@@ -1045,7 +1126,7 @@ form.addEventListener('submit',async e=>{
       if (modelSelect) modelSelect.style.display = 'none';
       if (gate) gate.style.display = 'block';
     } finally {
-      busy=false;input.disabled=false;send.disabled=false;if(micBtn)micBtn.disabled=false;input.focus();
+      busy=false;input.disabled=false;send.disabled=false;if(micBtn)micBtn.disabled=false;if(centralMicBtn)centralMicBtn.disabled=false;input.focus();
     }
   } else {
     try{
@@ -1068,7 +1149,7 @@ form.addEventListener('submit',async e=>{
       history.push({role:'assistant',content:answer});
       if (autoSpeakResponse) {
         autoSpeakResponse = false;
-        speakBrowserTTS(answer);
+        speakText(answer, null);
       }
     }
     catch(err){
@@ -1077,7 +1158,7 @@ form.addEventListener('submit',async e=>{
       out.textContent='I hit a local inference error. Please try once more.';
       console.error(err);
     }
-    finally{busy=false;input.disabled=false;send.disabled=false;if(micBtn)micBtn.disabled=false;input.focus()}
+    finally{busy=false;input.disabled=false;send.disabled=false;if(micBtn)micBtn.disabled=false;if(centralMicBtn)centralMicBtn.disabled=false;input.focus()}
   }
 });
 
@@ -1228,12 +1309,17 @@ addEventListener('appinstalled', () => {
     const canvas = document.getElementById('field');
     const hero = document.querySelector('.hero');
     if (canvas && hero) {
-      const heroRect = hero.getBoundingClientRect();
-      if (heroRect.bottom > 0) {
-        const progress = 1 - (heroRect.bottom / window.innerHeight);
-        canvas.style.transform = `translateY(${progress * 120}px)`;
-        canvas.style.opacity = `${1 - progress * 1.25}`;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (docHeight > 0) {
+        scrollProgress = window.scrollY / docHeight;
       }
+      
+      if (scrollProgress > 0.82) {
+        canvas.style.opacity = `${(1.0 - scrollProgress) / 0.18}`;
+      } else {
+        canvas.style.opacity = '1';
+      }
+      canvas.style.transform = 'none';
     }
     
     // 3. Project card & about-visual scroll parallax
@@ -1251,72 +1337,173 @@ addEventListener('appinstalled', () => {
   handleScroll(); // Initial run on load
 })();
 
-// Browser-Inbuilt Speech-to-Speech Integration
+// Speech-to-Speech Mode Controller Logic
 let autoSpeakResponse = false;
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let voiceRecognition = null;
+let isVoiceListening = false;
 
-function speakBrowserTTS(text) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const cleanText = text.replace(/[*_`#\-]/g, '').trim();
-  const utterance = new SpeechSynthesisUtterance(cleanText);
-  const voices = window.speechSynthesis.getVoices();
-  const englishVoice = voices.find(v => v.lang.includes('en-US') && v.name.includes('Google')) ||
-                       voices.find(v => v.lang.includes('en')) ||
-                       voices[0];
-  if (englishVoice) utterance.voice = englishVoice;
-  utterance.rate = 1.05;
-  window.speechSynthesis.speak(utterance);
+function updateModeUI() {
+  if (isVoiceModeActive) {
+    if (voiceModeContainer) voiceModeContainer.style.display = 'flex';
+    if (messages) messages.style.display = 'none';
+    if (suggestions) suggestions.style.display = 'none';
+    if (form) form.style.display = 'none';
+    if (toggleVoiceModeBtn) {
+      toggleVoiceModeBtn.innerHTML = '⌨️';
+      toggleVoiceModeBtn.title = 'Switch to Keyboard Mode';
+    }
+  } else {
+    if (voiceModeContainer) voiceModeContainer.style.display = 'none';
+    if (messages) messages.style.display = 'flex';
+    if (suggestions) suggestions.style.display = 'flex';
+    if (form) form.style.display = 'grid';
+    if (toggleVoiceModeBtn) {
+      toggleVoiceModeBtn.innerHTML = '🎙️';
+      toggleVoiceModeBtn.title = 'Switch to Voice Mode';
+    }
+    stopVoiceListening();
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio = null;
+    }
+  }
+}
+
+function startVoiceListening() {
+  if (!voiceRecognition || isVoiceListening) return;
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio = null;
+  }
+  try {
+    voiceRecognition.start();
+  } catch (e) {
+    console.error('Failed to start speech recognition:', e);
+  }
+}
+
+function stopVoiceListening() {
+  if (voiceRecognition && isVoiceListening) {
+    voiceRecognition.stop();
+  }
 }
 
 (function() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let recognition = null;
-  let isListening = false;
+  if (SpeechRecognition) {
+    voiceRecognition = new SpeechRecognition();
+    voiceRecognition.continuous = false; // VAD: stop on pause
+    voiceRecognition.interimResults = true; // live feedback
+    voiceRecognition.lang = 'en-US';
 
-  if (SpeechRecognition && micBtn) {
-    recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = 'en-US';
-
-    recognition.onstart = () => {
-      isListening = true;
-      micBtn.classList.add('recording');
-      micBtn.innerHTML = '🛑';
-      input.placeholder = 'Listening...';
-    };
-
-    recognition.onend = () => {
-      isListening = false;
-      micBtn.classList.remove('recording');
-      micBtn.innerHTML = '🎙️';
-      input.placeholder = 'Ask about my work…';
-    };
-
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      input.value = transcript;
-      autoSpeakResponse = true;
-      form.requestSubmit();
-    };
-
-    recognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
-      isListening = false;
-      micBtn.classList.remove('recording');
-      micBtn.innerHTML = '🎙️';
-      input.placeholder = 'Ask about my work…';
-    };
-
-    micBtn.addEventListener('click', () => {
-      if (isListening) {
-        recognition.stop();
-      } else {
-        window.speechSynthesis.cancel();
-        recognition.start();
+    voiceRecognition.onstart = () => {
+      isVoiceListening = true;
+      if (centralMicBtn) {
+        centralMicBtn.classList.add('listening');
+        centralMicBtn.classList.remove('speaking');
+        centralMicBtn.innerHTML = '🛑';
       }
-    });
-  } else if (micBtn) {
-    micBtn.style.display = 'none';
+      if (voiceStatus) voiceStatus.textContent = 'Listening...';
+    };
+
+    voiceRecognition.onend = () => {
+      isVoiceListening = false;
+      if (centralMicBtn) {
+        centralMicBtn.classList.remove('listening');
+        if (!centralMicBtn.classList.contains('speaking')) {
+          centralMicBtn.innerHTML = '🎙️';
+        }
+      }
+      if (voiceStatus && !currentAudio) voiceStatus.textContent = 'Tap to Talk';
+    };
+
+    voiceRecognition.onresult = (event) => {
+      let interimTranscript = '';
+      let finalTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+
+      const activeTranscript = finalTranscript || interimTranscript;
+      if (voiceTranscript) {
+        voiceTranscript.textContent = `"${activeTranscript}"`;
+      }
+
+      if (finalTranscript) {
+        input.value = finalTranscript;
+        autoSpeakResponse = true;
+        voiceRecognition.stop();
+        form.requestSubmit();
+        if (voiceStatus) voiceStatus.textContent = 'Thinking...';
+      }
+    };
+
+    voiceRecognition.onerror = (event) => {
+      console.error('Speech recognition error:', event.error);
+      isVoiceListening = false;
+      if (centralMicBtn) {
+        centralMicBtn.classList.remove('listening');
+        centralMicBtn.innerHTML = '🎙️';
+      }
+      if (voiceStatus) voiceStatus.textContent = 'Tap to Talk';
+    };
+
+    // Standard input bar micro mic button listener
+    if (micBtn) {
+      micBtn.addEventListener('click', () => {
+        isVoiceModeActive = true;
+        updateModeUI();
+        startVoiceListening();
+      });
+    }
+
+    // Central voice mode button
+    if (centralMicBtn) {
+      centralMicBtn.addEventListener('click', () => {
+        if (isVoiceListening) {
+          stopVoiceListening();
+        } else if (currentAudio) {
+          currentAudio.pause();
+          currentAudio = null;
+          if (centralMicBtn) {
+            centralMicBtn.classList.remove('speaking');
+            centralMicBtn.innerHTML = '🎙️';
+          }
+          if (voiceStatus) voiceStatus.textContent = 'Tap to Talk';
+        } else {
+          startVoiceListening();
+        }
+      });
+    }
+
+    // Mode toggles
+    if (toggleVoiceModeBtn) {
+      toggleVoiceModeBtn.addEventListener('click', () => {
+        isVoiceModeActive = !isVoiceModeActive;
+        updateModeUI();
+        if (isVoiceModeActive && ready) {
+          startVoiceListening();
+        }
+      });
+    }
+
+    if (switchToTextBtn) {
+      switchToTextBtn.addEventListener('click', () => {
+        isVoiceModeActive = false;
+        updateModeUI();
+      });
+    }
+
+  } else {
+    // Web Speech not supported
+    if (toggleVoiceModeBtn) toggleVoiceModeBtn.style.display = 'none';
+    if (micBtn) micBtn.style.display = 'none';
+    isVoiceModeActive = false;
+    updateModeUI();
   }
 })();

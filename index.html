@@ -269,7 +269,18 @@
         </div>
       </div>
       <select id="model-select" class="model-select" style="background:var(--ink);color:var(--acid);border:1px solid var(--acid);font-family:'DM Mono',monospace;font-size:10px;padding:2px 4px;border-radius:2px;outline:none;cursor:pointer;margin-left:auto;margin-right:10px;display:none;"></select>
+      <button id="toggle-voice-mode" class="header-mode-btn" aria-label="Toggle voice mode" style="background:none;border:none;color:var(--acid);font-size:14px;cursor:pointer;margin-left:auto;margin-right:12px;opacity:0.85;transition:opacity 0.2s;">🎙️</button>
       <button id="chat-close" aria-label="Close assistant">×</button>
+    </div>
+    <div class="voice-mode-container" id="voice-mode-container">
+      <div class="voice-status" id="voice-status">Connecting Voice Mode...</div>
+      <div class="voice-visualizer" id="voice-visualizer">
+        <div class="pulse-ring ring-1"></div>
+        <div class="pulse-ring ring-2"></div>
+        <button type="button" class="central-mic-btn" id="central-mic-btn" aria-label="Talk to AI" disabled>🎙️</button>
+      </div>
+      <div class="voice-transcript" id="voice-transcript">"Tap to start speaking"</div>
+      <button type="button" class="switch-mode-btn" id="switch-to-text">Switch to Keyboard Mode</button>
     </div>
     <div class="chat-messages" id="chat-messages" aria-live="polite">
       <div class="message bot"><span>AI</span><p>I can answer questions about Abhimanyu’s work, experience, and technical fit.</p></div>
