@@ -305,6 +305,8 @@
     // 2. REALISTIC AVATAR SETUP (To make it act like you)
     // -----------------------------------------------------------------
     let avatarHeadMeshes = [];
+    let mixer;
+    const clock = new THREE.Clock();
     const loader = new GLTFLoader();
     console.log('[GLTF] Starting avatar load');
 
@@ -343,6 +345,15 @@
       const maxDim = Math.max(size.x, size.y, size.z);
       const targetScale = 3.0 / maxDim;
       avatar.scale.set(targetScale, targetScale, targetScale);
+
+      // Play animations if present
+      if (gltf.animations && gltf.animations.length > 0) {
+        mixer = new THREE.AnimationMixer(avatar);
+        gltf.animations.forEach((clip) => {
+          mixer.clipAction(clip).play();
+        });
+        console.log('[GLTF] Animation mixer initialized for', gltf.animations.length, 'animations');
+      }
 
       group.add(avatar);
       console.log('[GLTF] Avatar added to scene', avatar);
@@ -475,6 +486,10 @@
 
     function animate3D() {
       requestAnimationFrame(animate3D);
+      if (mixer) {
+        const delta = clock.getDelta();
+        mixer.update(delta);
+      }
       renderer.render(scene, camera);
     }
 

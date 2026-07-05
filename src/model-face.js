@@ -18,6 +18,8 @@ let lastFpsTime = performance.now();
 let frameCount = 0;
 
 let avatarHeadMeshes = [];
+let mixer;
+const clock = new THREE.Clock();
 
 const renderer = new THREE.WebGLRenderer({
   canvas,
@@ -138,6 +140,15 @@ function loadAvatar() {
       const maxDim = Math.max(size.x, size.y, size.z);
       const targetScale = 3.0 / maxDim;
       avatar.scale.set(targetScale, targetScale, targetScale);
+
+      // Play animations if present
+      if (gltf.animations && gltf.animations.length > 0) {
+        mixer = new THREE.AnimationMixer(avatar);
+        gltf.animations.forEach((clip) => {
+          mixer.clipAction(clip).play();
+        });
+        console.log("[GLTF] Animation mixer initialized for", gltf.animations.length, "animations");
+      }
 
       group.add(avatar);
 
@@ -293,6 +304,10 @@ function updateFps() {
 
 function renderLoop() {
   requestAnimationFrame(renderLoop);
+  if (mixer) {
+    const delta = clock.getDelta();
+    mixer.update(delta);
+  }
   renderer.render(scene, camera);
 }
 
