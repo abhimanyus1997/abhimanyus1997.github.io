@@ -783,8 +783,16 @@ async function runBootSequence() {
   const AUTH_TTL = 2 * 60 * 60 * 1000; // 2 hours
   const authTs = parseInt(localStorage.getItem('auth_done') || '0', 10);
   const authValid = authTs && (Date.now() - authTs < AUTH_TTL);
-  if (authValid || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  const sessionAuthDone = sessionStorage.getItem('auth_done') === '1';
+  if (authValid || sessionAuthDone || matchMedia('(prefers-reduced-motion: reduce)').matches) {
     finishIntro();
+    if (sessionAuthDone && window.location.hash) {
+      const targetHash = window.location.hash;
+      setTimeout(() => {
+        const el = document.querySelector(targetHash);
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 950);
+    }
     return;
   }
 
@@ -1458,7 +1466,7 @@ async function speakText(text, buttonElement) {
         }
       }
     }
-    if (messageP) {
+    if (messageP && !messageP.textContent.trim()) {
       typeOutAnimation(messageP, cleanText);
     }
 
