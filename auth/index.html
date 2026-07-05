@@ -538,17 +538,6 @@
     }
     .success-skip:hover { border-color: var(--acid); color: var(--acid); }
 
-    /* ── mini mesh canvas ────────────────────────────────── */
-    .mesh-canvas {
-      display: none;
-      width: min(220px, 60vw);
-      height: min(220px, 60vw);
-      border: 1px solid rgba(201,255,54,.15);
-      background: rgba(0,0,0,.45);
-      animation: fadeUp .5s ease .05s both;
-    }
-    .mesh-canvas.on { display: block; }
-
     /* ── error toast ─────────────────────────────────────── */
     .toast {
       position: fixed; top:18px; left:50%; transform:translateX(-50%);
@@ -810,8 +799,6 @@
       <div class="success-h" id="successH">ACCESS GRANTED</div>
       <div class="success-sub" id="successSub">IDENTITY VERIFIED</div>
     </div>
-    <!-- mini mesh canvas -->
-    <canvas id="meshCanvas" class="mesh-canvas"></canvas>
     <!-- live analytics panel -->
     <div class="analytics-panel" id="analyticsPanel">
       <div class="analytics-title">LIVE BIOMETRIC FEED</div>
@@ -900,8 +887,6 @@
     const liveAge        = document.getElementById("liveAge");
     const liveGender     = document.getElementById("liveGender");
     const successNav     = document.getElementById("successNav");
-    const meshCanvas     = document.getElementById("meshCanvas");
-    const meshCtx        = meshCanvas.getContext("2d");
     const toast          = document.getElementById("toast");
     // register
     const regOverlay  = document.getElementById("regOverlay");
@@ -1008,7 +993,27 @@
     function chime() { tone(523,.14); setTimeout(()=>tone(659,.14),160); setTimeout(()=>tone(784,.22,"sine",.11),320); }
 
     function playFile(file) {
-      return new Promise(resolve => {
+      return new Promise(async resolve => {
+        // iOS requires AudioContext-based playback; new Audio() is blocked after page load
+        if (audioCtx) {
+          if (audioCtx.state === 'suspended') { try { await audioCtx.resume(); } catch(_){} }
+          try {
+            setWaves(true);
+            const resp = await fetch(AUDIO_BASE + file);
+            if (!resp.ok) throw new Error(resp.status);
+            const decoded = await audioCtx.decodeAudioData(await resp.arrayBuffer());
+            const src = audioCtx.createBufferSource();
+            src.buffer = decoded;
+            src.connect(audioCtx.destination);
+            let done = false;
+            const finish = () => { if(done)return; done=true; setWaves(false); resolve(); };
+            src.onended = finish;
+            setTimeout(finish, (decoded.duration * 1000) + 3000);
+            src.start(0);
+            return;
+          } catch(e) { console.warn("AudioContext playback failed:", e); }
+        }
+        // fallback: HTMLAudio (desktop / non-iOS)
         const a = new Audio(AUDIO_BASE + file);
         setWaves(true);
         a.play().catch(()=>{});
@@ -1091,95 +1096,17 @@
       setTimeout(()=>{ window.location.href=path; },750);
     }
 
-    /* ── mini mesh drawing ──────────────────────────────── */
-    // 68-point landmark edge groups
-    const MESH_EDGES = (() => {
-      const e = [];
-      // jaw
-      for(let i=0;i<16;i++) e.push([i,i+1]);
-      // right eyebrow
-      for(let i=17;i<21;i++) e.push([i,i+1]);
-      // left eyebrow
-      for(let i=22;i<26;i++) e.push([i,i+1]);
-      // nose bridge
-      for(let i=27;i<30;i++) e.push([i,i+1]);
-      // nose bottom
-      for(let i=31;i<35;i++) e.push([i,i+1]); e.push([30,35]);
-      // right eye
-      for(let i=36;i<41;i++) e.push([i,i+1]); e.push([41,36]);
-      // left eye
-      for(let i=42;i<47;i++) e.push([i,i+1]); e.push([47,42]);
-      // outer mouth
-      for(let i=48;i<59;i++) e.push([i,i+1]); e.push([59,48]);
-      // inner mouth
-      for(let i=60;i<67;i++) e.push([i,i+1]); e.push([67,60]);
-      // extra cross-connectors for density: eyebrow-to-eye
-      [[17,36],[21,39],[22,42],[26,45]].forEach(p=>e.push(p));
-      // nose tip to eye corners
-      [[30,36],[30,45],[33,51],[33,57]].forEach(p=>e.push(p));
-      // jaw-to-eyebrow diagonals (sparse)
-      [[0,17],[16,26],[3,48],[13,54],[8,57]].forEach(p=>e.push(p));
-      return e;
-    })();
-
-    function drawMiniMesh(landmarks) {
-      const S = meshCanvas.width;
-      const pts = landmarks.positions;
-
-      // bounding box to center + scale face within canvas
-      let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
-      for(const p of pts) { if(p.x<minX)minX=p.x; if(p.y<minY)minY=p.y; if(p.x>maxX)maxX=p.x; if(p.y>maxY)maxY=p.y; }
-      const fw=maxX-minX, fh=maxY-minY, scale=Math.min((S*0.82)/fw,(S*0.82)/fh);
-      const ox = (S - fw*scale)/2 - minX*scale;
-      const oy = (S - fh*scale)/2 - minY*scale;
-
-      meshCtx.clearRect(0,0,S,S);
-
-      // subtle radial glow behind face
-      const grad = meshCtx.createRadialGradient(S/2,S/2,0,S/2,S/2,S*0.45);
-      grad.addColorStop(0,"rgba(201,255,54,0.06)");
-      grad.addColorStop(1,"rgba(0,0,0,0)");
-      meshCtx.fillStyle=grad; meshCtx.fillRect(0,0,S,S);
-
-      // edges — two passes: glow then crisp
-      for(let pass=0;pass<2;pass++){
-        meshCtx.beginPath();
-        for(const [a,b] of MESH_EDGES){
-          const pa=pts[a], pb=pts[b];
-          if(!pa||!pb) continue;
-          meshCtx.moveTo(pa.x*scale+ox, pa.y*scale+oy);
-          meshCtx.lineTo(pb.x*scale+ox, pb.y*scale+oy);
-        }
-        if(pass===0){ meshCtx.strokeStyle="rgba(201,255,54,0.08)"; meshCtx.lineWidth=3; }
-        else        { meshCtx.strokeStyle="rgba(201,255,54,0.55)"; meshCtx.lineWidth=0.6; }
-        meshCtx.stroke();
-      }
-
-      // dots at each landmark
-      meshCtx.fillStyle="rgba(201,255,54,0.9)";
-      for(const p of pts){
-        meshCtx.beginPath();
-        meshCtx.arc(p.x*scale+ox, p.y*scale+oy, 0.9, 0, Math.PI*2);
-        meshCtx.fill();
-      }
-    }
-
     /* ── live analytics loop (runs in GREETING/LISTENING) ── */
     let analyticsRaf = null;
     async function startAnalyticsLoop() {
       if (analyticsRaf) return;
       analyticsPanel.classList.add("on");
-      // size the canvas to its CSS display size
-      const s = Math.round(Math.min(220, window.innerWidth*0.6));
-      meshCanvas.width = s; meshCanvas.height = s;
-      meshCanvas.classList.add("on");
       const opts = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 });
       async function tick() {
         if (!is("GREETING","LISTENING")) { analyticsRaf=null; return; }
         try {
           const det = await faceapi
             .detectSingleFace(video, opts)
-            .withFaceLandmarks()
             .withFaceExpressions()
             .withAgeAndGender();
           if (det) {
@@ -1187,7 +1114,6 @@
             liveEmotion.textContent = expr.toUpperCase();
             liveAge.textContent     = Math.round(det.age);
             liveGender.textContent  = det.gender.toUpperCase();
-            drawMiniMesh(det.landmarks);
           }
         } catch(_) {}
         analyticsRaf = requestAnimationFrame(tick);

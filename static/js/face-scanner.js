@@ -103,23 +103,32 @@ function tone(freq, duration, type = "sine", gain = 0.10, delay = 0) {
 }
 
 // STT Speech Recognition Trigger
+let _sttRec = null;
+let _sttActive = false;
 function startSTT() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (SpeechRecognition) {
-    const recognition = new SpeechRecognition();
-    recognition.continuous = false;
+    if (_sttActive) return;
+    if (!_sttRec) {
+      _sttRec = new SpeechRecognition();
+    }
+    const recognition = _sttRec;
+    recognition.continuous = true;
     recognition.lang = 'en-US';
-    recognition.interimResults = false;
+    recognition.interimResults = true;
     recognition.maxAlternatives = 1;
-    
+
     recognition.onstart = () => {
+      _sttActive = true;
       console.log("Voice listening active...");
       addHudLog("VOICE LISTENING SYSTEM: ACTIVE");
       scrambleText("scanStatus", "LISTENING FOR DIRECTION...");
     };
-    
+
     recognition.onresult = (event) => {
-      const resultText = event.results[0][0].transcript.toLowerCase();
+      const result = event.results[event.resultIndex];
+      if (!result.isFinal) return;
+      const resultText = result[0].transcript.toLowerCase().trim();
       console.log("Speech recognized: " + resultText);
       addHudLog(`VOICE INPUT RECEIVED: "${resultText.toUpperCase()}"`);
       
@@ -196,19 +205,18 @@ function startSTT() {
     };
     
     recognition.onerror = (event) => {
+      if (event.error === 'no-speech' || event.error === 'aborted') return;
       console.warn("STT Error:", event.error);
       addHudLog(`VOICE LISTENING ERROR: ${event.error.toUpperCase()}`);
-      scrambleText("scanStatus", "ROUTING TO PORTFOLIO...");
-      if (completionCallback) {
-        setTimeout(() => completionCallback("#top"), 1500);
-      }
     };
-    
+
     recognition.onend = () => {
+      _sttActive = false;
       console.log("Speech recognition ended.");
     };
-    
-    recognition.start();
+
+    _sttActive = false;
+    try { recognition.start(); } catch(_) {}
   } else {
     console.warn("SpeechRecognition not supported in this browser.");
     addHudLog("VOICE LISTENING SYSTEM: NOT SUPPORTED");
@@ -219,27 +227,36 @@ function startSTT() {
   }
 }
 
+// iOS-safe WAV playback via AudioContext (bypasses autoplay restrictions)
+async function playAudioFile(path, onEnded) {
+  if (!audioContext) {
+    if (onEnded) setTimeout(onEnded, 100);
+    return;
+  }
+  if (audioContext.state === 'suspended') {
+    try { await audioContext.resume(); } catch(_) {}
+  }
+  try {
+    const resp = await fetch(path);
+    if (!resp.ok) throw new Error(resp.status);
+    const buf = await resp.arrayBuffer();
+    const decoded = await audioContext.decodeAudioData(buf);
+    const src = audioContext.createBufferSource();
+    src.buffer = decoded;
+    src.connect(masterGain || audioContext.destination);
+    if (onEnded) src.onended = onEnded;
+    src.start(0);
+  } catch (e) {
+    console.warn("Audio fetch/decode failed:", e);
+    if (onEnded) setTimeout(onEnded, 500);
+  }
+}
+
 function playNavigationPrompt() {
   addHudLog("VOICE PROMPT: WHERE WOULD YOU LIKE TO GO?");
   const queryText = "Where would you like to go? You can say: Projects, Experience, or About.";
-  try {
-    const queryAudio = new Audio("static/audio/welcome-prompt-query.wav");
-    queryAudio.volume = 0.85;
-    queryAudio.play()
-      .then(() => {
-        queryAudio.addEventListener('ended', () => {
-          startSTT();
-        });
-      })
-      .catch(err => {
-        console.warn("Prompt audio play failed, using speech synthesis fallback:", err);
-        speakFallback(queryText);
-        setTimeout(startSTT, 5000);
-      });
-  } catch (e) {
-    speakFallback(queryText);
-    setTimeout(startSTT, 5000);
-  }
+  playAudioFile("static/audio/welcome-prompt-query.wav", () => startSTT())
+    .catch(() => { speakFallback(queryText); setTimeout(startSTT, 4000); });
 }
 
 function sweep(startFreq, endFreq, duration, gain = 0.07) {
@@ -355,26 +372,9 @@ function playWelcomeAudio(label, gender, count) {
   if (filename) {
     lastSpokenTime = now;
     const fallbackText = getFallbackText(label, gender, count);
-    try {
-      const audioPath = `static/audio/${filename}.wav`;
-      const welcomeAudio = new Audio(audioPath);
-      welcomeAudio.volume = 0.85;
-      welcomeAudio.play()
-        .then(() => {
-          welcomeAudio.addEventListener('ended', () => {
-            playNavigationPrompt();
-          });
-        })
-        .catch(err => {
-          console.warn("Welcome audio blocked or failed. Playing native fallback:", err);
-          speakFallback(fallbackText);
-          setTimeout(playNavigationPrompt, 4000);
-        });
-    } catch (e) {
-      console.warn("Audio load exception, using native fallback:", e);
-      speakFallback(fallbackText);
-      setTimeout(playNavigationPrompt, 4000);
-    }
+    const audioPath = `static/audio/${filename}.wav`;
+    playAudioFile(audioPath, () => playNavigationPrompt())
+      .catch(() => { speakFallback(fallbackText); setTimeout(playNavigationPrompt, 4000); });
   }
 }
 

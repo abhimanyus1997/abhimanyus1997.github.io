@@ -297,14 +297,14 @@ async function initThree() {
     if (!THREE?.GLTFLoader) throw new Error('Three.js or GLTFLoader did not initialize');
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(42, 1, .1, 100);
-    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: window.devicePixelRatio === 1, powerPreference: 'default' });
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 0); renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
     camera.position.set(0, 0, 7);
     const group = new THREE.Group();
     scene.add(group);
-    const core = new THREE.Mesh(new THREE.IcosahedronGeometry(1.38, 2), new THREE.MeshBasicMaterial({ color: 0xc9ff36, wireframe: true, transparent: true, opacity: .1 }));
-    const wire = new THREE.Mesh(new THREE.IcosahedronGeometry(1.55, 1), new THREE.MeshBasicMaterial({ color: 0x26301d, wireframe: true, transparent: true, opacity: .28 }));
+    const core = new THREE.Mesh(new THREE.IcosahedronGeometry(1.38, 2), new THREE.MeshBasicMaterial({ color: 0xc9ff36, wireframe: true, transparent: true, opacity: .22 }));
+    const wire = new THREE.Mesh(new THREE.IcosahedronGeometry(1.55, 1), new THREE.MeshBasicMaterial({ color: 0x6a8a3c, wireframe: true, transparent: true, opacity: .45 }));
     core.position.z = -1.8; wire.position.z = -1.7; group.add(core, wire);
 
     // Glowing green starfield
@@ -316,7 +316,7 @@ async function initThree() {
       particleData.push(r * Math.sin(b) * Math.cos(a), r * Math.cos(b) * .65, r * Math.sin(b) * Math.sin(a));
     }
     const particleGeo = new THREE.BufferGeometry(); particleGeo.setAttribute('position', new THREE.Float32BufferAttribute(particleData, 3));
-    const orbit = new THREE.Points(particleGeo, new THREE.PointsMaterial({ color: 0x242920, size: .045, transparent: true, opacity: 0.5 })); group.add(orbit);
+    const orbit = new THREE.Points(particleGeo, new THREE.PointsMaterial({ color: 0x4a5c35, size: .06, transparent: true, opacity: 0.7 })); group.add(orbit);
 
     const ring1 = new THREE.Mesh(new THREE.TorusGeometry(2.75, .008, 3, 72), new THREE.MeshBasicMaterial({ color: 0x536146, transparent: true, opacity: .45 }));
     ring1.rotation.x = 1.08; group.add(ring1);
@@ -551,7 +551,7 @@ async function initThree() {
 
       const isMobile = window.innerWidth <= 800;
       const baseX = isMobile ? 0 : 1.75;
-      const baseY = isMobile ? -1.6 : -.02;
+      const baseY = isMobile ? -0.9 : -.02;
       const baseScale = isMobile ? 0.82 : 0.78;
 
       // ──────────────────────────────────────────────
@@ -564,7 +564,7 @@ async function initThree() {
       // X: gentle sinusoidal sweep left→right across scene
       const flyX = Math.sin(sp * Math.PI * 1.2) * (isMobile ? 1.2 : 2.8);
       // Y: descend slowly mid-scroll, then pull back up for landing
-      const flyY = -sp * (isMobile ? 1.2 : 2.2) + Math.sin(sp * Math.PI * 0.8) * 0.5;
+      const flyY = -sp * (isMobile ? 0.7 : 2.2) + Math.sin(sp * Math.PI * 0.8) * 0.5;
       // Z: push INTO background mid-scroll (sp≈0.5), return closer at footer (sp≈1)
       const flyZ = Math.sin(sp * Math.PI) * (isMobile ? -0.8 : -2.2);
       // Scale: shrink slightly as it recedes, grow back at landing
@@ -624,8 +624,8 @@ async function initThree() {
         group.visible = true;
         group.rotation.y = t * 0.05;
         orbit.rotation.y = -t * 0.08;
-        group.position.set(0, 0, -1.5);
-        group.scale.setScalar(isMobile ? 0.65 : 0.95);
+        group.position.set(0, isMobile ? 0 : 0, -1.5);
+        group.scale.setScalar(isMobile ? 0.85 : 0.95);
       } else {
         // Shadow fades out in transit flight (between sp 0.08 and 0.88)
         let shadowFade = 0;
