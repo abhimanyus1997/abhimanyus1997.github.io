@@ -780,7 +780,7 @@ async function runBootSequence() {
     }, { passive: false });
   }
 
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (sessionStorage.getItem('auth_done') || matchMedia('(prefers-reduced-motion: reduce)').matches) {
     finishIntro();
     return;
   }
