@@ -60,15 +60,14 @@
       position: relative; z-index: 10;
       width: 100%; min-height: 100dvh;
       display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 48px 24px;
-      gap: 32px;
+      align-items: center; justify-content: flex-start;
+      padding: 0;
+      gap: 0;
     }
 
     /* ── eyebrow / title ─────────────────────────────────── */
     .brand {
-      text-align: center;
-      animation: fadeDown .65s ease both;
+      display: none; /* hidden in fullscreen mode */
     }
 
     .brand-eyebrow {
@@ -99,31 +98,27 @@
       animation: pulseDot 1.4s ease-in-out infinite;
     }
 
-    /* ── scanner card ────────────────────────────────────── */
+    /* ── scanner card — fullscreen viewport ─────────────── */
     .scanner-card {
       position: relative;
-      width: min(300px, 80vw);
-      aspect-ratio: 3/4;
-      background: rgba(0,0,0,.6);
-      border: 1px solid rgba(201,255,54,.2);
+      width: 100%;
+      height: 100dvh;
+      background: #000;
       overflow: hidden;
-      box-shadow:
-        0 0 0 1px rgba(0,0,0,.4),
-        0 0 50px rgba(201,255,54,.06),
-        inset 0 0 30px rgba(0,0,0,.5);
       animation: fadeUp .7s ease .15s both;
     }
 
     /* bracket corners */
     .bkt {
-      position: absolute; width: 20px; height: 20px;
+      position: absolute; width: 28px; height: 28px;
       border-color: var(--acid); border-style: solid;
       z-index: 15; pointer-events: none;
+      filter: drop-shadow(0 0 4px var(--acid));
     }
-    .bkt-tl { top:10px; left:10px;  border-width:2px 0 0 2px; }
-    .bkt-tr { top:10px; right:10px; border-width:2px 2px 0 0; }
-    .bkt-bl { bottom:10px; left:10px;  border-width:0 0 2px 2px; }
-    .bkt-br { bottom:10px; right:10px; border-width:0 2px 2px 0; }
+    .bkt-tl { top:16px; left:16px;  border-width:2px 0 0 2px; }
+    .bkt-tr { top:16px; right:16px; border-width:2px 2px 0 0; }
+    .bkt-bl { bottom:16px; left:16px;  border-width:0 0 2px 2px; }
+    .bkt-br { bottom:16px; right:16px; border-width:0 2px 2px 0; }
 
     /* live camera */
     video, canvas {
@@ -132,80 +127,158 @@
       object-fit: cover;
       transform: scaleX(-1);
     }
-    video  { filter: brightness(.7) contrast(1.12) saturate(.85); z-index: 1; }
-    canvas { z-index: 5; }
+    video  { filter: brightness(.72) contrast(1.1) saturate(.9); z-index: 1; }
+    canvas { z-index: 8; }
 
     /* vignette + scanlines over video */
     .vignette {
       position: absolute; inset: 0; z-index: 6; pointer-events: none;
-      background: radial-gradient(circle at 50% 48%, transparent 38%, rgba(0,0,0,.65) 100%);
+      background: radial-gradient(ellipse 70% 60% at 50% 42%, transparent 30%, rgba(0,0,0,.7) 100%);
     }
     .scanlines {
       position: absolute; inset: 0; z-index: 7; pointer-events: none;
       background: repeating-linear-gradient(
         0deg,
-        rgba(201,255,54,.028) 0px, rgba(201,255,54,.028) 1px,
+        rgba(201,255,54,.018) 0px, rgba(201,255,54,.018) 1px,
         transparent 1px, transparent 4px
       );
     }
 
     /* sweep bar */
     .sweep {
-      position: absolute; left:0; right:0; height:70px; top:-90px;
+      position: absolute; left:0; right:0; height:100px; top:-120px;
       z-index: 8; pointer-events: none;
-      background: linear-gradient(to bottom, transparent, rgba(201,255,54,.2), transparent);
-      animation: sweepDown 3s linear infinite;
+      background: linear-gradient(to bottom, transparent, rgba(201,255,54,.18), transparent);
+      animation: sweepDown 3.5s linear infinite;
     }
 
-    /* face oval guide */
+    /* ── circular scan ring ─────────────────────────────── */
+    .scan-ring-wrap {
+      position: absolute; z-index: 12; pointer-events: none;
+      top: 50%; left: 50%;
+      width: min(280px, 72vw);
+      aspect-ratio: 1;
+      transform: translate(-50%, -56%);
+    }
+    .scan-ring-svg {
+      width: 100%; height: 100%;
+      overflow: visible;
+    }
+    /* rotating arc */
+    .scan-arc {
+      transform-origin: center;
+      animation: spinArc 2.4s linear infinite;
+    }
+    @keyframes spinArc {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    /* counter-rotating secondary arc */
+    .scan-arc-2 {
+      transform-origin: center;
+      animation: spinArc 3.8s linear infinite reverse;
+    }
+
+    /* face oval guide (inside ring) */
     .face-oval {
       position: absolute; top:50%; left:50%;
-      transform: translate(-50%, -52%);
-      width: 120px; height: 158px;
-      border: 1.5px dashed rgba(201,255,54,.32);
+      transform: translate(-50%, -56%);
+      width: min(160px, 40vw); height: min(210px, 52vw);
+      border: 1px dashed rgba(201,255,54,.25);
       border-radius: 50%;
       z-index: 9; pointer-events: none;
       animation: ovalBreath 2.4s ease-in-out infinite;
     }
     .face-oval::after {
       content: "ALIGN FACE";
-      position: absolute; bottom:-24px; left:50%;
+      position: absolute; bottom:-22px; left:50%;
       transform: translateX(-50%);
-      font: 400 8px var(--mono); letter-spacing:.14em; color:var(--acid);
+      font: 400 8px var(--mono); letter-spacing:.14em; color: rgba(201,255,54,.6);
       white-space: nowrap;
     }
 
-    /* overlay state label (e.g. SCANNING / VERIFIED) */
+    /* ── top HUD bar (overlaid on video) ────────────────── */
+    .scan-hud-top {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 14;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px 10px;
+      background: linear-gradient(to bottom, rgba(0,0,0,.65) 0%, transparent 100%);
+      pointer-events: none;
+    }
+    .hud-badge {
+      font: 400 9px var(--mono); letter-spacing: .18em;
+      color: var(--acid);
+    }
+    .hud-badge-right {
+      display: flex; align-items: center; gap: 6px;
+      font: 400 8px var(--mono); letter-spacing: .12em; color: var(--muted);
+    }
+    .hud-dot-live {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--acid);
+      box-shadow: 0 0 8px var(--acid);
+      animation: pulseDot 1.4s ease-in-out infinite;
+    }
+
+    /* ── bottom metric chips ────────────────────────────── */
+    .scan-metrics {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 14;
+      padding: 10px 16px 20px;
+      background: linear-gradient(to top, rgba(0,0,0,.85) 0%, transparent 100%);
+      pointer-events: none;
+    }
+    .scan-metrics-label {
+      font: 400 7px var(--mono); letter-spacing: .18em; color: var(--muted);
+      text-align: center; margin-bottom: 10px;
+    }
+    .scan-chips {
+      display: flex; gap: 10px; justify-content: center;
+    }
+    .scan-chip {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 8px 14px;
+      background: rgba(23,25,21,.78);
+      border: 1px solid rgba(201,255,54,.2);
+      border-radius: 2px;
+      min-width: 72px;
+      backdrop-filter: blur(6px);
+    }
+    .scan-chip-label {
+      font: 400 7px var(--mono); letter-spacing: .14em; color: var(--muted);
+    }
+    .scan-chip-val {
+      font: 500 13px var(--mono); letter-spacing: .06em; color: var(--acid);
+      min-height: 16px;
+    }
+    .scan-chip-icon {
+      font-size: 14px; line-height: 1; opacity: .7;
+    }
+
+    /* ── status strip — replaced by inline chip row ─────── */
+    .status-strip {
+      display: none;
+    }
+
+    /* status labels inside scan card (scan-label at bottom of ring) */
     .scan-label {
-      position: absolute; bottom:14px; left:0; right:0;
-      text-align: center; z-index:15; pointer-events:none;
-      font: 400 10px var(--mono); letter-spacing:.14em;
-      color: var(--acid); opacity:0;
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, 30%);
+      z-index: 15; pointer-events: none;
+      font: 400 9px var(--mono); letter-spacing: .18em;
+      color: var(--acid); opacity: 0;
       transition: opacity .3s;
+      text-align: center;
+      white-space: nowrap;
+      text-shadow: 0 0 10px var(--acid);
     }
     .scan-label.show { opacity: 1; }
 
-    /* ── status strip ────────────────────────────────────── */
-    .status-strip {
-      width: min(300px, 80vw);
-      border: 1px solid rgba(201,255,54,.13);
-      background: rgba(23,25,21,.55);
-      animation: fadeUp .7s ease .3s both;
-    }
-
-    .status-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 9px 16px;
-      font: 400 9px var(--mono); letter-spacing:.08em;
-      border-bottom: 1px solid rgba(201,255,54,.07);
-    }
-    .status-row:last-child { border-bottom: none; }
-    .sr-label { color: var(--muted); }
-    .sr-val   { color: var(--acid); }
-
-    /* ── CTA button  ─────────────────────────────────────── */
+    /* ── CTA button — centered on screen ────────────────── */
     .cta-wrap {
-      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      position: absolute; bottom: 100px; left: 0; right: 0;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      z-index: 20;
       animation: fadeUp .7s ease .45s both;
     }
 
@@ -283,130 +356,90 @@
       min-width: 140px;
     }
 
-    /* ── Voice Orb ───────────────────────────────────────── */
+    /* ── Voice Command Panel (replaces orb) ─────────────── */
     .vao-wrap {
       position: fixed;
-      bottom: 72px; left: 50%;
-      transform: translateX(-50%);
+      bottom: 0; left: 0; right: 0;
       z-index: 68;
       display: none;
-      width: 64px; height: 64px;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 20px 28px;
+      background: linear-gradient(to top, rgba(23,25,21,.98) 70%, transparent 100%);
+      border-top: 1px solid rgba(201,255,54,.12);
+      backdrop-filter: blur(12px);
     }
-    .vao-wrap.on { display: block; }
+    .vao-wrap.on { display: flex; }
 
-    .vao-orb {
-      position: absolute; left: 50%; top: 50%;
-      transform: translate(-50%, -50%) scale(1.15);
-      width: 64px; height: 64px;
-      cursor: pointer;
-      transition: transform .5s cubic-bezier(.175,.885,.32,1.275),
-                  filter .3s ease;
-      filter:
-        drop-shadow(0 0 4px var(--acid))
-        drop-shadow(0 0 12px rgba(201,255,54,.5));
+    /* mic status row */
+    .vao-mic-row {
+      display: flex; align-items: center; gap: 10px;
     }
-    .vao-orb:hover {
-      transform: translate(-50%, -50%) scale(1.35);
-      filter:
-        drop-shadow(0 0 4px var(--acid))
-        drop-shadow(0 0 18px rgba(201,255,54,.7));
+    .vao-mic-btn {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: rgba(201,255,54,.08);
+      border: 1.5px solid rgba(201,255,54,.3);
+      color: var(--acid);
+      display: grid; place-items: center;
+      cursor: pointer; transition: all .2s;
+      flex-shrink: 0;
     }
-    .vao-orb.open {
-      transform: translate(-50%, 56px) scale(1);
-      filter:
-        drop-shadow(0 0 12px rgba(201,255,54,.3))
-        drop-shadow(0 0 5px rgba(0,200,100,.3));
+    .vao-mic-btn:hover { background: rgba(201,255,54,.18); }
+    .vao-mic-btn.listening {
+      background: rgba(201,255,54,.15);
+      border-color: var(--acid);
+      box-shadow: 0 0 14px rgba(201,255,54,.35);
+      animation: micPulse 1.2s ease-in-out infinite;
     }
-    .vao-orb.open:hover {
-      transform: translate(-50%, 56px) scale(1.1);
+    .vao-mic-btn.tap-prompt {
+      animation: tapPulse 1s ease-in-out infinite;
+      border-color: rgba(201,255,54,.6);
     }
-
-    .vao-icon {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      color: var(--ink);
-      display: flex;
-      z-index: 5;
-      transition: all .3s ease;
+    @keyframes micPulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(201,255,54,.4); }
+      50% { box-shadow: 0 0 0 8px rgba(201,255,54,0); }
     }
-    .vao-icon svg { width: 22px; height: 22px; }
-    .vao-icon .i-close { opacity: 0; position: absolute; }
-    .vao-icon .i-mic   { opacity: .7; }
-    .vao-orb.open .vao-icon .i-close { opacity: 1; filter: drop-shadow(0 0 4px #fff); }
-    .vao-orb.open .vao-icon .i-mic   { opacity: 0; }
-
-    .vao-ball {
-      width: 64px; height: 64px; border-radius: 50px;
-      background: var(--acid);
-      filter: url(#vao-gooey);
-      position: relative;
+    @keyframes tapPulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(201,255,54,.5); }
+      50% { box-shadow: 0 0 0 12px rgba(201,255,54,0); }
     }
-
-    .vao-lines {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 100px; height: 100px;
-      background-image: radial-gradient(ellipse at center,
-        rgba(255,255,255,.75) 15%, #38e07a 50%);
-      clip-path: polygon(50% 25%,65% 30%,75% 42%,75% 58%,65% 70%,50% 75%,35% 70%,26% 58%,25% 42%,35% 30%);
-      pointer-events: none;
+    .vao-mic-btn svg { width: 20px; height: 20px; }
+    .vao-status-col {
+      display: flex; flex-direction: column; gap: 2px;
     }
-    .vao-orb.listening .vao-lines {
-      animation: vaoMorph 3s ease-in-out infinite;
+    .vao-status-label {
+      font: 400 7px var(--mono); letter-spacing: .18em; color: var(--muted);
+    }
+    .vao-status-text {
+      font: 500 12px var(--mono); letter-spacing: .04em; color: var(--paper);
+      min-height: 16px;
     }
 
-    .vao-rings {
-      aspect-ratio: 1; border-radius: 50%;
-      position: absolute; inset: 0; perspective: 11rem;
+    /* nav buttons row */
+    .vao-nav-row {
+      display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+      width: 100%; max-width: 340px;
     }
-    .vao-rings::before, .vao-rings::after {
-      content: ""; position: absolute; inset: 0;
-      border-radius: 50%; border: 5px solid transparent;
-      mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-      background: linear-gradient(var(--acid), #38ff7a, var(--acid)) border-box;
-      mask-composite: exclude;
-    }
-    .vao-rings::before { animation: vaoRing180 8s linear infinite; }
-    .vao-rings::after  { animation: vaoRing90  8s linear infinite; }
-
-    /* chat bubble */
-    .vao-chat {
-      position: absolute;
-      bottom: 80px; left: 50%; transform: translateX(-50%);
-      width: min(260px, 88vw);
-      background: rgba(23,25,21,.96);
-      border: 1px solid rgba(201,255,54,.2);
-      border-radius: 2px;
-      padding: 12px 16px;
-      display: none;
-      flex-direction: column; gap: 6px;
+    .vao-nav-btn {
+      flex: 1; min-width: 70px;
+      padding: 9px 10px;
+      background: transparent;
+      border: 1px solid rgba(201,255,54,.18);
+      color: var(--muted);
+      font: 400 8px var(--mono); letter-spacing: .1em;
+      cursor: pointer; transition: all .2s;
       text-align: center;
     }
-    .vao-chat.on { display: flex; }
-    .vao-chat-label {
-      font: 400 8px var(--mono); letter-spacing:.18em; color: var(--acid);
-    }
-    .vao-chat-text {
-      font-size: 13px; color: var(--paper); min-height: 18px;
-    }
-    .vao-chat-hint {
-      font: 400 7px var(--mono); letter-spacing:.06em; color: var(--muted);
+    .vao-nav-btn:hover, .vao-nav-btn:active {
+      background: var(--acid); color: var(--ink);
+      border-color: var(--acid);
     }
 
-    @keyframes vaoMorph {
-      0%,100%{ clip-path:polygon(50% 25%,65% 30%,75% 42%,75% 58%,65% 70%,50% 75%,35% 70%,26% 58%,25% 42%,35% 30%) }
-      25%    { clip-path:polygon(50% 20%,70% 28%,78% 44%,76% 62%,62% 74%,50% 78%,38% 74%,24% 62%,22% 44%,30% 28%) }
-      50%    { clip-path:polygon(50% 15%,68% 22%,80% 40%,80% 60%,68% 78%,50% 82%,32% 78%,20% 60%,20% 40%,32% 22%) }
-      75%    { clip-path:polygon(50% 20%,70% 28%,78% 44%,76% 62%,62% 74%,50% 78%,38% 74%,24% 62%,22% 44%,30% 28%) }
-    }
-    @keyframes vaoRing180 {
-      from { transform: rotateY(0) rotateX(0) rotateZ(0); }
-      to   { transform: rotateY(360deg) rotateX(360deg) rotateZ(360deg); }
-    }
-    @keyframes vaoRing90 {
-      from { transform: rotateY(90deg) rotateX(90deg) rotateZ(90deg); }
-      to   { transform: rotateY(450deg) rotateX(450deg) rotateZ(450deg); }
-    }
+    /* chat bubble kept hidden — JS refs it */
+    .vao-chat { display: none; }
+    .vao-orb  { display: none; }
+    .vao-chat-label, .vao-chat-text, .vao-chat-hint { display: none; }
 
     /* legacy stt-panel kept hidden (JS still references it) */
     .stt-panel { display: none !important; }
@@ -444,16 +477,22 @@
       font: 400 8px var(--mono); letter-spacing:.1em; color: var(--muted);
     }
 
-    /* ── success flash ───────────────────────────────────── */
+    /* ── success flash — translucent overlay over camera ─── */
     .success-overlay {
       position: fixed; inset:0; z-index:65;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      gap: 28px;
-      background: var(--ink);
+      gap: 20px;
+      background: linear-gradient(
+        to bottom,
+        rgba(23,25,21,.82) 0%,
+        rgba(23,25,21,.6) 50%,
+        rgba(23,25,21,.9) 100%
+      );
+      backdrop-filter: blur(2px);
       opacity:0; visibility:hidden;
       transition: opacity .45s, visibility .45s;
-      padding: 40px 24px;
+      padding: 40px 24px 120px; /* bottom padding for voice panel */
       overflow-y: auto;
     }
     .success-overlay.on { opacity:1; visibility:visible; }
@@ -461,71 +500,68 @@
     .success-box { text-align:center; animation: zoomIn .5s ease both; }
 
     .success-ring {
-      width:62px; height:62px;
+      width:70px; height:70px;
       border: 2px solid var(--acid); border-radius:50%;
       display:grid; place-items:center;
-      margin: 0 auto 18px;
-      box-shadow: 0 0 28px rgba(201,255,54,.28);
+      margin: 0 auto 20px;
+      box-shadow: 0 0 40px rgba(201,255,54,.35), 0 0 80px rgba(201,255,54,.1);
+      animation: zoomIn .5s ease both, ringPulse 2.5s ease-in-out infinite;
+    }
+    @keyframes ringPulse {
+      0%,100% { box-shadow: 0 0 28px rgba(201,255,54,.28); }
+      50% { box-shadow: 0 0 52px rgba(201,255,54,.5), 0 0 90px rgba(201,255,54,.15); }
     }
     .success-ring svg {
-      width:26px; height:26px;
+      width:30px; height:30px;
       stroke:var(--acid); stroke-width:2.5; fill:none;
     }
     .success-h {
-      font: 700 clamp(22px,5vw,32px)/1 Manrope, sans-serif;
+      font: 700 clamp(26px,6vw,38px)/1 Manrope, sans-serif;
       letter-spacing:-.04em; color:var(--paper);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+      text-shadow: 0 0 30px rgba(201,255,54,.3);
     }
     .success-sub {
-      font: 400 9px var(--mono); letter-spacing:.12em; color:var(--acid);
+      font: 400 10px var(--mono); letter-spacing:.14em; color:var(--acid);
     }
 
     /* ── live analytics panel (shown in success overlay) ─── */
     .analytics-panel {
       display: none;
-      flex-direction: column; align-items: center; gap: 10px;
-      width: min(320px, 88vw);
-      padding: 16px 20px;
-      border: 1px solid rgba(201,255,54,.18);
-      background: rgba(23,25,21,.72);
+      flex-direction: column; align-items: center; gap: 8px;
+      width: min(300px, 88vw);
+      padding: 12px 16px;
+      border: 1px solid rgba(201,255,54,.14);
+      background: rgba(23,25,21,.6);
+      backdrop-filter: blur(8px);
       animation: fadeUp .5s ease both;
     }
     .analytics-panel.on { display: flex; }
 
     .analytics-title {
-      font: 400 9px var(--mono); letter-spacing:.18em; color: var(--acid);
-      margin-bottom: 2px;
+      font: 400 8px var(--mono); letter-spacing:.18em; color: var(--muted);
     }
 
     .analytics-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 10px; width: 100%;
+      gap: 8px; width: 100%;
     }
     .analytics-cell {
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
-      padding: 10px 6px;
-      border: 1px solid rgba(201,255,54,.1);
-      background: rgba(0,0,0,.3);
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      padding: 8px 4px;
+      border: 1px solid rgba(201,255,54,.08);
+      background: rgba(0,0,0,.2);
     }
     .analytics-cell-label {
-      font: 400 7px var(--mono); letter-spacing:.12em; color: var(--muted);
+      font: 400 7px var(--mono); letter-spacing:.10em; color: var(--muted);
     }
     .analytics-cell-val {
-      font: 500 13px var(--mono); color: var(--acid);
+      font: 500 12px var(--mono); color: var(--acid);
     }
 
-    /* ── success overlay nav ─────────────────────────────── */
-    .success-nav {
-      display: none;
-      gap: 10px; flex-wrap: wrap; justify-content: center;
-      width: min(320px, 88vw);
-      animation: fadeUp .55s ease .15s both;
-    }
-    .success-nav.on { display: flex; }
-    .success-nav .nav-btn {
-      flex: 1; min-width: 100px; max-width: 140px;
-    }
+    /* ── success overlay nav — hidden (voice panel handles nav) */
+    .success-nav { display: none !important; }
 
     .success-skip {
       position: absolute; top:18px; right:18px;
@@ -668,11 +704,10 @@
 
     /* ── mobile tweaks ───────────────────────────────────── */
     @media (max-width: 640px) {
-      .shell { padding: 32px 16px; gap: 20px; }
-      .scanner-card { width: min(270px, 86vw); }
-      .status-strip  { width: min(270px, 86vw); }
-      .nav-row       { width: min(270px, 86vw); }
-      .nav-btn { min-width: 80px; }
+      .scan-ring-wrap { width: min(260px, 70vw); }
+      .face-oval { width: min(140px, 36vw); height: min(185px, 46vw); }
+      .scan-chip { min-width: 62px; padding: 7px 10px; }
+      .scan-chip-val { font-size: 11px; }
     }
   </style>
 </head>
@@ -693,33 +728,103 @@
       <span class="brand-sub"><span class="pulse-dot"></span>NEURAL CORRELATION ENGINE</span>
     </header>
 
-    <!-- scanner viewport -->
+    <!-- scanner viewport — fullscreen -->
     <div class="scanner-card" id="scannerCard">
       <span class="bkt bkt-tl"></span>
       <span class="bkt bkt-tr"></span>
       <span class="bkt bkt-bl"></span>
       <span class="bkt bkt-br"></span>
 
+      <!-- top HUD overlay -->
+      <div class="scan-hud-top">
+        <span class="hud-badge">AS / BIOMETRIC AUTH</span>
+        <div class="hud-badge-right">
+          <span class="hud-dot-live"></span>
+          <span id="srStatus">AWAITING INIT</span>
+        </div>
+      </div>
+
+      <!-- circular scan ring (SVG) -->
+      <div class="scan-ring-wrap" id="scanRingWrap">
+        <svg class="scan-ring-svg" viewBox="0 0 200 200">
+          <!-- static outer ring -->
+          <circle cx="100" cy="100" r="96" fill="none" stroke="rgba(201,255,54,0.12)" stroke-width="1"/>
+          <!-- tick marks -->
+          <circle cx="100" cy="100" r="96" fill="none"
+            stroke="rgba(201,255,54,0.25)" stroke-width="2"
+            stroke-dasharray="2 18.03" stroke-dashoffset="0"/>
+          <!-- rotating primary arc -->
+          <g class="scan-arc">
+            <circle cx="100" cy="100" r="96" fill="none"
+              stroke="url(#arcGrad)" stroke-width="2.5"
+              stroke-dasharray="60 542.9" stroke-linecap="round"/>
+          </g>
+          <!-- secondary counter arc -->
+          <g class="scan-arc-2">
+            <circle cx="100" cy="100" r="90" fill="none"
+              stroke="rgba(201,255,54,0.3)" stroke-width="1"
+              stroke-dasharray="30 534.6" stroke-linecap="round"/>
+          </g>
+          <!-- inner identity ring -->
+          <circle cx="100" cy="100" r="84" fill="none"
+            stroke="rgba(201,255,54,0.06)" stroke-width="1" stroke-dasharray="4 8"/>
+          <defs>
+            <linearGradient id="arcGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#c9ff36" stop-opacity="0"/>
+              <stop offset="60%" stop-color="#c9ff36" stop-opacity="1"/>
+              <stop offset="100%" stop-color="#c9ff36" stop-opacity="0.6"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+
+      <!-- face oval guide -->
       <div class="face-oval"></div>
+
       <video id="video" autoplay muted playsinline></video>
       <canvas id="overlay"></canvas>
       <div class="sweep"></div>
       <div class="vignette"></div>
       <div class="scanlines"></div>
       <div class="scan-label" id="scanLabel">SCANNING...</div>
+
+      <!-- bottom metric chips -->
+      <div class="scan-metrics" id="scanMetrics">
+        <div class="scan-metrics-label">BIOMETRIC FEED</div>
+        <div class="scan-chips">
+          <div class="scan-chip">
+            <div class="scan-chip-icon">◎</div>
+            <div class="scan-chip-label">ID</div>
+            <div class="scan-chip-val" id="srIdent">—</div>
+          </div>
+          <div class="scan-chip">
+            <div class="scan-chip-icon">▣</div>
+            <div class="scan-chip-label">CONF</div>
+            <div class="scan-chip-val" id="srConf">—</div>
+          </div>
+          <div class="scan-chip">
+            <div class="scan-chip-icon">◉</div>
+            <div class="scan-chip-label">AGE</div>
+            <div class="scan-chip-val" id="chipAge">—</div>
+          </div>
+          <div class="scan-chip">
+            <div class="scan-chip-icon">◈</div>
+            <div class="scan-chip-label">EXPR</div>
+            <div class="scan-chip-val" id="chipExpr">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA inside card -->
+      <div class="cta-wrap" id="ctaWrap">
+        <button class="btn-init" id="initBtn">INITIALIZE SCAN</button>
+        <button class="btn-register" id="openRegBtn">REGISTER FACE</button>
+      </div>
     </div>
 
-    <!-- status strip -->
+    <!-- status strip (hidden, kept for JS refs) -->
     <div class="status-strip">
-      <div class="status-row"><span class="sr-label">STATUS</span><span class="sr-val" id="srStatus">AWAITING INIT</span></div>
-      <div class="status-row"><span class="sr-label">IDENTITY</span><span class="sr-val" id="srIdent">---</span></div>
-      <div class="status-row"><span class="sr-label">CONFIDENCE</span><span class="sr-val" id="srConf">---</span></div>
-    </div>
-
-    <!-- CTA -->
-    <div class="cta-wrap" id="ctaWrap">
-      <button class="btn-init" id="initBtn">INITIALIZE SCAN</button>
-      <button class="btn-register" id="openRegBtn">REGISTER FACE</button>
+      <div class="status-row"><span class="sr-label">STATUS</span><span class="sr-val" id="srStatusHidden">---</span></div>
     </div>
 
     <!-- nav buttons (hidden until greeting done) -->
@@ -748,35 +853,34 @@
     <div class="stt-text" id="sttText"></div>
   </div>
 
-  <!-- voice assistant orb -->
+  <!-- voice command panel (replaces orb) -->
   <div class="vao-wrap" id="vaoWrap">
-    <!-- chat bubble above the orb -->
+    <!-- hidden stubs for JS refs -->
     <div class="vao-chat" id="vaoChat">
-      <div class="vao-chat-label">VOICE COMMAND</div>
-      <div class="vao-chat-text" id="vaoChatText">Listening…</div>
-      <div class="vao-chat-hint">say: home · projects · about · contact</div>
+      <div class="vao-chat-text" id="vaoChatText"></div>
     </div>
-    <!-- orb -->
-    <div class="vao-orb" id="vaoOrb">
-      <div class="vao-icon">
-        <svg class="i-close" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-          <path fill="currentColor" d="M18.3 5.71a.996.996 0 0 0-1.41 0L12 10.59L7.11 5.7A.996.996 0 1 0 5.7 7.11L10.59 12L5.7 16.89a.996.996 0 1 0 1.41 1.41L12 13.41l4.89 4.89a.996.996 0 1 0 1.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4"/>
-        </svg>
-        <svg class="i-mic" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+    <div class="vao-orb" id="vaoOrb"></div>
+
+    <!-- mic status row -->
+    <div class="vao-mic-row">
+      <button class="vao-mic-btn" id="vaoMicBtn" aria-label="Tap to speak">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
           <rect width="8" height="13" x="8" y="2" fill="currentColor" rx="4"/>
           <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11a7 7 0 1 0 14 0m-7 10v-2"/>
         </svg>
+      </button>
+      <div class="vao-status-col">
+        <div class="vao-status-label">VOICE COMMAND</div>
+        <div class="vao-status-text" id="vaoCmdText">Listening…</div>
       </div>
-      <div class="vao-ball">
-        <div class="vao-lines"></div>
-        <div class="vao-rings"></div>
-      </div>
-      <svg style="display:none">
-        <filter id="vao-gooey">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="5"/>
-          <feColorMatrix values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -10"/>
-        </filter>
-      </svg>
+    </div>
+
+    <!-- nav buttons -->
+    <div class="vao-nav-row">
+      <button class="vao-nav-btn" data-path="/">HOME</button>
+      <button class="vao-nav-btn" data-path="/#projects">PROJECTS</button>
+      <button class="vao-nav-btn" data-path="/#about">ABOUT</button>
+      <button class="vao-nav-btn" data-path="/#contact">CONTACT</button>
     </div>
   </div>
 
@@ -906,6 +1010,17 @@
     const REG_FRAMES = 10;
     const REQUIRED_STABLE_FRAMES = 3;
 
+    // Auto-detect audio base: Vite serves /public at root; Live Server does not
+    let _audioBase = null;
+    async function resolveAudioBase() {
+      if (_audioBase) return _audioBase;
+      try {
+        const r = await fetch(AUDIO_BASE + "welcome-prompt-query.wav", { method: "HEAD" });
+        _audioBase = r.ok ? AUDIO_BASE : "/public" + AUDIO_BASE;
+      } catch(_) { _audioBase = AUDIO_BASE; }
+      return _audioBase;
+    }
+
     const AUDIO = {
       abhimanyu:      ["welcome-abhimanyu-1.wav","welcome-abhimanyu-2.wav","welcome-abhimanyu-3.wav","welcome-abhimanyu-4.wav"],
       unknown_male:   ["welcome-unknown-male-1.wav","welcome-unknown-male-2.wav","welcome-unknown-male-3.wav","welcome-unknown-male-4.wav"],
@@ -928,27 +1043,33 @@
     let stableUnknownCount = 0;
     let lastKnownLabel     = "UNKNOWN";
 
-    /* ── orb helpers ────────────────────────────────── */
+    /* ── voice panel helpers ────────────────────────── */
+    const vaoMicBtn  = document.getElementById("vaoMicBtn");
+    const vaoCmdText = document.getElementById("vaoCmdText");
+
     function setOrbListening(active) {
-      vaoOrb.classList.toggle("listening", active);
+      vaoOrb.classList.toggle("listening", active); // kept for compat
+      if (vaoMicBtn) {
+        vaoMicBtn.classList.toggle("listening", active);
+        vaoMicBtn.classList.remove("tap-prompt");
+      }
     }
-    // Mirror sttText changes to orb chat bubble
-    const _origSttText = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "textContent");
-    // Proxy: whenever JS sets sttText.textContent, also update vaoChatText
+
+    // Mirror sttText changes to voice panel status text
+    const _origSttText = Object.getOwnPropertyDescriptor(Node.prototype, "textContent");
     Object.defineProperty(sttText, "textContent", {
       set(v) {
         _origSttText.set.call(sttText, v);
-        if (v) vaoChatText.textContent = v;
+        if (vaoCmdText && vaoCmdText !== sttText) _origSttText.set.call(vaoCmdText, v || "");
+        if (vaoChatText && vaoChatText !== sttText) _origSttText.set.call(vaoChatText, v || "");
       },
       get() { return _origSttText.get.call(sttText); }
     });
-    // Show/hide orb when sttPanel is shown/hidden
-    const _origAdd = DOMTokenList.prototype.add;
-    // Simpler approach: patch classList directly on sttPanel
+
+    // Watch sttPanel class to show/hide voice panel
     sttPanel.addEventListener = function(type, ...args) {
       HTMLElement.prototype.addEventListener.call(this, type, ...args);
     };
-    // Just watch sttPanel class changes via MutationObserver
     new MutationObserver(() => {
       if (sttPanel.classList.contains("on")) {
         vaoWrap.classList.add("on");
@@ -960,18 +1081,24 @@
         vaoChat.classList.remove("on");
       }
     }).observe(sttPanel, { attributes: true, attributeFilter: ["class"] });
-    // Orb click: toggle mic
+
+    // Mic button: tap-to-speak
+    if (vaoMicBtn) {
+      vaoMicBtn.addEventListener("click", () => {
+        if (!is("LISTENING")) return;
+        if (isIOS) { tapToSpeak(); return; }
+        if (sttActive) {
+          if (rec) { try { rec.stop(); } catch(_) {} }
+        } else {
+          startSTT();
+        }
+      });
+    }
+
+    // Orb click kept for compat (now hidden)
     vaoOrb.addEventListener("click", () => {
       if (!is("LISTENING")) return;
-      if (vaoOrb.classList.contains("open")) {
-        // close / stop STT
-        if (rec) { try { rec.stop(); } catch(_) {} }
-        sttPanel.classList.remove("on");
-      } else {
-        // open / restart
-        sttPanel.classList.add("on");
-        startSTT();
-      }
+      if (isIOS) { tapToSpeak(); return; }
     });
 
     /* ── audio ──────────────────────────────────────── */
@@ -994,12 +1121,13 @@
 
     function playFile(file) {
       return new Promise(async resolve => {
+        const base = await resolveAudioBase();
         // iOS requires AudioContext-based playback; new Audio() is blocked after page load
         if (audioCtx) {
           if (audioCtx.state === 'suspended') { try { await audioCtx.resume(); } catch(_){} }
           try {
             setWaves(true);
-            const resp = await fetch(AUDIO_BASE + file);
+            const resp = await fetch(base + file);
             if (!resp.ok) throw new Error(resp.status);
             const decoded = await audioCtx.decodeAudioData(await resp.arrayBuffer());
             const src = audioCtx.createBufferSource();
@@ -1014,7 +1142,7 @@
           } catch(e) { console.warn("AudioContext playback failed:", e); }
         }
         // fallback: HTMLAudio (desktop / non-iOS)
-        const a = new Audio(AUDIO_BASE + file);
+        const a = new Audio(base + file);
         setWaves(true);
         a.play().catch(()=>{});
         let resolved = false;
@@ -1032,50 +1160,75 @@
     }
 
     /* ── STT ────────────────────────────────────────── */
+    const isIOS = /iP(hone|ad|od)/i.test(navigator.userAgent);
     let rec = null;
     let sttActive = false;
+
+    function _makeSttRec(SR) {
+      const r = new SR();
+      r.continuous     = !isIOS; // iOS doesn't support continuous reliably
+      r.interimResults = true;
+      r.lang           = "en-US";
+      r.maxAlternatives = 1;
+      r.onstart = () => {
+        sttActive = true;
+        sttPanel.classList.add("on");
+        sttText.textContent = "Listening…";
+        setOrbListening(true);
+      };
+      r.onresult = e => {
+        const result = e.results[e.resultIndex];
+        const t = result[0].transcript.toLowerCase().trim();
+        sttText.textContent = t;
+        if (result.isFinal) { routeVoice(t); }
+      };
+      r.onerror = e => {
+        if (e.error === "no-speech" || e.error === "aborted") return;
+        sttText.textContent = "Tap the mic to speak.";
+        sttActive = false; setOrbListening(false);
+      };
+      r.onend = () => {
+        sttActive = false;
+        setOrbListening(false);
+        // On non-iOS, auto-restart if still LISTENING
+        if (!isIOS && is("LISTENING")) {
+          setTimeout(() => {
+            if (is("LISTENING") && !sttActive) {
+              rec = _makeSttRec(SR);
+              try { rec.start(); } catch(_) {}
+            }
+          }, 300);
+        }
+        // On iOS: show tap-to-speak hint
+        if (isIOS && is("LISTENING")) {
+          sttText.textContent = "Tap mic to speak";
+          vaoOrb.classList.add("tap-prompt");
+          if (vaoMicBtn) vaoMicBtn.classList.add("tap-prompt");
+        }
+      };
+      return r;
+    }
+
     function startSTT() {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) { sttPanel.classList.add("on"); sttText.textContent="Voice not supported — use buttons."; return; }
-      if (sttActive) return;
-      if (!rec) {
-        rec = new SR();
-        rec.continuous     = true;
-        rec.interimResults = true;
-        rec.lang           = "en-US";
-        rec.maxAlternatives = 1;
-
-        rec.onstart = () => {
-          sttActive = true;
-          sttPanel.classList.add("on");
-          sttText.textContent = "Listening…";
-          setOrbListening(true);
-        };
-
-        rec.onresult = e => {
-          const result = e.results[e.resultIndex];
-          const t = result[0].transcript.toLowerCase().trim();
-          sttText.textContent = t;
-          if (result.isFinal) routeVoice(t);
-        };
-
-        rec.onerror = e => {
-          if (e.error === "no-speech") return;
-          if (e.error === "aborted")   return;
-          sttText.textContent = "Mic error — use buttons or try again.";
-        };
-
-        rec.onend = () => {
-          sttActive = false;
-          setOrbListening(false);
-          if (is("LISTENING")) {
-            setTimeout(() => {
-              if (is("LISTENING")) { sttActive = false; try { rec.start(); } catch(_) {} }
-            }, 300);
-          }
-        };
+      if (!SR) {
+        sttPanel.classList.add("on");
+        sttText.textContent = "Voice not supported — use buttons.";
+        return;
       }
-      sttActive = false;
+      if (sttActive) return;
+      rec = _makeSttRec(SR);
+      try { rec.start(); } catch(_) {}
+    }
+
+    // iOS tap-to-speak: tapping the mic button fires a fresh recognition
+    function tapToSpeak() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR || !is("LISTENING")) return;
+      if (sttActive) { try { rec && rec.stop(); } catch(_) {} }
+      vaoOrb.classList.remove("tap-prompt");
+      if (vaoMicBtn) vaoMicBtn.classList.remove("tap-prompt");
+      rec = _makeSttRec(SR);
       try { rec.start(); } catch(_) {}
     }
 
@@ -1092,7 +1245,7 @@
       if(analyticsRaf){cancelAnimationFrame(analyticsRaf);analyticsRaf=null;}
       sttPanel.classList.remove("on"); waveBar.classList.remove("on");
       vaoWrap.classList.remove("on");
-      chime(); localStorage.setItem("auth_done", Date.now().toString());
+      chime(); sessionStorage.setItem("auth_done", "1");
       setTimeout(()=>{ window.location.href=path; },750);
     }
 
@@ -1133,7 +1286,6 @@
       waveLabel.textContent="AWAITING COMMAND";
       await playFile(AUDIO.prompt);
       waveBar.classList.remove("on");
-      successNav.classList.add("on");
       transition("LISTENING");
       startSTT();
     }
@@ -1174,20 +1326,17 @@
       setProgress(95,"LOADING FACE DB...");
       const descriptors = [];
 
+      // Load registered faces from localStorage
       try {
-        // Fetch all stored descriptors from server (includes ABHIMANYU if env var set)
-        const resp = await fetch("/api/faces");
-        if (resp.ok) {
-          const { faces } = await resp.json();
-          for (const [name, arrays] of Object.entries(faces)) {
-            const descs = arrays.map(d => new Float32Array(d));
-            const avg = averageDescriptor(descs);
-            descriptors.push(new faceapi.LabeledFaceDescriptors(name.toUpperCase(), [avg]));
-          }
+        const stored = JSON.parse(localStorage.getItem(LS_KEY) || "[]");
+        for (const entry of stored) {
+          const descs = entry.descriptors.map(d => new Float32Array(d));
+          const avg = averageDescriptor(descs);
+          descriptors.push(new faceapi.LabeledFaceDescriptors(entry.name.toUpperCase(), [avg]));
         }
-      } catch(e) { console.warn("Server faces fetch failed:", e); }
+      } catch(e) { console.warn("localStorage faces parse failed:", e); }
 
-      // Fall back: detect Abhimanyu from reference image if not provided by server
+      // Fall back: detect Abhimanyu from reference image if not in localStorage
       if (!descriptors.find(d => d.label === "ABHIMANYU")) {
         try {
           const img = await faceapi.fetchImage(REF_IMAGE);
@@ -1417,7 +1566,10 @@
         const first = resized[0];
         srStatus.textContent = matchedResult ? "VERIFIED" : "SCANNING...";
         srIdent.textContent  = matchedResult ? matchedResult.label : "UNKNOWN";
-        srConf.textContent   = `${Math.round(first.detection.score*100)}% | DIST: ${matchedResult?.dist ?? "--"}`;
+        srConf.textContent   = `${Math.round(first.detection.score*100)}%`;
+        const [firstExpr] = dominantExpression(first.expressions);
+        if (document.getElementById("chipAge")) document.getElementById("chipAge").textContent = Math.round(first.age);
+        if (document.getElementById("chipExpr")) document.getElementById("chipExpr").textContent = firstExpr.toUpperCase();
         scanLabel.textContent= matchedResult ? "VERIFIED" : "SCANNING...";
         scanLabel.classList.toggle("show", !!resized.length);
 
@@ -1553,17 +1705,16 @@
       if (!regCapturing) return;
       if (collected.length < REG_FRAMES) { regStatus.textContent="CAPTURE INCOMPLETE — TRY AGAIN"; regStartBtn.disabled=false; regCapturing=false; return; }
 
-      // POST descriptors to server
-      regStatus.textContent="SAVING TO SERVER…";
+      // Save to localStorage
+      regStatus.textContent="SAVING…";
       try {
-        const resp = await fetch("/api/faces", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, descriptors: collected })
-        });
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const existing = JSON.parse(localStorage.getItem(LS_KEY) || "[]");
+        const idx = existing.findIndex(e => e.name.toUpperCase() === name.toUpperCase());
+        const entry = { name: name.toUpperCase(), descriptors: collected };
+        if (idx >= 0) existing[idx] = entry; else existing.push(entry);
+        localStorage.setItem(LS_KEY, JSON.stringify(existing));
       } catch(e) {
-        regStatus.textContent=`SERVER ERROR — ${e.message}`;
+        regStatus.textContent=`SAVE ERROR — ${e.message}`;
         regCapturing=false; regStartBtn.disabled=false;
         return;
       }
@@ -1590,6 +1741,10 @@
       btn.addEventListener("click", ()=>go(btn.dataset.path));
     });
     successNav.querySelectorAll(".nav-btn").forEach(btn=>{
+      btn.addEventListener("click", ()=>go(btn.dataset.path));
+    });
+    // new voice panel nav buttons
+    document.querySelectorAll(".vao-nav-btn").forEach(btn=>{
       btn.addEventListener("click", ()=>go(btn.dataset.path));
     });
     window.addEventListener("resize", ()=>{ if(is("SCANNING","GREETING","LISTENING")) resizeCanvas(); });
