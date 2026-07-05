@@ -2004,6 +2004,7 @@ addEventListener('appinstalled', () => {
           headerEl.classList.remove('header-visible');
         }
       } else {
+        // Desktop: always show header
         headerEl.classList.add('header-visible');
       }
     }
