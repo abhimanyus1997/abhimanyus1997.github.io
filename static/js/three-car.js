@@ -9,14 +9,12 @@ export const ThreeCarState = {
   smoothScroll: 0
 };
 
-export async function initThree(canvas) {
+export async function initThree({ canvas, renderer, scene, camera }) {
   try {
     const THREE = window.THREE;
     if (!THREE?.GLTFLoader) throw new Error('Three.js or GLTFLoader did not initialize');
     
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(42, 1, .1, 100);
-    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
+    // Use the existing scene, camera, and renderer passed in. No need to create new ones.
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 0);
     renderer.outputEncoding = THREE.sRGBEncoding;
@@ -96,7 +94,8 @@ export async function initThree(canvas) {
     
     const carStatus = document.querySelector('#car-status');
     
-    new THREE.GLTFLoader().load('static/models/hovercar.glb', gltf => {
+    console.log('[Hovercar] Initiating model load');
+new THREE.GLTFLoader().load('static/models/hovercar.glb', gltf => {
       const car = gltf.scene;
       const box = new THREE.Box3().setFromObject(car);
       const size = box.getSize(new THREE.Vector3());
@@ -127,7 +126,7 @@ export async function initThree(canvas) {
         }
       });
       
-      carRig.add(car);
+      carRig.add(car); console.log('[Hovercar] Model added to scene');
       carRig.visible = true;
       carStatus.classList.add('ready');
       carStatus.textContent = 'HOVERCAR ONLINE';
@@ -163,7 +162,7 @@ export async function initThree(canvas) {
         if (carStatus.lastChild) carStatus.lastChild.textContent = ` LOADING HOVERCAR · ${pct}%`;
       }
     }, err => {
-      carStatus.classList.add('error');
+      carStatus.classList.add('error'); console.error('[Hovercar] Failed to load', err);
       carStatus.textContent = '3D MODEL UNAVAILABLE';
       console.warn('Hovercar could not load', err);
       ThreeCarState.modelFailed = true;

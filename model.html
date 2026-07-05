@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 3D Face Avatar Scanner</title>
+
+  <style>
+    :root {
+      --green: #a6ff2f;
+      --green-soft: rgba(166, 255, 47, .18);
+      --bg: #020702;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+      font-family: Inter, system-ui, Arial, sans-serif;
+      color: var(--green);
+      background: radial-gradient(circle at center, rgba(166, 255, 47, .09), transparent 45%), #020402;
+    }
+
+    .app {
+      width: 100vw;
+      height: 100vh;
+      display: grid;
+      grid-template-columns: 390px 1fr;
+      gap: 18px;
+      padding: 18px;
+    }
+
+    .panel {
+      position: relative;
+      border: 1px solid rgba(166, 255, 47, .32);
+      border-radius: 18px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(4, 18, 6, .95), rgba(0, 8, 2, .92));
+      box-shadow: 0 0 35px rgba(166, 255, 47, .12), inset 0 0 40px rgba(166, 255, 47, .04);
+    }
+
+    .camera-panel {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .title {
+      font-size: 12px;
+      letter-spacing: .25em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .video-wrap {
+      position: relative;
+      flex-grow: 1;
+      min-height: 200px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(166, 255, 47, .35);
+      background: #000;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+      filter: brightness(.72) contrast(1.18) saturate(.75);
+    }
+
+    .scan-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--green), transparent);
+      box-shadow: 0 0 24px var(--green);
+      animation: scan 2.4s linear infinite;
+    }
+
+    @keyframes scan {
+      from { top: -10px; }
+      to { top: 100%; }
+    }
+
+    .corner {
+      position: absolute;
+      width: 42px;
+      height: 42px;
+      border-color: var(--green);
+    }
+
+    .tl {
+      top: 12px;
+      left: 12px;
+      border-left: 2px solid;
+      border-top: 2px solid;
+    }
+
+    .tr {
+      top: 12px;
+      right: 12px;
+      border-right: 2px solid;
+      border-top: 2px solid;
+    }
+
+    .bl {
+      bottom: 12px;
+      left: 12px;
+      border-left: 2px solid;
+      border-bottom: 2px solid;
+    }
+
+    .br {
+      bottom: 12px;
+      right: 12px;
+      border-right: 2px solid;
+      border-bottom: 2px solid;
+    }
+
+    .status {
+      margin-top: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border: 1px solid rgba(166, 255, 47, .18);
+      border-radius: 10px;
+      background: rgba(166, 255, 47, .035);
+      font-size: 13px;
+    }
+
+    .value {
+      color: var(--green);
+      text-shadow: 0 0 12px rgba(166, 255, 47, .7);
+    }
+
+    .stage {
+      min-height: 0;
+    }
+
+    #three {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .hud {
+      position: absolute;
+      top: 18px;
+      left: 22px;
+      right: 22px;
+      z-index: 5;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    .hud-card {
+      padding: 11px 17px;
+      border: 1px solid rgba(166, 255, 47, .28);
+      border-radius: 14px;
+      background: rgba(0, 10, 2, .65);
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    @media(max-width:900px) {
+      .app {
+        grid-template-columns: 1fr;
+        grid-template-rows: 350px 1fr;
+        padding: 10px;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <aside class="panel camera-panel">
+      <div class="title">Neural Face Scan</div>
+
+      <div class="video-wrap">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="scan-line"></div>
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+      </div>
+
+      <div class="status">
+        <div class="metric"><span>Status</span><span id="status" class="value">Loading...</span></div>
+        <div class="metric"><span>Landmarks</span><span id="points" class="value">0</span></div>
+        <div class="metric"><span>FPS</span><span id="fps" class="value">0</span></div>
+      </div>
+    </aside>
+
+    <main class="panel stage">
+      <div class="hud">
+        <div class="hud-card">AI Face Geometry</div>
+        <div class="hud-card" id="scanText">Scanning...</div>
+      </div>
+      <canvas id="three"></canvas>
+    </main>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+      "three/examples/jsm/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module" src="/src/model.js"></script>
+</body>
+</html>

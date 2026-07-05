@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 3D Face Avatar Scanner</title>
+
+  <style>
+    :root {
+      --green: #a6ff2f;
+      --green-soft: rgba(166, 255, 47, .18);
+      --bg: #020702;
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+      font-family: Inter, system-ui, Arial, sans-serif;
+      color: var(--green);
+      background: radial-gradient(circle at center, rgba(166, 255, 47, .09), transparent 45%), #020402;
+    }
+
+    .app {
+      width: 100vw;
+      height: 100vh;
+      display: grid;
+      grid-template-columns: 390px 1fr;
+      gap: 18px;
+      padding: 18px;
+    }
+
+    .panel {
+      position: relative;
+      border: 1px solid rgba(166, 255, 47, .32);
+      border-radius: 18px;
+      overflow: hidden;
+      background: linear-gradient(180deg, rgba(4, 18, 6, .95), rgba(0, 8, 2, .92));
+      box-shadow: 0 0 35px rgba(166, 255, 47, .12), inset 0 0 40px rgba(166, 255, 47, .04);
+    }
+
+    .camera-panel {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .title {
+      font-size: 12px;
+      letter-spacing: .25em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    .video-wrap {
+      position: relative;
+      flex-grow: 1;
+      min-height: 200px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(166, 255, 47, .35);
+      background: #000;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+      filter: brightness(.72) contrast(1.18) saturate(.75);
+    }
+
+    .scan-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--green), transparent);
+      box-shadow: 0 0 24px var(--green);
+      animation: scan 2.4s linear infinite;
+    }
+
+    @keyframes scan {
+      from {
+        top: -10px
+      }
+
+      to {
+        top: 100%
+      }
+    }
+
+    .corner {
+      position: absolute;
+      width: 42px;
+      height: 42px;
+      border-color: var(--green);
+    }
+
+    .tl {
+      top: 12px;
+      left: 12px;
+      border-left: 2px solid;
+      border-top: 2px solid
+    }
+
+    .tr {
+      top: 12px;
+      right: 12px;
+      border-right: 2px solid;
+      border-top: 2px solid
+    }
+
+    .bl {
+      bottom: 12px;
+      left: 12px;
+      border-left: 2px solid;
+      border-bottom: 2px solid
+    }
+
+    .br {
+      bottom: 12px;
+      right: 12px;
+      border-right: 2px solid;
+      border-bottom: 2px solid
+    }
+
+    .status {
+      margin-top: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border: 1px solid rgba(166, 255, 47, .18);
+      border-radius: 10px;
+      background: rgba(166, 255, 47, .035);
+      font-size: 13px;
+    }
+
+    .value {
+      color: var(--green);
+      text-shadow: 0 0 12px rgba(166, 255, 47, .7);
+    }
+
+    .stage {
+      min-height: 0;
+    }
+
+    #three {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .hud {
+      position: absolute;
+      top: 18px;
+      left: 22px;
+      right: 22px;
+      z-index: 5;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    .hud-card {
+      padding: 11px 17px;
+      border: 1px solid rgba(166, 255, 47, .28);
+      border-radius: 14px;
+      background: rgba(0, 10, 2, .65);
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    /* MOBILE FIX */
+    @media(max-width:900px) {
+      .app {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        padding: 10px;
+        gap: 10px;
+      }
+
+      .camera-panel {
+        /* No longer hidden, just shorter */
+        height: 350px;
+      }
+
+      .video-wrap {
+        height: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <aside class="panel camera-panel">
+      <div class="title">Neural Face Scan</div>
+
+      <div class="video-wrap">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="scan-line"></div>
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+      </div>
+
+      <div class="status">
+        <div class="metric"><span>Status</span><span id="status" class="value">Loading...</span></div>
+        <div class="metric"><span>Landmarks</span><span id="points" class="value">0</span></div>
+        <div class="metric"><span>FPS</span><span id="fps" class="value">0</span></div>
+      </div>
+    </aside>
+
+    <main class="panel stage">
+      <div class="hud">
+        <div class="hud-card">AI Face Geometry</div>
+        <div class="hud-card" id="scanText">Scanning...</div>
+      </div>
+      <canvas id="three"></canvas>
+    </main>
+  </div>
+
+  <script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+  }
+}
+</script>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    import {
+      FaceLandmarker,
+      FilesetResolver
+    } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/vision_bundle.mjs";
+
+    const video = document.getElementById("video");
+    const statusEl = document.getElementById("status");
+    const pointsEl = document.getElementById("points");
+    const fpsEl = document.getElementById("fps");
+    const scanTextEl = document.getElementById("scanText");
+    const canvas = document.getElementById("three");
+
+    let faceLandmarker;
+    let lastVideoTime = -1;
+    let lastFpsTime = performance.now();
+    let frameCount = 0;
+
+    // Set up Scene, Camera, Renderer
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+    camera.position.set(0, 0, 8.5);
+
+    // Add basic lighting (Required if you load a realistic 3D human avatar)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
+    scene.add(ambientLight);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+    dirLight.position.set(0, 5, 5);
+    scene.add(dirLight);
+    const axes = new THREE.AxesHelper(5); // visual aid
+    scene.add(axes);
+    // Group to hold the mesh
+    const group = new THREE.Group();
+    group.scale.set(1.25, 1.25, 1.25);
+    scene.add(group);
+
+    // -----------------------------------------------------------------
+    // 1. WIREFRAME MESH SETUP (Current visual)
+    // -----------------------------------------------------------------
+    const pointCount = 478;
+    const pointPositions = new Float32Array(pointCount * 3);
+    const pointGeometry = new THREE.BufferGeometry();
+    pointGeometry.setAttribute("position", new THREE.BufferAttribute(pointPositions, 3));
+    const pointMaterial = new THREE.PointsMaterial({ size: 0.035, color: 0xa6ff2f, transparent: true, opacity: 0.95 });
+    const points = new THREE.Points(pointGeometry, pointMaterial);
+    group.add(points);
+
+    const connections = [...FaceLandmarker.FACE_LANDMARKS_TESSELATION, ...FaceLandmarker.FACE_LANDMARKS_FACE_OVAL];
+    const linePositions = new Float32Array(connections.length * 2 * 3);
+    const lineGeometry = new THREE.BufferGeometry();
+    lineGeometry.setAttribute("position", new THREE.BufferAttribute(linePositions, 3));
+    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x9dff3a, transparent: true, opacity: 0.3 });
+    const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
+    group.add(lines);
+
+    // -----------------------------------------------------------------
+    // 2. REALISTIC AVATAR SETUP (To make it act like you)
+    // -----------------------------------------------------------------
+    let avatarHeadMeshes = [];
+    const loader = new GLTFLoader();
+    console.log('[GLTF] Starting avatar load');
+
+    loader.load("shewolf.glb", (gltf) => {
+      console.log('[GLTF] Avatar loaded successfully', gltf);
+
+      const avatar = gltf.scene;
+
+      // Hide the green wireframe so you only see your realistic avatar
+      points.visible = false;
+      lines.visible = false;
+
+      avatarHeadMeshes = [];
+      // Find all SkinnedMeshes that contain the face/blendshapes
+      avatar.traverse((child) => {
+        if (child.isMesh) {
+          child.frustumCulled = false;
+          if (child.morphTargetDictionary && child.morphTargetInfluences) {
+            avatarHeadMeshes.push(child);
+            console.log('[GLTF] Morph mesh added:', child.name);
+          }
+        }
+      });
+
+      // Auto-scale and center the avatar model
+      const box = new THREE.Box3().setFromObject(avatar);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+
+      // Center model relative to its group container
+      avatar.position.x += (avatar.position.x - center.x);
+      avatar.position.y += (avatar.position.y - center.y) - 0.5; // Offset down slightly
+      avatar.position.z += (avatar.position.z - center.z);
+
+      // Scale to fit target dimensions
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const targetScale = 3.0 / maxDim;
+      avatar.scale.set(targetScale, targetScale, targetScale);
+
+      group.add(avatar);
+      console.log('[GLTF] Avatar added to scene', avatar);
+    },
+      undefined,
+      (err) => {
+        console.error('[GLTF] Failed to load avatar', err);
+      }
+    );
+
+
+    function resizeRenderer() {
+      const rect = canvas.getBoundingClientRect();
+      renderer.setSize(rect.width, rect.height, false);
+      camera.aspect = rect.width / rect.height;
+      camera.updateProjectionMatrix();
+    }
+    window.addEventListener("resize", resizeRenderer);
+    resizeRenderer();
+
+    // ASPECT RATIO FIX: 
+    // Multiply X by the video's aspect ratio so the face doesn't look stretched/squished.
+    function mapLandmark(lm, videoAspect) {
+      return {
+        x: -(lm.x - .5) * 5.2 * videoAspect,
+        y: -(lm.y - .5) * 5.2,
+        z: -lm.z * 7
+      };
+    }
+
+    // Dummy object to handle matrix rotation math
+    const headRotationDummy = new THREE.Object3D();
+
+    function updateMesh(result) {
+  console.log('[Mesh] updateMesh called');
+      // Calculate aspect ratio for the fix
+      const aspect = video.videoWidth / video.videoHeight || 1.33;
+
+      // 1. Update the Wireframe positions
+      const landmarks = result.faceLandmarks[0];
+      if (landmarks) {
+        console.log('[Mesh] Updating wireframe with', landmarks.length, 'landmarks');
+        for (let i = 0; i < pointCount; i++) {
+          const p = mapLandmark(landmarks[i], aspect);
+          pointPositions[i * 3] = p.x;
+          pointPositions[i * 3 + 1] = p.y;
+          pointPositions[i * 3 + 2] = p.z;
+        }
+        pointGeometry.attributes.position.needsUpdate = true;
+
+        let offset = 0;
+        for (const c of connections) {
+          const a = mapLandmark(landmarks[c.start], aspect);
+          const b = mapLandmark(landmarks[c.end], aspect);
+          linePositions[offset++] = a.x; linePositions[offset++] = a.y; linePositions[offset++] = a.z;
+          linePositions[offset++] = b.x; linePositions[offset++] = b.y; linePositions[offset++] = b.z;
+        }
+        lineGeometry.attributes.position.needsUpdate = true;
+        pointsEl.textContent = landmarks.length;
+      }
+
+      // 2. Animate the Realistic Avatar (if loaded)
+      if (avatarHeadMeshes.length > 0 && result.faceBlendshapes?.length > 0) {
+        // Loop through MediaPipe's expression scores and apply them to the 3D model
+        const blendshapes = result.faceBlendshapes[0].categories;
+        blendshapes.forEach(shape => {
+          const blendshapeName = shape.categoryName;
+          avatarHeadMeshes.forEach(mesh => {
+            const index = mesh.morphTargetDictionary[blendshapeName];
+            if (index !== undefined) {
+              mesh.morphTargetInfluences[index] = shape.score;
+            }
+          });
+        });
+      }
+
+      // 3. Rotate the whole head based on your real head tilt
+      if (result.facialTransformationMatrixes?.length > 0) {
+        const matrix = new THREE.Matrix4().fromArray(result.facialTransformationMatrixes[0].data);
+        // Extract the rotation from the matrix
+        matrix.decompose(headRotationDummy.position, headRotationDummy.quaternion, headRotationDummy.scale);
+        // Apply the rotation smoothly to our group
+        group.quaternion.slerp(headRotationDummy.quaternion, 0.2);
+      }
+
+      statusEl.textContent = "Face locked";
+      scanTextEl.textContent = "Face locked";
+    }
+
+    async function initCamera() {
+  console.log('[Camera] Initializing camera stream');
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+        audio: false
+      });
+      video.srcObject = stream;
+      await new Promise(resolve => video.onloadedmetadata = resolve);
+      await video.play();
+      resizeRenderer(); // Call again once video dimensions are known
+    }
+
+    async function initFaceLandmarker() {
+  console.log('[FaceLandmarker] Initializing');
+      const vision = await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm"
+      );
+
+      faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+          delegate: "GPU"
+        },
+        runningMode: "VIDEO",
+        numFaces: 1,
+        outputFaceBlendshapes: true,
+        outputFacialTransformationMatrixes: true
+      });
+      console.log('[FaceLandmarker] Initialized', faceLandmarker);
+    }
+
+    function updateFps() {
+      frameCount++;
+      const now = performance.now();
+      if (now - lastFpsTime > 1000) {
+        fpsEl.textContent = frameCount;
+        frameCount = 0;
+        lastFpsTime = now;
+      }
+    }
+
+    function animate3D() {
+      requestAnimationFrame(animate3D);
+      renderer.render(scene, camera);
+    }
+
+    function detectLoop() {
+  console.log('[Detect] Loop iteration');
+      if (faceLandmarker && video.readyState >= 2 && video.currentTime !== lastVideoTime) {
+        const result = faceLandmarker.detectForVideo(video, performance.now());
+        lastVideoTime = video.currentTime;
+
+        if (result.faceLandmarks?.length) {
+          console.log('[Detect] Landmarks detected', result.faceLandmarks[0].length);
+
+          updateMesh(result);
+          console.log('[Detect] Mesh updated');
+        } else {
+          console.log('[Detect] No landmarks found');
+          statusEl.textContent = "Searching...";
+          scanTextEl.textContent = "Scanning...";
+          pointsEl.textContent = "0";
+        }
+        updateFps();
+      }
+      requestAnimationFrame(detectLoop);
+    }
+
+    async function main() {
+      try {
+        statusEl.textContent = "Starting camera...";
+        await initCamera();
+
+        statusEl.textContent = "Loading model...";
+        await initFaceLandmarker();
+
+        statusEl.textContent = "Scanning...";
+        animate3D();
+        detectLoop();
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = "Error";
+        scanTextEl.textContent = "Camera/model error";
+      }
+    }
+
+    main();
+  </script>
+</body>
+
+<script type="module">
+import { initThree } from '/static/js/three-car.js';
+// Use the existing canvas, renderer, scene, and camera defined earlier
+initThree({ canvas, renderer, scene, camera }).catch(err => console.error('[Hovercar] initThree error', err));
+</script>
+</html>
