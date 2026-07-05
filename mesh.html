@@ -336,15 +336,13 @@
       const size = box.getSize(new THREE.Vector3());
       const center = box.getCenter(new THREE.Vector3());
 
-      // Center model relative to its group container
-      avatar.position.x += (avatar.position.x - center.x);
-      avatar.position.y += (avatar.position.y - center.y) - 0.5; // Offset down slightly
-      avatar.position.z += (avatar.position.z - center.z);
-
       // Scale to fit target dimensions
       const maxDim = Math.max(size.x, size.y, size.z);
       const targetScale = 3.0 / maxDim;
       avatar.scale.set(targetScale, targetScale, targetScale);
+
+      // Center model relative to its group container (accounting for scale)
+      avatar.position.set(-center.x * targetScale, -center.y * targetScale - 0.5, -center.z * targetScale);
 
       // Play animations if present
       if (gltf.animations && gltf.animations.length > 0) {

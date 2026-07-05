@@ -763,6 +763,7 @@
         let lastBeep = 0;
         let lastKnownLabel = "UNKNOWN";
         let recognition = null;
+        let greetingStarted = false;
 
         const AUDIO_BASE = "/static/audio/";
         const AUDIO_FILES = {
@@ -1326,6 +1327,7 @@
         }
 
         async function detectLoop() {
+            if (greetingStarted) return;
             resizeCanvas();
 
             const options = getDetectorOptions();
@@ -1415,7 +1417,8 @@
                         lastBeep = now;
                     }
                     // Trigger audio welcome and speech recognition once
-                    if (!recognition) {
+                    if (!greetingStarted) {
+                        greetingStarted = true;
                         initAudio();
                         playSuccessSound();
                         (async () => {
