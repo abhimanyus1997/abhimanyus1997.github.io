@@ -686,6 +686,7 @@
      *  IDLE → REGISTERING (parallel path, returns to IDLE)
      * ─────────────────────────────────────────────────────────────────── */
     let STATE = "IDLE";
+    let detecting = false; // lock: only one faceapi call in flight at a time
     function is(...ss) { return ss.includes(STATE); }
     function transition(s) { console.debug(`[auth] ${STATE}→${s}`); STATE = s; }
 
@@ -885,55 +886,61 @@
 
     /* Single detect pass — returns true to keep looping, false to stop */
     async function detectOnce() {
-      if (!is("SCANNING")) return false;
-      resizeCanvas();
+      if (!is("SCANNING") || detecting) return false;
+      detecting = true;
+      try {
+        resizeCanvas();
 
-      const dets = await faceapi
-        .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({inputSize:224,scoreThreshold:.42}))
-        .withFaceLandmarks().withAgeAndGender().withFaceDescriptors();
+        const dets = await faceapi
+          .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({inputSize:224,scoreThreshold:.42}))
+          .withFaceLandmarks().withAgeAndGender().withFaceDescriptors();
 
-      if (!is("SCANNING")) return false; // state changed while awaiting
+        if (!is("SCANNING")) return false; // state changed while awaiting
 
-      ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
+        ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
 
-      if (!dets.length) {
-        srStatus.textContent="SCANNING..."; srIdent.textContent="---"; srConf.textContent="---";
-        scanLabel.classList.remove("show");
+        if (!dets.length) {
+          srStatus.textContent="SCANNING..."; srIdent.textContent="---"; srConf.textContent="---";
+          scanLabel.classList.remove("show");
+          if (!fallbackTimer) armFallback();
+          return true;
+        }
+
+        const det=dets[0], box=det.detection.box;
+        let label="UNKNOWN", dist="---";
+
+        if (faceMatcher) {
+          const m=faceMatcher.findBestMatch(det.descriptor);
+          label=m.label; dist=m.distance.toFixed(2);
+        }
+
+        const isMatch = label!=="unknown" && parseFloat(dist)<THRESHOLD;
+        drawBox(box, label, isMatch);
+
+        const conf=Math.round(det.detection.score*100);
+        srStatus.textContent = isMatch?"VERIFIED":"SCANNING...";
+        srIdent.textContent  = isMatch?label:"UNKNOWN";
+        srConf.textContent   = `${conf}% | DIST: ${dist}`;
+        scanLabel.textContent= isMatch?"VERIFIED":"SCANNING...";
+        scanLabel.classList.add("show");
+
+        if (isMatch) {
+          clearFallback();
+          // Transition BEFORE any async work — no further detectOnce can enter
+          transition("GREETING");
+          successH.textContent   = label==="ABHIMANYU"?"WELCOME BACK":`WELCOME, ${label}`;
+          successSub.textContent = `${label} VERIFIED`;
+          successOverlay.classList.add("on");
+          detecting = false; // release before long async so it doesn't block anything else
+          await _greetingFlow(label, det.gender, dets.length);
+          return false;
+        }
+
+        if (!fallbackTimer) armFallback();
         return true;
+      } finally {
+        detecting = false;
       }
-
-      const det=dets[0], box=det.detection.box;
-      let label="UNKNOWN", dist="---";
-
-      if (faceMatcher) {
-        const m=faceMatcher.findBestMatch(det.descriptor);
-        label=m.label; dist=m.distance.toFixed(2);
-      }
-
-      const isMatch = label!=="unknown" && parseFloat(dist)<THRESHOLD;
-      drawBox(box, label, isMatch);
-
-      const conf=Math.round(det.detection.score*100);
-      srStatus.textContent = isMatch?"VERIFIED":"SCANNING...";
-      srIdent.textContent  = isMatch?label:"UNKNOWN";
-      srConf.textContent   = `${conf}% | DIST: ${dist}`;
-      scanLabel.textContent= isMatch?"VERIFIED":"SCANNING...";
-      scanLabel.classList.add("show");
-
-      if (isMatch) {
-        clearFallback();
-        // STOP loop immediately before any async work
-        transition("GREETING");
-        successH.textContent   = label==="ABHIMANYU"?"WELCOME BACK":`WELCOME, ${label}`;
-        successSub.textContent = `${label} VERIFIED`;
-        successOverlay.classList.add("on");
-        // runGreeting checks is("SCANNING") so call the async part directly
-        await _greetingFlow(label, det.gender, dets.length);
-        return false;
-      }
-
-      if (!fallbackTimer) armFallback();
-      return true;
     }
 
     /* Internal greeting body — used by both detectOnce (post-transition) and fallback */
@@ -987,7 +994,6 @@
         srStatus.textContent="READY";
         waveBar.classList.add("on"); waveLabel.textContent="ALIGN YOUR FACE"; setWaves(false);
         transition("SCANNING");
-        armFallback();
         detectLoop();
       } catch(e) {
         console.error(e);
