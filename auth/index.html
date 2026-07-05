@@ -1,1096 +1,936 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <title>INTELLIGENCE IN MOTION</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-
-    <style>
-        :root {
-            --ink: #171915;
-            --paper: #f2f0e9;
-            --acid: #c9ff36;
-            --muted: #73766c;
-            --mono: 'DM Mono', monospace;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            min-height: 100vh;
-            min-height: 100dvh;
-            background: var(--ink);
-            color: var(--paper);
-            font-family: Manrope, sans-serif;
-            overflow: hidden;
-        }
-
-        /* ── DESKTOP: centred card layout ── */
-        .page-wrapper {
-            position: relative;
-            z-index: 10;
-            width: 100%;
-            min-height: 100vh;
-            min-height: 100dvh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px 24px;
-        }
-
-        /* Backgrounds */
-        .cinematic-bg {
-            position: fixed; inset: 0; z-index: 0;
-            background:
-                radial-gradient(ellipse at 50% 0%, rgba(201,255,54,.09) 0%, transparent 55%),
-                radial-gradient(ellipse at 50% 100%, rgba(201,255,54,.05) 0%, transparent 55%),
-                var(--ink);
-        }
-
-        .grid-overlay {
-            position: fixed; inset: 0; z-index: 1; pointer-events: none;
-            background-image:
-                linear-gradient(rgba(201,255,54,.025) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(201,255,54,.025) 1px, transparent 1px);
-            background-size: 60px 60px;
-            animation: gridPulse 6s ease-in-out infinite;
-        }
-
-        .noise {
-            position: fixed; inset: 0; z-index: 2; opacity: .035; pointer-events: none;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-        }
-
-        /* ── Header ── */
-        .auth-header {
-            text-align: center;
-            margin-bottom: 32px;
-            animation: fadeDown .7s ease both;
-        }
-
-        .eyebrow {
-            font: 10px var(--mono);
-            letter-spacing: .18em;
-            color: var(--acid);
-            margin-bottom: 14px;
-        }
-
-        .title {
-            font: 700 clamp(28px, 6vw, 60px)/0.88 Manrope, sans-serif;
-            letter-spacing: -.06em;
-            color: var(--paper);
-            margin-bottom: 10px;
-        }
-
-        .subtitle {
-            font: 9px var(--mono);
-            letter-spacing: .12em;
-            color: var(--muted);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .subtitle i {
-            display: inline-block;
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--acid);
-            box-shadow: 0 0 14px var(--acid);
-            animation: pulse 1.2s infinite;
-        }
-
-        /* ── Scanner frame (desktop) ── */
-        .scanner-frame {
-            position: relative;
-            width: min(300px, 78vw);
-            aspect-ratio: 3/4;
-            background: rgba(23,25,21,.85);
-            border: 1px solid rgba(201,255,54,.2);
-            overflow: hidden;
-            box-shadow: 0 0 60px rgba(201,255,54,.08);
-            flex-shrink: 0;
-        }
-
-        /* ── MOBILE: fullscreen scanner ── */
-        @media (max-width: 767px) {
-            .page-wrapper {
-                padding: 0;
-                justify-content: flex-start;
-                align-items: stretch;
-            }
-
-            .auth-header { display: none; }
-
-            .scanner-frame {
-                width: 100vw;
-                height: 100dvh;
-                aspect-ratio: auto;
-                border: none;
-                border-radius: 0;
-                box-shadow: none;
-                background: #000;
-            }
-
-            /* Move status panel into overlay on mobile */
-            .status-panel {
-                position: absolute !important;
-                bottom: 90px !important;
-                left: 14px !important;
-                right: 14px !important;
-                margin: 0 !important;
-                z-index: 30;
-                background: rgba(23,25,21,.75) !important;
-            }
-
-            /* Nav buttons full-width row on mobile */
-            .nav-buttons {
-                position: fixed !important;
-                bottom: 0 !important;
-                left: 0 !important; right: 0 !important;
-                z-index: 40;
-                display: none !important;
-                flex-direction: row !important;
-                flex-wrap: nowrap !important;
-                gap: 0 !important;
-                background: rgba(23,25,21,.96);
-                border-top: 1px solid rgba(201,255,54,.15);
-                padding: 10px 8px !important;
-            }
-
-            .nav-buttons.active { display: flex !important; }
-
-            .nav-btn {
-                flex: 1 !important;
-                padding: 12px 6px !important;
-                font-size: 8px !important;
-                letter-spacing: .08em !important;
-            }
-
-            .start-btn {
-                position: fixed !important;
-                bottom: 24px !important;
-                left: 50% !important;
-                transform: translateX(-50%) !important;
-                z-index: 40;
-                margin: 0 !important;
-                padding: 15px 40px !important;
-            }
-
-            .start-btn.hidden { display: none !important; }
-        }
-
-        /* Corner brackets */
-        .corner {
-            position: absolute;
-            width: 22px; height: 22px;
-            border-color: var(--acid);
-            border-style: solid;
-            z-index: 15;
-        }
-
-        .corner-tl { top: 12px; left: 12px; border-width: 2px 0 0 2px; }
-        .corner-tr { top: 12px; right: 12px; border-width: 2px 2px 0 0; }
-        .corner-bl { bottom: 12px; left: 12px; border-width: 0 0 2px 2px; }
-        .corner-br { bottom: 12px; right: 12px; border-width: 0 2px 2px 0; }
-
-        /* Mobile: larger corners */
-        @media (max-width: 767px) {
-            .corner { width: 32px; height: 32px; }
-            .corner-tl { top: 20px; left: 16px; }
-            .corner-tr { top: 20px; right: 16px; }
-            .corner-bl { bottom: 100px; left: 16px; }
-            .corner-br { bottom: 100px; right: 16px; }
-        }
-
-        video, canvas {
-            position: absolute; inset: 0;
-            width: 100%; height: 100%;
-            object-fit: cover;
-            transform: scaleX(-1);
-        }
-
-        video { filter: brightness(.7) contrast(1.15) saturate(.9); }
-        canvas { z-index: 5; }
-
-        /* Vignette + scanlines (visible on mobile fullscreen) */
-        .vignette {
-            position: absolute; inset: 0; z-index: 7; pointer-events: none;
-            background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,.7) 100%);
-        }
-
-        .scanlines {
-            position: absolute; inset: 0; z-index: 8; pointer-events: none;
-            background: linear-gradient(rgba(201,255,54,.035) 50%, rgba(0,0,0,.12) 50%);
-            background-size: 100% 4px;
-            mix-blend-mode: screen;
-            animation: scanlines .6s linear infinite;
-        }
-
-        /* Scan sweep */
-        .scan-sweep {
-            position: absolute; left: 0; right: 0;
-            height: 80px; top: -100px;
-            z-index: 6; pointer-events: none;
-            background: linear-gradient(to bottom, transparent, rgba(201,255,54,.22), transparent);
-            animation: sweepMove 2.8s linear infinite;
-        }
-
-        /* Face guide oval */
-        .face-guide {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -54%);
-            width: 130px; height: 170px;
-            border: 1.5px dashed rgba(201,255,54,.35);
-            border-radius: 50%;
-            z-index: 4; pointer-events: none;
-            animation: guidePulse 2.2s ease-in-out infinite;
-        }
-
-        .face-guide::after {
-            content: "ALIGN FACE";
-            position: absolute;
-            bottom: -26px; left: 50%;
-            transform: translateX(-50%);
-            font: 9px var(--mono);
-            letter-spacing: .14em;
-            color: var(--acid);
-            white-space: nowrap;
-        }
-
-        @media (max-width: 767px) {
-            .face-guide {
-                width: 175px; height: 230px;
-                transform: translate(-50%, -56%);
-            }
-        }
-
-        /* Mobile HUD header (title inside scanner) */
-        .mobile-hud-header {
-            display: none;
-            position: absolute;
-            top: 22px; left: 0; right: 0;
-            z-index: 20;
-            text-align: center;
-            pointer-events: none;
-        }
-
-        .mobile-hud-header .hud-eyebrow {
-            font: 9px var(--mono);
-            letter-spacing: .16em;
-            color: var(--acid);
-            text-shadow: 0 0 10px var(--acid);
-        }
-
-        .mobile-hud-header .hud-title {
-            font: 700 22px/1 Manrope, sans-serif;
-            letter-spacing: -.04em;
-            color: var(--paper);
-            text-shadow: 0 0 20px rgba(201,255,54,.3);
-            margin-top: 4px;
-        }
-
-        @media (max-width: 767px) {
-            .mobile-hud-header { display: block; }
-        }
-
-        /* Status panel */
-        .status-panel {
-            margin-top: 24px;
-            padding: 16px 20px;
-            background: rgba(23,25,21,.6);
-            border: 1px solid rgba(201,255,54,.15);
-            min-width: 270px;
-            animation: fadeUp .8s ease .3s both;
-        }
-
-        .status-line {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            font: 9px var(--mono);
-            letter-spacing: .08em;
-            border-bottom: 1px solid rgba(201,255,54,.08);
-        }
-
-        .status-line:last-child { border-bottom: none; }
-        .status-label { color: var(--muted); }
-        .status-value { color: var(--acid); }
-
-        /* Buttons */
-        .start-btn {
-            margin-top: 24px;
-            padding: 14px 36px;
-            background: var(--acid);
-            border: none;
-            color: var(--ink);
-            font: 12px var(--mono);
-            letter-spacing: .12em;
-            cursor: pointer;
-            transition: box-shadow .25s;
-            animation: fadeUp .8s ease .5s both;
-        }
-
-        .start-btn:hover { box-shadow: 0 0 30px rgba(201,255,54,.4); }
-        .start-btn.hidden { display: none; }
-
-        .skip-btn {
-            position: fixed;
-            top: 18px; right: 18px;
-            z-index: 50;
-            padding: 10px 18px;
-            background: transparent;
-            border: 1px solid rgba(201,255,54,.18);
-            color: var(--muted);
-            font: 10px var(--mono);
-            letter-spacing: .1em;
-            cursor: pointer;
-            transition: all .25s;
-        }
-
-        .skip-btn:hover { border-color: var(--acid); color: var(--acid); }
-
-        /* Nav buttons */
-        .nav-buttons {
-            display: none;
-            gap: 10px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .nav-buttons.active { display: flex; }
-
-        .nav-btn {
-            padding: 11px 20px;
-            background: transparent;
-            border: 1px solid rgba(201,255,54,.25);
-            color: var(--paper);
-            font: 10px var(--mono);
-            letter-spacing: .1em;
-            cursor: pointer;
-            transition: all .25s;
-        }
-
-        .nav-btn:hover { background: var(--acid); color: var(--ink); border-color: var(--acid); }
-
-        /* Audio dialog */
-        .audio-dialog {
-            position: fixed;
-            bottom: 72px; left: 50%;
-            transform: translateX(-50%);
-            z-index: 45;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 18px;
-            background: rgba(23,25,21,.9);
-            border: 1px solid rgba(201,255,54,.15);
-        }
-
-        .audio-waves { display: flex; align-items: center; gap: 3px; height: 22px; }
-
-        .audio-wave {
-            width: 2px;
-            background: var(--acid);
-            border-radius: 1px;
-            animation: waveAnim 1s ease-in-out infinite;
-        }
-
-        .audio-wave:nth-child(1) { height: 8px; animation-delay: 0s; }
-        .audio-wave:nth-child(2) { height: 14px; animation-delay: .1s; }
-        .audio-wave:nth-child(3) { height: 20px; animation-delay: .2s; }
-        .audio-wave:nth-child(4) { height: 14px; animation-delay: .3s; }
-        .audio-wave:nth-child(5) { height: 8px; animation-delay: .4s; }
-
-        .audio-wave.inactive { animation: none; height: 6px; opacity: .25; }
-
-        .audio-text {
-            font: 10px var(--mono);
-            letter-spacing: .14em;
-            color: var(--acid);
-        }
-
-        /* Voice panel */
-        .voice-panel {
-            position: fixed;
-            bottom: 160px; left: 50%;
-            transform: translateX(-50%);
-            z-index: 45;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            padding: 16px 24px;
-            background: rgba(23,25,21,.96);
-            border: 1px solid rgba(201,255,54,.2);
-            min-width: 270px;
-        }
-
-        .voice-panel.active { display: flex; }
-
-        .voice-title {
-            font: 10px var(--mono);
-            letter-spacing: .18em;
-            color: var(--acid);
-        }
-
-        .voice-transcript {
-            font-size: 14px;
-            color: var(--paper);
-            min-height: 20px;
-            text-align: center;
-        }
-
-        .voice-hint {
-            font: 9px var(--mono);
-            letter-spacing: .08em;
-            color: var(--muted);
-            text-align: center;
-        }
-
-        @media (max-width: 767px) {
-            .voice-panel { bottom: 80px; min-width: 86vw; }
-            .audio-dialog { bottom: 58px; }
-        }
-
-        /* Loading overlay */
-        .loading-overlay {
-            position: fixed; inset: 0; z-index: 55;
-            display: grid; place-items: center;
-            background: var(--ink);
-            transition: .4s ease;
-        }
-
-        .loading-overlay.hidden { opacity: 0; visibility: hidden; }
-
-        .loading-box {
-            width: min(290px, 86vw);
-            padding: 24px;
-            border: 1px solid rgba(201,255,54,.18);
-            background: rgba(23,25,21,.92);
-            text-align: center;
-        }
-
-        .loading-title {
-            font: 11px var(--mono);
-            letter-spacing: .18em;
-            color: var(--acid);
-            margin-bottom: 18px;
-        }
-
-        .loading-bar {
-            height: 3px;
-            background: rgba(201,255,54,.15);
-            overflow: hidden;
-        }
-
-        .loading-progress {
-            height: 100%;
-            width: 0%;
-            background: var(--acid);
-            transition: width .3s ease;
-            box-shadow: 0 0 8px var(--acid);
-        }
-
-        .loading-text {
-            margin-top: 12px;
-            font: 9px var(--mono);
-            letter-spacing: .1em;
-            color: var(--muted);
-        }
-
-        /* Success flash */
-        .success-screen {
-            position: fixed; inset: 0; z-index: 60;
-            display: grid; place-items: center;
-            background: var(--ink);
-            opacity: 0; visibility: hidden;
-            transition: .45s ease;
-        }
-
-        .success-screen.active { opacity: 1; visibility: visible; }
-
-        .success-content { text-align: center; animation: zoomIn .55s ease; }
-
-        .success-icon {
-            width: 66px; height: 66px;
-            border: 2px solid var(--acid);
-            border-radius: 50%;
-            display: grid; place-items: center;
-            margin: 0 auto 18px;
-            box-shadow: 0 0 30px rgba(201,255,54,.3);
-        }
-
-        .success-icon svg {
-            width: 30px; height: 30px;
-            stroke: var(--acid); stroke-width: 2.5; fill: none;
-        }
-
-        .success-title {
-            font: 700 clamp(22px,5vw,34px)/1 Manrope, sans-serif;
-            letter-spacing: -.04em;
-            color: var(--paper);
-            margin-bottom: 8px;
-        }
-
-        .success-sub {
-            font: 10px var(--mono);
-            letter-spacing: .12em;
-            color: var(--acid);
-        }
-
-        /* Error */
-        .error-msg {
-            position: fixed;
-            top: 18px; left: 50%;
-            transform: translateX(-50%);
-            z-index: 65;
-            padding: 11px 18px;
-            background: rgba(154,90,73,.18);
-            border: 1px solid #9a5a49;
-            color: #d4a29a;
-            font: 10px var(--mono);
-            letter-spacing: .08em;
-            text-align: center;
-            display: none;
-            max-width: 90vw;
-        }
-
-        .error-msg.show { display: block; animation: shake .5s ease; }
-
-        /* Keyframes */
-        @keyframes gridPulse { 0%,100%{opacity:.4} 50%{opacity:.85} }
-        @keyframes fadeDown { from{opacity:0;transform:translateY(-24px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
-        @keyframes sweepMove { from{top:-100px;opacity:0} 10%{opacity:1} 90%{opacity:1} to{top:100%;opacity:0} }
-        @keyframes scanlines { to{background-position-y:8px} }
-        @keyframes guidePulse { 0%,100%{border-color:rgba(201,255,54,.3)} 50%{border-color:rgba(201,255,54,.65)} }
-        @keyframes waveAnim { 0%,100%{transform:scaleY(.45)} 50%{transform:scaleY(1)} }
-        @keyframes zoomIn { from{opacity:0;transform:scale(.85)} to{opacity:1;transform:scale(1)} }
-        @keyframes shake {
-            0%,100%{transform:translateX(-50%)}
-            20%,60%{transform:translateX(calc(-50% - 5px))}
-            40%,80%{transform:translateX(calc(-50% + 5px))}
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>INTELLIGENCE IN MOTION</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@500;700&display=swap" rel="stylesheet">
+  <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+  <style>
+    :root {
+      --ink:   #171915;
+      --paper: #f2f0e9;
+      --acid:  #c9ff36;
+      --muted: #6b6e65;
+      --dim:   rgba(201,255,54,.15);
+      --mono:  'DM Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100dvh;
+      background: var(--ink);
+      color: var(--paper);
+      font-family: Manrope, sans-serif;
+      overflow: hidden;
+    }
+
+    /* ── decorative bg ───────────────────────────────────── */
+    .bg-glow {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 60% 40% at 50% 0%,   rgba(201,255,54,.07) 0%, transparent 100%),
+        radial-gradient(ellipse 60% 40% at 50% 100%, rgba(201,255,54,.04) 0%, transparent 100%);
+    }
+
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(201,255,54,.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,255,54,.022) 1px, transparent 1px);
+      background-size: 56px 56px;
+      animation: gridBreath 7s ease-in-out infinite;
+    }
+
+    .bg-noise {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .032;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* ── layout shell ────────────────────────────────────── */
+    .shell {
+      position: relative; z-index: 10;
+      width: 100%; min-height: 100dvh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 48px 24px;
+      gap: 32px;
+    }
+
+    /* ── eyebrow / title ─────────────────────────────────── */
+    .brand {
+      text-align: center;
+      animation: fadeDown .65s ease both;
+    }
+
+    .brand-eyebrow {
+      font: 400 10px var(--mono);
+      letter-spacing: .18em;
+      color: var(--acid);
+      margin-bottom: 14px;
+    }
+
+    .brand-title {
+      font: 700 clamp(36px, 7vw, 68px)/0.86 Manrope, sans-serif;
+      letter-spacing: -.06em;
+      color: var(--paper);
+      margin-bottom: 12px;
+    }
+
+    .brand-sub {
+      display: inline-flex; align-items: center; gap: 8px;
+      font: 400 9px var(--mono);
+      letter-spacing: .12em;
+      color: var(--muted);
+    }
+
+    .pulse-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--acid);
+      box-shadow: 0 0 12px var(--acid);
+      animation: pulseDot 1.4s ease-in-out infinite;
+    }
+
+    /* ── scanner card ────────────────────────────────────── */
+    .scanner-card {
+      position: relative;
+      width: min(300px, 80vw);
+      aspect-ratio: 3/4;
+      background: rgba(0,0,0,.6);
+      border: 1px solid rgba(201,255,54,.2);
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,.4),
+        0 0 50px rgba(201,255,54,.06),
+        inset 0 0 30px rgba(0,0,0,.5);
+      animation: fadeUp .7s ease .15s both;
+    }
+
+    /* bracket corners */
+    .bkt {
+      position: absolute; width: 20px; height: 20px;
+      border-color: var(--acid); border-style: solid;
+      z-index: 15; pointer-events: none;
+    }
+    .bkt-tl { top:10px; left:10px;  border-width:2px 0 0 2px; }
+    .bkt-tr { top:10px; right:10px; border-width:2px 2px 0 0; }
+    .bkt-bl { bottom:10px; left:10px;  border-width:0 0 2px 2px; }
+    .bkt-br { bottom:10px; right:10px; border-width:0 2px 2px 0; }
+
+    /* live camera */
+    video, canvas {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+    video  { filter: brightness(.7) contrast(1.12) saturate(.85); z-index: 1; }
+    canvas { z-index: 5; }
+
+    /* vignette + scanlines over video */
+    .vignette {
+      position: absolute; inset: 0; z-index: 6; pointer-events: none;
+      background: radial-gradient(circle at 50% 48%, transparent 38%, rgba(0,0,0,.65) 100%);
+    }
+    .scanlines {
+      position: absolute; inset: 0; z-index: 7; pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(201,255,54,.028) 0px, rgba(201,255,54,.028) 1px,
+        transparent 1px, transparent 4px
+      );
+    }
+
+    /* sweep bar */
+    .sweep {
+      position: absolute; left:0; right:0; height:70px; top:-90px;
+      z-index: 8; pointer-events: none;
+      background: linear-gradient(to bottom, transparent, rgba(201,255,54,.2), transparent);
+      animation: sweepDown 3s linear infinite;
+    }
+
+    /* face oval guide */
+    .face-oval {
+      position: absolute; top:50%; left:50%;
+      transform: translate(-50%, -52%);
+      width: 120px; height: 158px;
+      border: 1.5px dashed rgba(201,255,54,.32);
+      border-radius: 50%;
+      z-index: 9; pointer-events: none;
+      animation: ovalBreath 2.4s ease-in-out infinite;
+    }
+    .face-oval::after {
+      content: "ALIGN FACE";
+      position: absolute; bottom:-24px; left:50%;
+      transform: translateX(-50%);
+      font: 400 8px var(--mono); letter-spacing:.14em; color:var(--acid);
+      white-space: nowrap;
+    }
+
+    /* overlay state label (e.g. SCANNING / VERIFIED) */
+    .scan-label {
+      position: absolute; bottom:14px; left:0; right:0;
+      text-align: center; z-index:15; pointer-events:none;
+      font: 400 10px var(--mono); letter-spacing:.14em;
+      color: var(--acid); opacity:0;
+      transition: opacity .3s;
+    }
+    .scan-label.show { opacity: 1; }
+
+    /* ── status strip ────────────────────────────────────── */
+    .status-strip {
+      width: min(300px, 80vw);
+      border: 1px solid rgba(201,255,54,.13);
+      background: rgba(23,25,21,.55);
+      animation: fadeUp .7s ease .3s both;
+    }
+
+    .status-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 9px 16px;
+      font: 400 9px var(--mono); letter-spacing:.08em;
+      border-bottom: 1px solid rgba(201,255,54,.07);
+    }
+    .status-row:last-child { border-bottom: none; }
+    .sr-label { color: var(--muted); }
+    .sr-val   { color: var(--acid); }
+
+    /* ── CTA button  ─────────────────────────────────────── */
+    .cta-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      animation: fadeUp .7s ease .45s both;
+    }
+
+    .btn-init {
+      padding: 13px 40px;
+      background: var(--acid);
+      border: none;
+      color: var(--ink);
+      font: 500 11px var(--mono);
+      letter-spacing: .14em;
+      cursor: pointer;
+      transition: box-shadow .25s, transform .15s;
+    }
+    .btn-init:hover  { box-shadow: 0 0 28px rgba(201,255,54,.4); }
+    .btn-init:active { transform: scale(.97); }
+    .btn-init.gone   { display: none; }
+
+    /* ── skip button ─────────────────────────────────────── */
+    .btn-skip {
+      position: fixed; top:18px; right:18px; z-index:60;
+      padding: 9px 16px;
+      background: transparent;
+      border: 1px solid rgba(201,255,54,.18);
+      color: var(--muted);
+      font: 400 9px var(--mono); letter-spacing:.1em;
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-skip:hover { border-color: var(--acid); color: var(--acid); }
+
+    /* ── nav buttons (post-auth) ─────────────────────────── */
+    .nav-row {
+      display: none; /* shown via JS */
+      gap: 10px; flex-wrap: wrap; justify-content: center;
+      width: min(300px, 80vw);
+      animation: fadeUp .55s ease both;
+    }
+    .nav-btn {
+      flex: 1; min-width: 100px; max-width: 140px;
+      padding: 11px 14px;
+      background: transparent;
+      border: 1px solid rgba(201,255,54,.22);
+      color: var(--paper);
+      font: 400 9px var(--mono); letter-spacing:.1em;
+      cursor: pointer; transition: all .2s;
+      text-align: center;
+    }
+    .nav-btn:hover { background: var(--acid); color: var(--ink); border-color: var(--acid); }
+
+    /* ── audio wave bar ──────────────────────────────────── */
+    .wave-bar {
+      position: fixed; bottom:22px; left:50%; transform:translateX(-50%);
+      z-index:55;
+      display: none; /* flex when active */
+      align-items: center; gap: 14px;
+      padding: 10px 20px;
+      background: rgba(23,25,21,.94);
+      border: 1px solid rgba(201,255,54,.16);
+    }
+    .wave-bar.on { display: flex; }
+
+    .waves { display:flex; align-items:center; gap:3px; height:20px; }
+    .wave {
+      width: 2px; background: var(--acid); border-radius:1px;
+      animation: waveAnim 1s ease-in-out infinite;
+    }
+    .wave:nth-child(1){height:6px;  animation-delay:.00s}
+    .wave:nth-child(2){height:14px; animation-delay:.12s}
+    .wave:nth-child(3){height:20px; animation-delay:.24s}
+    .wave:nth-child(4){height:14px; animation-delay:.36s}
+    .wave:nth-child(5){height:6px;  animation-delay:.48s}
+    .wave.flat { animation:none; height:4px; opacity:.22; }
+
+    .wave-label {
+      font: 400 9px var(--mono); letter-spacing:.14em; color: var(--acid);
+      min-width: 140px;
+    }
+
+    /* ── STT panel ───────────────────────────────────────── */
+    .stt-panel {
+      position: fixed; bottom:72px; left:50%; transform:translateX(-50%);
+      z-index:55;
+      display: none;
+      flex-direction: column; align-items:center; gap:10px;
+      padding: 16px 24px;
+      background: rgba(23,25,21,.97);
+      border: 1px solid rgba(201,255,54,.18);
+      min-width: min(280px, 90vw);
+      text-align: center;
+    }
+    .stt-panel.on { display: flex; }
+
+    .stt-title {
+      font: 400 9px var(--mono); letter-spacing:.18em; color: var(--acid);
+    }
+    .stt-text {
+      font-size: 15px; color: var(--paper); min-height:22px;
+    }
+    .stt-hint {
+      font: 400 8px var(--mono); letter-spacing:.06em; color: var(--muted);
+    }
+
+    /* ── loading overlay ─────────────────────────────────── */
+    .loading-overlay {
+      position: fixed; inset:0; z-index:70;
+      display: grid; place-items: center;
+      background: var(--ink);
+      transition: opacity .4s, visibility .4s;
+    }
+    .loading-overlay.hidden { opacity:0; visibility:hidden; }
+
+    .loading-box {
+      width: min(280px, 86vw);
+      padding: 24px;
+      border: 1px solid rgba(201,255,54,.18);
+      background: rgba(23,25,21,.9);
+      text-align: center;
+    }
+    .loading-title {
+      font: 400 10px var(--mono); letter-spacing:.18em; color: var(--acid);
+      margin-bottom: 18px;
+    }
+    .loading-track {
+      height: 2px; background: rgba(201,255,54,.12); overflow:hidden;
+    }
+    .loading-fill {
+      height:100%; width:0%; background: var(--acid);
+      transition: width .3s ease;
+      box-shadow: 0 0 6px var(--acid);
+    }
+    .loading-info {
+      margin-top: 12px;
+      font: 400 8px var(--mono); letter-spacing:.1em; color: var(--muted);
+    }
+
+    /* ── success flash ───────────────────────────────────── */
+    .success-overlay {
+      position: fixed; inset:0; z-index:65;
+      display: grid; place-items: center;
+      background: var(--ink);
+      opacity:0; visibility:hidden;
+      transition: opacity .45s, visibility .45s;
+    }
+    .success-overlay.on { opacity:1; visibility:visible; }
+
+    .success-box { text-align:center; animation: zoomIn .5s ease both; }
+
+    .success-ring {
+      width:62px; height:62px;
+      border: 2px solid var(--acid); border-radius:50%;
+      display:grid; place-items:center;
+      margin: 0 auto 18px;
+      box-shadow: 0 0 28px rgba(201,255,54,.28);
+    }
+    .success-ring svg {
+      width:26px; height:26px;
+      stroke:var(--acid); stroke-width:2.5; fill:none;
+    }
+    .success-h {
+      font: 700 clamp(22px,5vw,32px)/1 Manrope, sans-serif;
+      letter-spacing:-.04em; color:var(--paper);
+      margin-bottom: 8px;
+    }
+    .success-sub {
+      font: 400 9px var(--mono); letter-spacing:.12em; color:var(--acid);
+    }
+
+    /* ── error toast ─────────────────────────────────────── */
+    .toast {
+      position: fixed; top:18px; left:50%; transform:translateX(-50%);
+      z-index:80; padding:11px 20px; max-width:90vw;
+      background: rgba(100,28,28,.9);
+      border: 1px solid rgba(180,60,60,.5);
+      color: #e0a0a0;
+      font: 400 9px var(--mono); letter-spacing:.08em;
+      text-align:center; display:none;
+    }
+    .toast.on { display:block; animation: shakeX .4s ease; }
+
+    /* ── keyframes ───────────────────────────────────────── */
+    @keyframes gridBreath { 0%,100%{opacity:.45} 50%{opacity:.9} }
+    @keyframes fadeDown   { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeUp     { from{opacity:0;transform:translateY(16px)}  to{opacity:1;transform:translateY(0)} }
+    @keyframes pulseDot   { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.45;transform:scale(.75)} }
+    @keyframes sweepDown  { from{top:-90px;opacity:0} 10%{opacity:1} 88%{opacity:1} to{top:100%;opacity:0} }
+    @keyframes ovalBreath { 0%,100%{border-color:rgba(201,255,54,.28)} 50%{border-color:rgba(201,255,54,.62)} }
+    @keyframes waveAnim   { 0%,100%{transform:scaleY(.4)} 50%{transform:scaleY(1)} }
+    @keyframes zoomIn     { from{opacity:0;transform:scale(.82)} to{opacity:1;transform:scale(1)} }
+    @keyframes shakeX {
+      0%,100%{transform:translateX(-50%)}
+      20%,60%{transform:translateX(calc(-50% - 6px))}
+      40%,80%{transform:translateX(calc(-50% + 6px))}
+    }
+
+    /* ── mobile tweaks ───────────────────────────────────── */
+    @media (max-width: 640px) {
+      .shell { padding: 32px 16px; gap: 20px; }
+      .scanner-card { width: min(270px, 86vw); }
+      .status-strip  { width: min(270px, 86vw); }
+      .nav-row       { width: min(270px, 86vw); }
+      .nav-btn { min-width: 80px; }
+    }
+  </style>
 </head>
-
 <body>
-    <div class="cinematic-bg"></div>
-    <div class="grid-overlay"></div>
-    <div class="noise"></div>
 
-    <button class="skip-btn" id="skipBtn">SKIP →</button>
+  <div class="bg-glow"></div>
+  <div class="bg-grid"></div>
+  <div class="bg-noise"></div>
 
-    <div class="page-wrapper">
-        <header class="auth-header">
-            <p class="eyebrow">AS / BIOMETRIC AUTH</p>
-            <h1 class="title">INTELLIGENCE<br>IN MOTION</h1>
-            <span class="subtitle"><i></i> NEURAL CORRELATION ENGINE</span>
-        </header>
+  <button class="btn-skip" id="skipBtn">SKIP →</button>
 
-        <div class="scanner-frame" id="scannerFrame">
-            <div class="corner corner-tl"></div>
-            <div class="corner corner-tr"></div>
-            <div class="corner corner-bl"></div>
-            <div class="corner corner-br"></div>
+  <div class="shell">
 
-            <!-- Mobile-only HUD title -->
-            <div class="mobile-hud-header">
-                <div class="hud-eyebrow">AS / BIOMETRIC AUTH</div>
-                <div class="hud-title">INTELLIGENCE IN MOTION</div>
-            </div>
+    <!-- brand header -->
+    <header class="brand">
+      <p class="brand-eyebrow">AS / BIOMETRIC AUTH</p>
+      <h1 class="brand-title">INTELLIGENCE<br>IN MOTION</h1>
+      <span class="brand-sub"><span class="pulse-dot"></span>NEURAL CORRELATION ENGINE</span>
+    </header>
 
-            <div class="face-guide"></div>
-            <video id="video" autoplay muted playsinline></video>
-            <canvas id="overlay"></canvas>
-            <div class="scan-sweep"></div>
-            <div class="vignette"></div>
-            <div class="scanlines"></div>
-        </div>
+    <!-- scanner viewport -->
+    <div class="scanner-card" id="scannerCard">
+      <span class="bkt bkt-tl"></span>
+      <span class="bkt bkt-tr"></span>
+      <span class="bkt bkt-bl"></span>
+      <span class="bkt bkt-br"></span>
 
-        <!-- Status panel (mobile: overlaid inside scanner via CSS) -->
-        <div class="status-panel" id="statusPanel">
-            <div class="status-line">
-                <span class="status-label">STATUS</span>
-                <span class="status-value" id="statusText">AWAITING INIT</span>
-            </div>
-            <div class="status-line">
-                <span class="status-label">IDENTITY</span>
-                <span class="status-value" id="identityText">---</span>
-            </div>
-            <div class="status-line">
-                <span class="status-label">CONFIDENCE</span>
-                <span class="status-value" id="confidenceText">---</span>
-            </div>
-        </div>
-
-        <button class="start-btn" id="startBtn">INITIALIZE SCAN</button>
-
-        <div class="nav-buttons" id="navButtons">
-            <button class="nav-btn" data-nav="home">HOME</button>
-            <button class="nav-btn" data-nav="projects">PROJECTS</button>
-            <button class="nav-btn" data-nav="about">ABOUT</button>
-            <button class="nav-btn" data-nav="contact">CONTACT</button>
-        </div>
+      <div class="face-oval"></div>
+      <video id="video" autoplay muted playsinline></video>
+      <canvas id="overlay"></canvas>
+      <div class="sweep"></div>
+      <div class="vignette"></div>
+      <div class="scanlines"></div>
+      <div class="scan-label" id="scanLabel">SCANNING...</div>
     </div>
 
-    <!-- Audio / voice overlays (outside page-wrapper so they float freely) -->
-    <div class="audio-dialog" id="audioDialog">
-        <div class="audio-waves" id="audioWaves">
-            <div class="audio-wave"></div>
-            <div class="audio-wave"></div>
-            <div class="audio-wave"></div>
-            <div class="audio-wave"></div>
-            <div class="audio-wave"></div>
-        </div>
-        <div class="audio-text" id="audioText">PROCESSING...</div>
+    <!-- status strip -->
+    <div class="status-strip">
+      <div class="status-row"><span class="sr-label">STATUS</span><span class="sr-val" id="srStatus">AWAITING INIT</span></div>
+      <div class="status-row"><span class="sr-label">IDENTITY</span><span class="sr-val" id="srIdent">---</span></div>
+      <div class="status-row"><span class="sr-label">CONFIDENCE</span><span class="sr-val" id="srConf">---</span></div>
     </div>
 
-    <div class="voice-panel" id="voicePanel">
-        <div class="voice-title">VOICE COMMAND</div>
-        <div class="voice-transcript" id="voiceTranscript">Listening...</div>
-        <div class="voice-hint">Say: "projects", "about", "contact" or "home"</div>
+    <!-- CTA -->
+    <div class="cta-wrap" id="ctaWrap">
+      <button class="btn-init" id="initBtn">INITIALIZE SCAN</button>
     </div>
 
-    <div class="loading-overlay hidden" id="loadingOverlay">
-        <div class="loading-box">
-            <div class="loading-title">SYSTEM INIT</div>
-            <div class="loading-bar">
-                <div class="loading-progress" id="loadingProgress"></div>
-            </div>
-            <div class="loading-text" id="loadingText">LOADING...</div>
-        </div>
+    <!-- nav buttons (hidden until greeting done) -->
+    <div class="nav-row" id="navRow">
+      <button class="nav-btn" data-path="/">HOME</button>
+      <button class="nav-btn" data-path="/#projects">PROJECTS</button>
+      <button class="nav-btn" data-path="/#about">ABOUT</button>
+      <button class="nav-btn" data-path="/#contact">CONTACT</button>
     </div>
 
-    <div class="success-screen" id="successScreen">
-        <div class="success-content">
-            <div class="success-icon">
-                <svg viewBox="0 0 24 24"><polyline points="4,12 9,17 20,6"></polyline></svg>
-            </div>
-            <div class="success-title" id="successTitle">ACCESS GRANTED</div>
-            <div class="success-sub" id="successSub">IDENTITY VERIFIED</div>
-        </div>
+  </div><!-- .shell -->
+
+  <!-- floating overlays -->
+  <div class="wave-bar" id="waveBar">
+    <div class="waves">
+      <div class="wave" id="w1"></div>
+      <div class="wave" id="w2"></div>
+      <div class="wave" id="w3"></div>
+      <div class="wave" id="w4"></div>
+      <div class="wave" id="w5"></div>
     </div>
+    <span class="wave-label" id="waveLabel">PROCESSING...</span>
+  </div>
 
-    <div class="error-msg" id="errorMsg"></div>
+  <div class="stt-panel" id="sttPanel">
+    <div class="stt-title">VOICE COMMAND</div>
+    <div class="stt-text" id="sttText">Listening...</div>
+    <div class="stt-hint">Say: "home" · "projects" · "about" · "contact"</div>
+  </div>
 
-    <script>
-        const video        = document.getElementById("video");
-        const canvas       = document.getElementById("overlay");
-        const ctx          = canvas.getContext("2d");
-        const startBtn     = document.getElementById("startBtn");
-        const skipBtn      = document.getElementById("skipBtn");
-        const loadingOverlay  = document.getElementById("loadingOverlay");
-        const loadingProgress = document.getElementById("loadingProgress");
-        const loadingText     = document.getElementById("loadingText");
-        const statusText   = document.getElementById("statusText");
-        const identityText = document.getElementById("identityText");
-        const confidenceText  = document.getElementById("confidenceText");
-        const audioDialog  = document.getElementById("audioDialog");
-        const audioWaves   = document.getElementById("audioWaves");
-        const audioText    = document.getElementById("audioText");
-        const voicePanel   = document.getElementById("voicePanel");
-        const voiceTranscript = document.getElementById("voiceTranscript");
-        const successScreen   = document.getElementById("successScreen");
-        const successTitle    = document.getElementById("successTitle");
-        const successSub      = document.getElementById("successSub");
-        const errorMsg     = document.getElementById("errorMsg");
-        const navButtons   = document.getElementById("navButtons");
-        const statusPanel  = document.getElementById("statusPanel");
+  <!-- loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-box">
+      <div class="loading-title">SYSTEM INIT</div>
+      <div class="loading-track"><div class="loading-fill" id="loadFill"></div></div>
+      <div class="loading-info" id="loadInfo">LOADING...</div>
+    </div>
+  </div>
 
-        const MODEL_URL       = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights";
-        const REFERENCE_IMAGE = "/abhimanyu-reference.jpg";
-        const MATCH_THRESHOLD = 0.55;
-        const AUDIO_BASE      = "/static/audio/";
+  <!-- success flash -->
+  <div class="success-overlay" id="successOverlay">
+    <div class="success-box">
+      <div class="success-ring">
+        <svg viewBox="0 0 24 24"><polyline points="4,12 9,17 20,6"></polyline></svg>
+      </div>
+      <div class="success-h" id="successH">ACCESS GRANTED</div>
+      <div class="success-sub" id="successSub">IDENTITY VERIFIED</div>
+    </div>
+  </div>
 
-        const AUDIO_FILES = {
-            abhimanyu:     ["welcome-abhimanyu-1.wav","welcome-abhimanyu-2.wav","welcome-abhimanyu-3.wav","welcome-abhimanyu-4.wav"],
-            unknown_male:  ["welcome-unknown-male-1.wav","welcome-unknown-male-2.wav","welcome-unknown-male-3.wav","welcome-unknown-male-4.wav"],
-            unknown_female:["welcome-unknown-female-1.wav","welcome-unknown-female-2.wav","welcome-unknown-female-3.wav","welcome-unknown-female-4.wav"],
-            group:         ["welcome-group-1.wav","welcome-group-2.wav","welcome-group-3.wav"],
-            prompt:        "welcome-prompt-query.wav"
+  <!-- error toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+  (() => {
+    /* ── element refs ──────────────────────────────── */
+    const video         = document.getElementById("video");
+    const canvas        = document.getElementById("overlay");
+    const ctx           = canvas.getContext("2d");
+    const initBtn       = document.getElementById("initBtn");
+    const skipBtn       = document.getElementById("skipBtn");
+    const ctaWrap       = document.getElementById("ctaWrap");
+    const navRow        = document.getElementById("navRow");
+    const scanLabel     = document.getElementById("scanLabel");
+    const srStatus      = document.getElementById("srStatus");
+    const srIdent       = document.getElementById("srIdent");
+    const srConf        = document.getElementById("srConf");
+    const waveBar       = document.getElementById("waveBar");
+    const waveLabel     = document.getElementById("waveLabel");
+    const sttPanel      = document.getElementById("sttPanel");
+    const sttText       = document.getElementById("sttText");
+    const loadingOverlay= document.getElementById("loadingOverlay");
+    const loadFill      = document.getElementById("loadFill");
+    const loadInfo      = document.getElementById("loadInfo");
+    const successOverlay= document.getElementById("successOverlay");
+    const successH      = document.getElementById("successH");
+    const successSub    = document.getElementById("successSub");
+    const toast         = document.getElementById("toast");
+
+    /* ── constants ─────────────────────────────────── */
+    const MODEL_URL  = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights";
+    const REF_IMAGE  = "/abhimanyu-reference.jpg";
+    const THRESHOLD  = 0.55;
+    const AUDIO_BASE = "/static/audio/";
+
+    const AUDIO = {
+      abhimanyu:      ["welcome-abhimanyu-1.wav","welcome-abhimanyu-2.wav","welcome-abhimanyu-3.wav","welcome-abhimanyu-4.wav"],
+      unknown_male:   ["welcome-unknown-male-1.wav","welcome-unknown-male-2.wav","welcome-unknown-male-3.wav","welcome-unknown-male-4.wav"],
+      unknown_female: ["welcome-unknown-female-1.wav","welcome-unknown-female-2.wav","welcome-unknown-female-3.wav","welcome-unknown-female-4.wav"],
+      group:          ["welcome-group-1.wav","welcome-group-2.wav","welcome-group-3.wav"],
+      prompt:         "welcome-prompt-query.wav"
+    };
+
+    /* ── state machine ─────────────────────────────────────────────────────
+     *  States: IDLE → LOADING → SCANNING → GREETING → LISTENING → DONE
+     *  Transitions are the only place state changes; no other code mutates.
+     *  This prevents every re-entry / loop bug.
+     * ─────────────────────────────────────────────────────────────────── */
+    let STATE = "IDLE";
+
+    function is(...states) { return states.includes(STATE); }
+
+    function transition(next) {
+      console.debug(`[auth] ${STATE} → ${next}`);
+      STATE = next;
+    }
+
+    /* ── audio context (lazy) ──────────────────────── */
+    let audioCtx = null;
+
+    function getACtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      return audioCtx;
+    }
+
+    function tone(freq, dur, type = "sine", gain = 0.09) {
+      const ac  = getACtx();
+      const now = ac.currentTime;
+      const osc = ac.createOscillator();
+      const g   = ac.createGain();
+      osc.type = type; osc.frequency.value = freq;
+      g.gain.setValueAtTime(0.001, now);
+      g.gain.exponentialRampToValueAtTime(gain, now + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      osc.connect(g); g.connect(ac.destination);
+      osc.start(now); osc.stop(now + dur + 0.05);
+    }
+
+    function chime() {
+      tone(523, .14); setTimeout(() => tone(659, .14), 160); setTimeout(() => tone(784, .22, "sine", .11), 320);
+    }
+
+    /* Resolves when the audio file finishes (or errors). Shows wave bar. */
+    function playFile(file) {
+      return new Promise(resolve => {
+        const a = new Audio(AUDIO_BASE + file);
+        setWaves(true);
+        a.play().catch(() => {});
+        const done = () => { setWaves(false); resolve(); };
+        a.onended = done;
+        a.onerror = done;
+        // safety timeout: 12 s max per file
+        const guard = setTimeout(done, 12000);
+        a.onended = () => { clearTimeout(guard); done(); };
+        a.onerror = () => { clearTimeout(guard); done(); };
+      });
+    }
+
+    function setWaves(active) {
+      if (active) {
+        waveBar.classList.add("on");
+        document.querySelectorAll(".wave").forEach(w => w.classList.remove("flat"));
+      } else {
+        document.querySelectorAll(".wave").forEach(w => w.classList.add("flat"));
+        setTimeout(() => { if (!is("GREETING")) waveBar.classList.remove("on"); }, 400);
+      }
+    }
+
+    /* ── greeting + STT flow (called exactly once) ── */
+    async function runGreeting(identity, gender, count) {
+      if (!is("SCANNING")) return; // guard: only enter from SCANNING
+      transition("GREETING");
+
+      chime();
+
+      let key = identity === "ABHIMANYU" ? "abhimanyu"
+              : count > 1               ? "group"
+              : gender === "female"     ? "unknown_female"
+              : "unknown_male";
+
+      const files = AUDIO[key];
+      const pick  = files[Math.floor(Math.random() * files.length)];
+
+      waveLabel.textContent = identity === "ABHIMANYU" ? "WELCOME BACK" : "WELCOME VISITOR";
+      waveBar.classList.add("on");
+
+      await playFile(pick);             // welcome audio
+
+      waveLabel.textContent = "AWAITING COMMAND";
+      await playFile(AUDIO.prompt);     // "where do you want to go?"
+
+      waveBar.classList.remove("on");
+
+      // Show nav buttons
+      navRow.style.display = "flex";
+
+      // Start STT
+      transition("LISTENING");
+      startSTT();
+    }
+
+    /* ── fallback: greet without face match (6 s) ─── */
+    let fallbackTimer = null;
+
+    function armFallback() {
+      fallbackTimer = setTimeout(() => {
+        if (is("SCANNING")) runGreeting("UNKNOWN", "male", 0);
+      }, 6000);
+    }
+
+    function clearFallback() {
+      if (fallbackTimer) { clearTimeout(fallbackTimer); fallbackTimer = null; }
+    }
+
+    /* ── Speech Recognition ─────────────────────────
+     *  - Only one instance ever; restart only in LISTENING state
+     * ───────────────────────────────────────────── */
+    let rec = null;
+
+    function startSTT() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) { sttPanel.classList.add("on"); sttText.textContent = "Voice not supported — use buttons below."; return; }
+
+      if (!rec) {
+        rec = new SR();
+        rec.continuous     = false;
+        rec.interimResults = true;
+        rec.lang           = "en-US";
+
+        rec.onstart  = () => { sttPanel.classList.add("on"); sttText.textContent = "Listening..."; };
+        rec.onresult = (e) => {
+          const t = e.results[0][0].transcript.toLowerCase();
+          sttText.textContent = t;
+          if (e.results[0].isFinal) routeVoice(t);
         };
+        rec.onerror  = () => { sttText.textContent = "Not recognised – try again or use buttons."; };
+        rec.onend    = () => {
+          // Only auto-restart while in LISTENING state
+          if (is("LISTENING")) setTimeout(() => { try { rec.start(); } catch(_){} }, 800);
+        };
+      }
 
-        let faceMatcher    = null;
-        let audioCtx       = null;
-        let isScanning     = false;
-        let authenticated  = false;
-        let recognition    = null;
-        let authTriggered  = false;
-        let greetingDone   = false;
-        let greetingTimer  = null;
+      try { rec.start(); } catch(_) {}
+    }
 
-        // ── Audio ───────────────────────────────────────────────────────────
+    const VOICE_MAP = {
+      "projects": "/#projects", "project":  "/#projects",
+      "about":    "/#about",    "about me": "/#about",
+      "contact":  "/#contact",  "email":    "/#contact",
+      "home":     "/",          "main":     "/",
+      "skip":     "/",          "enter":    "/"
+    };
 
-        function initAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function routeVoice(transcript) {
+      for (const [cmd, path] of Object.entries(VOICE_MAP)) {
+        if (transcript.includes(cmd)) { go(path); return; }
+      }
+      sttText.textContent = `"${transcript}" — say: home · projects · about · contact`;
+    }
+
+    function go(path) {
+      if (is("DONE")) return;
+      transition("DONE");
+
+      if (rec) { try { rec.stop(); } catch(_){} }
+      sttPanel.classList.remove("on");
+      waveBar.classList.remove("on");
+      chime();
+      sessionStorage.setItem("auth_done", "true");
+      setTimeout(() => { window.location.href = path; }, 750);
+    }
+
+    /* ── progress helpers ───────────────────────────── */
+    function setProgress(pct, text) {
+      loadFill.style.width = pct + "%";
+      loadInfo.textContent = text;
+    }
+
+    /* ── face-api setup ─────────────────────────────── */
+    let faceMatcher = null;
+
+    async function loadModels() {
+      setProgress(0,  "LOADING NEURAL MODELS...");
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);  setProgress(30, "FACE DETECTOR READY");
+      await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL); setProgress(55, "LANDMARKS READY");
+      await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);setProgress(78, "RECOGNITION READY");
+      await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);      setProgress(95, "AGE/GENDER READY");
+    }
+
+    async function loadReference() {
+      setProgress(97, "LOADING REFERENCE...");
+      try {
+        const img = await faceapi.fetchImage(REF_IMAGE);
+        const det = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions())
+          .withFaceLandmarks().withFaceDescriptor();
+        if (det) {
+          faceMatcher = new faceapi.FaceMatcher(
+            new faceapi.LabeledFaceDescriptors("ABHIMANYU", [det.descriptor]), THRESHOLD
+          );
         }
+      } catch(e) { console.warn("Reference not found:", e); }
+      setProgress(100, "SYSTEM READY");
+    }
 
-        function playTone(freq, duration, type = "sine", gain = 0.1) {
-            if (!audioCtx) return;
-            const now = audioCtx.currentTime;
-            const osc = audioCtx.createOscillator();
-            const g   = audioCtx.createGain();
-            osc.type = type;
-            osc.frequency.value = freq;
-            g.gain.setValueAtTime(0.001, now);
-            g.gain.exponentialRampToValueAtTime(gain, now + 0.02);
-            g.gain.exponentialRampToValueAtTime(0.001, now + duration);
-            osc.connect(g); g.connect(audioCtx.destination);
-            osc.start(now); osc.stop(now + duration + 0.1);
-        }
+    /* ── camera ─────────────────────────────────────── */
+    async function startCamera() {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode:"user", width:{ideal:640}, height:{ideal:480} },
+        audio: true
+      });
+      video.srcObject = stream;
+      await new Promise(r => { video.onloadedmetadata = r; });
+      try { await video.play(); } catch(_) {}
+    }
 
-        function playSuccessSound() {
-            playTone(523, .15, "sine", .1);
-            setTimeout(() => playTone(659, .15, "sine", .1),  160);
-            setTimeout(() => playTone(784, .25, "sine", .12), 320);
-        }
+    /* ── canvas + detect loop ───────────────────────────────────────────────
+     *  Single loop; each frame waits for the async faceapi call to finish
+     *  before scheduling the next — no stack-up possible.
+     * ─────────────────────────────────────────────────────────────────── */
+    function resizeCanvas() {
+      const r = video.getBoundingClientRect();
+      canvas.width  = r.width  * devicePixelRatio;
+      canvas.height = r.height * devicePixelRatio;
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    }
 
-        function playWav(file) {
-            return new Promise(resolve => {
-                const a = new Audio(AUDIO_BASE + file);
-                a.play().catch(console.warn);
-                a.onended = resolve;
-                a.onerror = resolve;
-                audioDialog.style.display = "flex";
-                audioWaves.querySelectorAll(".audio-wave").forEach(w => w.classList.remove("inactive"));
-                a.onended = () => {
-                    audioWaves.querySelectorAll(".audio-wave").forEach(w => w.classList.add("inactive"));
-                    resolve();
-                };
-            });
-        }
+    function drawBox(box, isMatch) {
+      const W  = canvas.clientWidth;
+      const x  = W - box.x - box.width;
+      const y  = box.y;
+      const bw = box.width;
+      const bh = box.height;
+      const c  = isMatch ? "#c9ff36" : "#ffcc33";
+      const cs = 18;
 
-        // ── Greeting + STT flow ─────────────────────────────────────────────
+      ctx.save();
+      ctx.strokeStyle = c; ctx.lineWidth = 1.5;
+      ctx.shadowColor = c; ctx.shadowBlur = isMatch ? 14 : 7;
 
-        async function runGreetingFlow(identity, gender, count) {
-            if (greetingDone) return;
-            greetingDone = true;
-            if (greetingTimer) { clearTimeout(greetingTimer); greetingTimer = null; }
+      // main rect
+      ctx.strokeRect(x, y, bw, bh);
 
-            let audioKey = "unknown_male";
-            if (identity === "ABHIMANYU")    audioKey = "abhimanyu";
-            else if (count > 1)              audioKey = "group";
-            else if (gender === "female")    audioKey = "unknown_female";
+      // corner accents
+      ctx.lineWidth = 2.5;
+      [[x,y+cs,x,y,x+cs,y],[x+bw-cs,y,x+bw,y,x+bw,y+cs],
+       [x,y+bh-cs,x,y+bh,x+cs,y+bh],[x+bw-cs,y+bh,x+bw,y+bh,x+bw,y+bh-cs]]
+      .forEach(([x1,y1,x2,y2,x3,y3]) => {
+        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.lineTo(x3,y3); ctx.stroke();
+      });
 
-            const files = AUDIO_FILES[audioKey];
-            const file  = files[Math.floor(Math.random() * files.length)];
+      // label strip
+      ctx.fillStyle = "rgba(23,25,21,.88)";
+      ctx.fillRect(x, y-20, bw, 20);
+      ctx.fillStyle = c;
+      ctx.font = "9px 'DM Mono', monospace";
+      ctx.fillText(isMatch ? "IDENTIFIED: ABHIMANYU" : "SCANNING...", x+8, y-6);
+      ctx.restore();
+    }
 
-            audioText.textContent = identity === "ABHIMANYU" ? "WELCOME BACK" : "WELCOME VISITOR";
-            await playWav(file);
-            audioText.textContent = "AWAITING COMMAND";
-            await playWav(AUDIO_FILES.prompt);
+    async function detectOnce() {
+      if (!is("SCANNING")) return false; // stop loop
+      resizeCanvas();
 
-            audioDialog.style.display = "none";
-            voicePanel.classList.add("active");
-            navButtons.classList.add("active");
+      const dets = await faceapi
+        .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize:224, scoreThreshold:.42 }))
+        .withFaceLandmarks().withAgeAndGender().withFaceDescriptors();
 
-            recognition = initSpeechRecognition();
-            if (recognition) { try { recognition.start(); } catch(e) { console.warn(e); } }
-        }
+      ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
-        // ── Speech Recognition ───────────────────────────────────────────────
+      if (!dets.length) {
+        srStatus.textContent = "SCANNING...";
+        srIdent.textContent  = "---";
+        srConf.textContent   = "---";
+        scanLabel.classList.remove("show");
+        return true; // continue loop
+      }
 
-        function initSpeechRecognition() {
-            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SR) { console.warn("STT not supported"); return null; }
+      const det   = dets[0];
+      const box   = det.detection.box;
+      let label   = "UNKNOWN";
+      let dist    = "---";
 
-            const rec = new SR();
-            rec.continuous    = false;
-            rec.interimResults = true;
-            rec.lang          = "en-US";
+      if (faceMatcher) {
+        const m = faceMatcher.findBestMatch(det.descriptor);
+        label   = m.label;
+        dist    = m.distance.toFixed(2);
+      }
 
-            rec.onstart   = () => { voicePanel.classList.add("active"); voiceTranscript.textContent = "Listening..."; };
-            rec.onresult  = (e) => {
-                const t = e.results[0][0].transcript.toLowerCase();
-                voiceTranscript.textContent = t;
-                if (e.results[0].isFinal) handleVoiceCommand(t);
-            };
-            rec.onerror   = () => { voiceTranscript.textContent = "Not recognized – try again."; };
-            rec.onend     = () => {
-                if (!authenticated) setTimeout(() => { try { rec.start(); } catch(e){} }, 900);
-            };
+      const isMatch = label === "ABHIMANYU" && parseFloat(dist) < THRESHOLD;
+      drawBox(box, isMatch);
 
-            return rec;
-        }
+      const conf = Math.round(det.detection.score * 100);
+      srStatus.textContent = isMatch ? "VERIFIED" : "SCANNING...";
+      srIdent.textContent  = isMatch ? "ABHIMANYU" : "UNKNOWN";
+      srConf.textContent   = `${conf}% | DIST: ${dist}`;
 
-        function handleVoiceCommand(transcript) {
-            const map = {
-                "projects":   "/#projects",
-                "project":    "/#projects",
-                "about":      "/#about",
-                "about me":   "/#about",
-                "contact":    "/#contact",
-                "email":      "/#contact",
-                "home":       "/",
-                "main":       "/",
-                "skip":       "/",
-                "enter":      "/"
-            };
-            for (const [cmd, path] of Object.entries(map)) {
-                if (transcript.includes(cmd)) { navigateTo(path, cmd.toUpperCase()); return; }
-            }
-            voiceTranscript.textContent = `Unknown: "${transcript}". Say: projects, about, contact, home`;
-        }
+      scanLabel.textContent = isMatch ? "VERIFIED" : "SCANNING...";
+      scanLabel.classList.add("show");
 
-        function navigateTo(path, label) {
-            authenticated = true;
-            if (recognition) { try { recognition.stop(); } catch(e){} }
-            voicePanel.classList.remove("active");
-            playSuccessSound();
-            sessionStorage.setItem("auth_done", "true");
-            setTimeout(() => { window.location.href = path; }, 800);
-        }
+      if (isMatch) {
+        clearFallback();
+        // Show success flash + greet (runGreeting guards double-entry)
+        successH.textContent   = "WELCOME BACK";
+        successSub.textContent = "ABHIMANYU VERIFIED";
+        successOverlay.classList.add("on");
+        await runGreeting("ABHIMANYU", det.gender, dets.length);
+        return false; // stop loop
+      }
 
-        // ── UI helpers ───────────────────────────────────────────────────────
+      // Unknown face visible — arm fallback greet (only once)
+      if (!fallbackTimer) armFallback();
 
-        function showError(msg) {
-            errorMsg.textContent = msg;
-            errorMsg.classList.add("show");
-            setTimeout(() => errorMsg.classList.remove("show"), 4000);
-        }
+      return true; // continue loop
+    }
 
-        function updateProgress(pct, text) {
-            loadingProgress.style.width = pct + "%";
-            loadingText.textContent = text;
-        }
+    async function detectLoop() {
+      const cont = await detectOnce();
+      if (cont) requestAnimationFrame(detectLoop);
+    }
 
-        // ── Face-api models ──────────────────────────────────────────────────
+    /* ── init flow ───────────────────────────────────── */
+    async function init() {
+      if (!is("IDLE")) return;
+      transition("LOADING");
 
-        async function loadModels() {
-            updateProgress(0, "LOADING NEURAL MODELS...");
-            await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-            updateProgress(30, "FACE DETECTOR READY");
-            await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-            updateProgress(55, "LANDMARKS READY");
-            await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-            updateProgress(78, "RECOGNITION READY");
-            await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
-            updateProgress(95, "AGE/GENDER READY");
-        }
+      if (typeof faceapi === "undefined") {
+        showToast("Face API still loading – please wait.");
+        transition("IDLE"); return;
+      }
 
-        async function createFaceMatcher() {
-            updateProgress(97, "LOADING REFERENCE...");
-            try {
-                const img = await faceapi.fetchImage(REFERENCE_IMAGE);
-                const det = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions())
-                    .withFaceLandmarks().withFaceDescriptor();
-                if (det) {
-                    const labeled = new faceapi.LabeledFaceDescriptors("ABHIMANYU", [det.descriptor]);
-                    faceMatcher = new faceapi.FaceMatcher(labeled, MATCH_THRESHOLD);
-                }
-            } catch(e) { console.warn("Reference not found:", e); }
-            updateProgress(100, "SYSTEM READY");
-        }
+      ctaWrap.style.display = "none";
+      loadingOverlay.classList.remove("hidden");
+      srStatus.textContent = "REQUESTING PERMISSIONS...";
+      getACtx(); // unlock audio on user gesture
 
-        // ── Camera ───────────────────────────────────────────────────────────
+      try {
+        setProgress(5, "REQUESTING CAMERA & MICROPHONE...");
 
-        async function requestPermissions() {
-            try {
-                const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: true });
-                s.getTracks().forEach(t => t.stop());
-                return true;
-            } catch(e) { return false; }
-        }
+        // Preflight permission request (iOS/Safari/Android needs explicit grant)
+        const preflight = await navigator.mediaDevices.getUserMedia({ video:true, audio:true });
+        preflight.getTracks().forEach(t => t.stop());
 
-        async function startWebcam() {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
-                audio: true
-            });
-            video.srcObject = stream;
-            await new Promise(r => { video.onloadedmetadata = r; });
-            try { await video.play(); } catch(e) { console.warn("Autoplay blocked"); }
-        }
+        setProgress(10, "PERMISSIONS GRANTED");
 
-        // ── Canvas + detection ───────────────────────────────────────────────
+        await loadModels();
+        await loadReference();
+        await startCamera();
 
-        function resizeCanvas() {
-            const rect = video.getBoundingClientRect();
-            canvas.width  = rect.width  * devicePixelRatio;
-            canvas.height = rect.height * devicePixelRatio;
-            ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-        }
+        loadingOverlay.classList.add("hidden");
 
-        function drawDetection(box, label) {
-            const w  = canvas.clientWidth;
-            const x  = w - box.x - box.width;
-            const y  = box.y;
-            const bw = box.width;
-            const bh = box.height;
-            const isMatch = label === "ABHIMANYU";
-            const color   = isMatch ? "#c9ff36" : "#ffcc33";
+        srStatus.textContent = "READY";
+        waveBar.classList.add("on");
+        waveLabel.textContent = "ALIGN YOUR FACE";
+        setWaves(false); // show idle flat waves
 
-            ctx.save();
-            ctx.strokeStyle = color;
-            ctx.lineWidth   = isMatch ? 2.5 : 1.5;
-            ctx.shadowColor = color;
-            ctx.shadowBlur  = isMatch ? 16 : 8;
-            ctx.strokeRect(x, y, bw, bh);
+        transition("SCANNING");
+        armFallback();
+        detectLoop();
 
-            // corner accents
-            const cs = 20;
-            ctx.lineWidth = 3;
-            [
-                [x, y, x+cs, y, x, y+cs],
-                [x+bw-cs, y, x+bw, y, x+bw, y+cs],
-                [x, y+bh-cs, x, y+bh, x+cs, y+bh],
-                [x+bw-cs, y+bh, x+bw, y+bh, x+bw, y+bh-cs]
-            ].forEach(([x1,y1,x2,y2,x3,y3]) => {
-                ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.lineTo(x3,y3); ctx.stroke();
-            });
+      } catch(e) {
+        console.error(e);
+        transition("IDLE");
+        loadingOverlay.classList.add("hidden");
+        ctaWrap.style.display = "flex";
+        const msg = e.name === "NotAllowedError"
+          ? "CAMERA & MICROPHONE PERMISSION DENIED — allow in browser settings."
+          : "COULD NOT START — " + (e.message || "unknown error");
+        showToast(msg);
+      }
+    }
 
-            // label strip
-            ctx.fillStyle = "rgba(23,25,21,.88)";
-            ctx.fillRect(x, y - 20, bw, 20);
-            ctx.fillStyle = color;
-            ctx.font      = "10px 'DM Mono', monospace";
-            ctx.fillText(isMatch ? "IDENTIFIED: ABHIMANYU" : "SCANNING...", x + 8, y - 6);
-            ctx.restore();
-        }
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.classList.add("on");
+      setTimeout(() => toast.classList.remove("on"), 4500);
+    }
 
-        async function detectLoop() {
-            if (!isScanning || authenticated) return;
-            resizeCanvas();
+    /* ── button wiring ───────────────────────────────── */
+    initBtn.addEventListener("click", init);
+    initBtn.addEventListener("touchend", e => { e.preventDefault(); init(); });
 
-            const dets = await faceapi
-                .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.45 }))
-                .withFaceLandmarks().withAgeAndGender().withFaceDescriptors();
+    skipBtn.addEventListener("click", () => go("/"));
 
-            ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+    navRow.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => go(btn.dataset.path));
+    });
 
-            if (!dets.length) {
-                statusText.textContent  = "NO FACE DETECTED";
-                identityText.textContent   = "---";
-                confidenceText.textContent = "---";
-            } else {
-                const det  = dets[0];
-                const box  = det.detection.box;
-                let label  = "UNKNOWN";
-                let dist   = "---";
+    window.addEventListener("resize", () => { if (is("SCANNING","GREETING","LISTENING")) resizeCanvas(); });
+  })();
+  </script>
 
-                if (faceMatcher) {
-                    const m  = faceMatcher.findBestMatch(det.descriptor);
-                    label    = m.label;
-                    dist     = m.distance.toFixed(2);
-                }
-
-                drawDetection(box, label);
-                const conf = Math.round(det.detection.score * 100);
-                statusText.textContent     = "SCANNING...";
-                identityText.textContent   = label;
-                confidenceText.textContent = `${conf}% | DIST: ${dist}`;
-
-                if (label === "ABHIMANYU" && parseFloat(dist) < MATCH_THRESHOLD) {
-                    await triggerAuth(label, det.gender, dets.length);
-                } else if (label !== "ABHIMANYU" && conf > 68) {
-                    // Unknown person with confident detection — greet after short delay
-                    if (!greetingDone && !greetingTimer) {
-                        greetingTimer = setTimeout(() => runGreetingFlow("UNKNOWN", det.gender, dets.length), 2000);
-                    }
-                }
-            }
-
-            requestAnimationFrame(detectLoop);
-        }
-
-        async function triggerAuth(identity, gender, count) {
-            if (authTriggered) return;
-            authTriggered = true;
-            isScanning    = false;
-
-            statusText.textContent = "VERIFIED";
-            identityText.textContent = identity;
-
-            playSuccessSound();
-            successTitle.textContent = identity === "ABHIMANYU" ? "WELCOME BACK" : "WELCOME VISITOR";
-            successSub.textContent   = identity === "ABHIMANYU" ? "ABHIMANYU VERIFIED" : `${(gender||"").toUpperCase()} DETECTED`;
-            successScreen.classList.add("active");
-
-            await runGreetingFlow(identity, gender, count);
-        }
-
-        // ── Nav buttons (desktop / post-auth) ───────────────────────────────
-
-        navButtons.querySelectorAll(".nav-btn").forEach(btn => {
-            btn.addEventListener("click", () => {
-                const nav  = btn.dataset.nav;
-                const path = nav === "home" ? "/" : `/#${nav}`;
-                navigateTo(path, nav.toUpperCase());
-            });
-        });
-
-        // ── Start button ─────────────────────────────────────────────────────
-
-        startBtn.addEventListener("click", async () => {
-            if (typeof faceapi === "undefined") {
-                showError("Face API still loading – please wait a moment.");
-                return;
-            }
-            try {
-                startBtn.classList.add("hidden");
-                loadingOverlay.classList.remove("hidden");
-                statusText.textContent = "REQUESTING PERMISSIONS...";
-                initAudio();
-
-                updateProgress(5, "REQUESTING CAMERA & MICROPHONE...");
-                const ok = await requestPermissions();
-                if (!ok) throw new Error("Permissions denied");
-
-                updateProgress(10, "PERMISSIONS GRANTED");
-                await loadModels();
-                await createFaceMatcher();
-                await startWebcam();
-
-                loadingOverlay.classList.add("hidden");
-                statusText.textContent     = "READY";
-                audioDialog.style.display  = "flex";
-                audioText.textContent      = "ALIGN YOUR FACE";
-                playTone(600, .1, "sine", .08);
-
-                isScanning = true;
-                detectLoop();
-
-                // Fallback: if no face matched within 6s, greet as unknown
-                greetingTimer = setTimeout(() => {
-                    if (!greetingDone) runGreetingFlow("UNKNOWN", "male", 0);
-                }, 6000);
-
-            } catch(e) {
-                console.error(e);
-                loadingOverlay.classList.add("hidden");
-                startBtn.classList.remove("hidden");
-                showError("CAMERA & MIC ACCESS REQUIRED. Allow permissions in browser settings.");
-            }
-        });
-
-        startBtn.addEventListener("touchend", e => { e.preventDefault(); startBtn.click(); });
-
-        // ── Skip button ───────────────────────────────────────────────────────
-
-        skipBtn.addEventListener("click", () => {
-            playTone(600, .1, "sine", .08);
-            sessionStorage.setItem("auth_done", "true");
-            window.location.href = "/";
-        });
-
-        window.addEventListener("resize", resizeCanvas);
-    </script>
 </body>
-
 </html>
