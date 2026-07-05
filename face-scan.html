@@ -75,10 +75,6 @@
                 padding: 18px !important;
             }
 
-            .loading-item {
-                font-size: 9px !important;
-            }
-
             button {
                 padding: 18px 28px !important;
                 font-size: 14px !important;
@@ -400,11 +396,11 @@
         }
 
         .loading-box {
-            width: 340px;
+            width: min(320px, 86vw);
             padding: 28px;
             border: 1px solid rgba(166, 255, 47, 0.4);
-            background: rgba(4, 20, 8, 0.85);
-            box-shadow: 0 0 40px rgba(166, 255, 47, 0.15), inset 0 0 30px rgba(166, 255, 47, 0.08);
+            background: rgba(4, 20, 8, 0.92);
+            text-align: center;
             position: relative;
         }
 
@@ -412,27 +408,25 @@
         .loading-box::after {
             content: "";
             position: absolute;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             border-color: var(--green);
             border-style: solid;
         }
 
         .loading-box::before {
-            top: -1px;
-            left: -1px;
+            top: -1px; left: -1px;
             border-width: 2px 0 0 2px;
         }
 
         .loading-box::after {
-            bottom: -1px;
-            right: -1px;
+            bottom: -1px; right: -1px;
             border-width: 0 2px 2px 0;
         }
 
         .loading-header {
             color: var(--green);
-            font-size: 14px;
+            font-size: 11px;
             letter-spacing: 3px;
             text-shadow: 0 0 10px var(--green);
             margin-bottom: 20px;
@@ -441,62 +435,26 @@
 
         .loading-bar {
             width: 100%;
-            height: 6px;
+            height: 2px;
             background: rgba(166, 255, 47, 0.15);
-            border: 1px solid rgba(166, 255, 47, 0.3);
-            margin-bottom: 18px;
+            margin-bottom: 14px;
             overflow: hidden;
         }
 
         .loading-progress {
             height: 100%;
             width: 0%;
-            background: linear-gradient(90deg, var(--green), var(--green2));
-            box-shadow: 0 0 12px var(--green);
+            background: var(--green);
+            box-shadow: 0 0 6px var(--green);
             transition: width 0.3s ease;
         }
 
         .loading-text {
-            color: var(--green);
-            font-size: 11px;
+            color: rgba(166, 255, 47, 0.6);
+            font-size: 9px;
             letter-spacing: 2px;
             text-align: center;
-            margin-bottom: 18px;
-            text-shadow: 0 0 8px var(--green);
-        }
-
-        .loading-items {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .loading-item {
-            color: rgba(166, 255, 47, 0.4);
-            font-size: 10px;
-            letter-spacing: 1.5px;
-            padding: 4px 8px;
-            background: rgba(166, 255, 47, 0.05);
-            border-left: 2px solid rgba(166, 255, 47, 0.2);
-            transition: all 0.25s ease;
-        }
-
-        .loading-item.loading {
-            color: var(--green);
-            background: rgba(166, 255, 47, 0.12);
-            border-left-color: var(--green);
             text-shadow: 0 0 6px var(--green);
-        }
-
-        .loading-item.loaded {
-            color: var(--green2);
-            background: rgba(56, 255, 122, 0.08);
-            border-left-color: var(--green2);
-        }
-
-        .loading-item.loaded::after {
-            content: " ✓";
-            color: var(--green2);
         }
 
         @media (max-width: 768px) {
@@ -593,17 +551,16 @@
             }
 
             .loading-box {
-                width: min(330px, 88vw);
+                width: min(300px, 88vw);
                 padding: 22px;
             }
 
             .loading-header {
-                font-size: 12px;
+                font-size: 10px;
             }
 
-            .loading-text,
-            .loading-item {
-                font-size: 9px;
+            .loading-text {
+                font-size: 8px;
             }
 
             button {
@@ -697,14 +654,6 @@
                     <div class="loading-progress" id="loadingProgress"></div>
                 </div>
                 <div class="loading-text" id="loadingText">INITIALIZING...</div>
-                <div class="loading-items" id="loadingItems">
-                    <div class="loading-item" data-item="detector">TINY_FACE_DETECTOR</div>
-                    <div class="loading-item" data-item="landmarks">FACE_LANDMARKS_68</div>
-                    <div class="loading-item" data-item="recognition">FACE_RECOGNITION</div>
-                    <div class="loading-item" data-item="expression">FACE_EXPRESSIONS</div>
-                    <div class="loading-item" data-item="agegender">AGE_GENDER_NET</div>
-                    <div class="loading-item" data-item="reference">REFERENCE_MATCHER</div>
-                </div>
             </div>
         </div>
 
@@ -738,7 +687,6 @@
         const loadingOverlay = document.getElementById("loadingOverlay");
         const loadingProgress = document.getElementById("loadingProgress");
         const loadingText = document.getElementById("loadingText");
-        const loadingItems = document.getElementById("loadingItems");
 
         const matchStatus = document.getElementById("matchStatus");
         const expressionText = document.getElementById("expressionText");
@@ -916,14 +864,6 @@
             setTimeout(() => beep(880, 0.14, 0.045), 210);
         }
 
-        function setItemStatus(itemName, status) {
-            const item = loadingItems.querySelector(`[data-item="${itemName}"]`);
-            if (item) {
-                item.classList.remove("loading", "loaded");
-                if (status) item.classList.add(status);
-            }
-        }
-
         function updateProgress(percent, text) {
             loadingProgress.style.width = `${percent}%`;
             loadingText.textContent = text;
@@ -932,30 +872,19 @@
         async function loadModels() {
             updateProgress(0, "LOADING NEURAL MODELS...");
 
-            // Load each model sequentially for visual feedback
-            setItemStatus("detector", "loading");
             await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-            setItemStatus("detector", "loaded");
             updateProgress(16, "TINY_FACE_DETECTOR LOADED");
 
-            setItemStatus("landmarks", "loading");
             await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-            setItemStatus("landmarks", "loaded");
             updateProgress(32, "FACE_LANDMARKS_68 LOADED");
 
-            setItemStatus("recognition", "loading");
             await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-            setItemStatus("recognition", "loaded");
             updateProgress(48, "FACE_RECOGNITION LOADED");
 
-            setItemStatus("expression", "loading");
             await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
-            setItemStatus("expression", "loaded");
             updateProgress(64, "FACE_EXPRESSIONS LOADED");
 
-            setItemStatus("agegender", "loading");
             await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
-            setItemStatus("agegender", "loaded");
             updateProgress(80, "AGE_GENDER_NET LOADED");
 
             matchStatus.textContent = "MODELS READY";
@@ -963,7 +892,6 @@
 
         async function createFaceMatcher() {
             updateProgress(85, "LOADING REFERENCE IMAGE...");
-            setItemStatus("reference", "loading");
 
             try {
                 const img = await faceapi.fetchImage(REFERENCE_IMAGE);
@@ -988,12 +916,10 @@
 
                 faceMatcher = new faceapi.FaceMatcher(labeledDescriptor, MATCH_THRESHOLD);
                 matchStatus.textContent = "REFERENCE LOADED";
-                setItemStatus("reference", "loaded");
                 updateProgress(100, "SYSTEM READY");
             } catch (error) {
                 console.warn(error);
                 matchStatus.textContent = "REFERENCE IMAGE MISSING";
-                setItemStatus("reference", "loaded");
                 updateProgress(100, "SYSTEM READY (NO REFERENCE)");
             }
         }

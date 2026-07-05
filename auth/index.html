@@ -585,7 +585,7 @@
   </div>
 
   <!-- loading overlay -->
-  <div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-overlay hidden" id="loadingOverlay">
     <div class="loading-box">
       <div class="loading-title">SYSTEM INIT</div>
       <div class="loading-track"><div class="loading-fill" id="loadFill"></div></div>
@@ -670,8 +670,9 @@
     const REF_IMAGE  = "/abhimanyu-reference.jpg";
     const THRESHOLD  = 0.55;
     const AUDIO_BASE = "/static/audio/";
-    const LS_KEY     = "registered_faces"; // localStorage key
+    const LS_KEY     = "registered_faces";
     const REG_FRAMES = 10;
+    const REQUIRED_STABLE_FRAMES = 3;
 
     const AUDIO = {
       abhimanyu:      ["welcome-abhimanyu-1.wav","welcome-abhimanyu-2.wav","welcome-abhimanyu-3.wav","welcome-abhimanyu-4.wav"],
@@ -681,14 +682,19 @@
       prompt:         "welcome-prompt-query.wav"
     };
 
-    /* ── state machine ──────────────────────────────────────────────────────
+    /* ── state machine ─────────────────────────────────────────────────────
      *  IDLE → LOADING → SCANNING → GREETING → LISTENING → DONE
      *  IDLE → REGISTERING (parallel path, returns to IDLE)
-     * ─────────────────────────────────────────────────────────────────── */
+     * ────────────────────────────────────────────────────────────────── */
     let STATE = "IDLE";
-    let detecting = false; // lock: only one faceapi call in flight at a time
+    let detecting = false;
     function is(...ss) { return ss.includes(STATE); }
     function transition(s) { console.debug(`[auth] ${STATE}→${s}`); STATE = s; }
+
+    /* ── stable-frame counters ──────────────────────── */
+    let stableMatchCount   = 0;
+    let stableUnknownCount = 0;
+    let lastKnownLabel     = "UNKNOWN";
 
     /* ── audio ──────────────────────────────────────── */
     let audioCtx = null;
@@ -727,41 +733,7 @@
       else setTimeout(() => { if (!is("GREETING")) waveBar.classList.remove("on"); }, 400);
     }
 
-    /* ── greeting (runs exactly once — state guards entry) ── */
-    async function runGreeting(identity, gender, count) {
-      if (!is("SCANNING")) return;
-      transition("GREETING");
-      chime();
-
-      const key = identity === "ABHIMANYU" ? "abhimanyu"
-                : count > 1               ? "group"
-                : gender === "female"     ? "unknown_female"
-                : "unknown_male";
-
-      const files = AUDIO[key];
-      const pick  = files[Math.floor(Math.random() * files.length)];
-      waveLabel.textContent = identity === "ABHIMANYU" ? "WELCOME BACK" : "WELCOME VISITOR";
-      waveBar.classList.add("on");
-
-      await playFile(pick);
-      waveLabel.textContent = "AWAITING COMMAND";
-      await playFile(AUDIO.prompt);
-      waveBar.classList.remove("on");
-
-      navRow.style.display = "flex";
-      transition("LISTENING");
-      startSTT();
-    }
-
-    /* ── fallback greet (6 s after scan starts with no match) ── */
-    let fallbackTimer = null;
-    function armFallback() {
-      if (fallbackTimer) return;
-      fallbackTimer = setTimeout(() => { if (is("SCANNING")) runGreeting("UNKNOWN","male",0); }, 6000);
-    }
-    function clearFallback() { if(fallbackTimer){clearTimeout(fallbackTimer);fallbackTimer=null;} }
-
-    /* ── STT (single instance, only restarts in LISTENING) ── */
+    /* ── STT ────────────────────────────────────────── */
     let rec = null;
     function startSTT() {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -791,6 +763,33 @@
       setTimeout(()=>{ window.location.href=path; },750);
     }
 
+    /* ── greeting ───────────────────────────────────── */
+    async function _greetingFlow(identity, gender, count) {
+      chime();
+      const key = identity==="ABHIMANYU"?"abhimanyu":count>1?"group":gender==="female"?"unknown_female":"unknown_male";
+      const files=AUDIO[key], pick=files[Math.floor(Math.random()*files.length)];
+      waveLabel.textContent = identity==="ABHIMANYU"?"WELCOME BACK":"WELCOME VISITOR";
+      waveBar.classList.add("on");
+      await playFile(pick);
+      waveLabel.textContent="AWAITING COMMAND";
+      await playFile(AUDIO.prompt);
+      waveBar.classList.remove("on");
+      navRow.style.display="flex";
+      transition("LISTENING");
+      startSTT();
+    }
+
+    let fallbackTimer = null;
+    function armFallback() {
+      if (fallbackTimer) return;
+      fallbackTimer = setTimeout(() => {
+        if (!is("SCANNING")) return;
+        transition("GREETING");
+        _greetingFlow("UNKNOWN","male",0);
+      }, 6000);
+    }
+    function clearFallback() { if(fallbackTimer){clearTimeout(fallbackTimer);fallbackTimer=null;} }
+
     /* ── progress ───────────────────────────────────── */
     function setProgress(pct, text) { loadFill.style.width=pct+"%"; loadInfo.textContent=text; }
 
@@ -801,31 +800,27 @@
     async function ensureModels() {
       if (modelsLoaded) return;
       setProgress(0,  "LOADING NEURAL MODELS...");
-      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);   setProgress(30,"FACE DETECTOR READY");
-      await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);  setProgress(55,"LANDMARKS READY");
-      await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL); setProgress(78,"RECOGNITION READY");
-      await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);       setProgress(95,"AGE/GENDER READY");
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);   setProgress(18,"TINY_FACE_DETECTOR LOADED");
+      await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);  setProgress(36,"FACE_LANDMARKS_68 LOADED");
+      await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL); setProgress(54,"FACE_RECOGNITION LOADED");
+      await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);  setProgress(72,"FACE_EXPRESSIONS LOADED");
+      await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);       setProgress(90,"AGE_GENDER_NET LOADED");
       modelsLoaded = true;
     }
 
-    /* Build FaceMatcher from: static reference image + localStorage entries */
     async function buildMatcher() {
-      setProgress(97,"LOADING REFERENCE...");
+      setProgress(95,"LOADING REFERENCE...");
       const descriptors = [];
 
-      // static reference
       try {
         const img = await faceapi.fetchImage(REF_IMAGE);
-        const det = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+        const det = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions({inputSize:416,scoreThreshold:.5})).withFaceLandmarks().withFaceDescriptor();
         if (det) descriptors.push(new faceapi.LabeledFaceDescriptors("ABHIMANYU",[det.descriptor]));
       } catch(e) { console.warn("Static reference missing:", e); }
 
-      // registered faces from localStorage
       const stored = loadRegistered();
       for (const [name, arr] of Object.entries(stored)) {
-        // arr is array of plain float arrays → Float32Array descriptors
         const descs = arr.map(d => new Float32Array(d));
-        // average descriptor for robustness
         const avg = averageDescriptor(descs);
         descriptors.push(new faceapi.LabeledFaceDescriptors(name.toUpperCase(),[avg]));
       }
@@ -845,7 +840,6 @@
       const avg = new Float32Array(len);
       for (const d of descs) for (let i=0;i<len;i++) avg[i]+=d[i];
       for (let i=0;i<len;i++) avg[i]/=descs.length;
-      // normalise
       let mag=0; for(let i=0;i<len;i++) mag+=avg[i]*avg[i]; mag=Math.sqrt(mag);
       for(let i=0;i<len;i++) avg[i]/=mag;
       return avg;
@@ -853,122 +847,230 @@
 
     /* ── camera ─────────────────────────────────────── */
     async function startCamera() {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video:{facingMode:"user",width:{ideal:640},height:{ideal:480}}, audio:true
-      });
+      const isMobile = window.matchMedia("(max-width: 768px)").matches;
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      const constraints = {
+        video: { facingMode:"user", width:{ideal: isMobile?640:1280}, height:{ideal: isMobile?480:720} },
+        audio: true
+      };
+      if (isIOS && isSafari) { constraints.video.width={ideal:640}; constraints.video.height={ideal:480}; }
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       video.srcObject = stream;
-      await new Promise(r=>{ video.onloadedmetadata=r; });
-      try { await video.play(); } catch(_) {}
+      await new Promise((resolve, reject) => {
+        video.onloadedmetadata = () => { video.setAttribute('playsinline',''); resolve(); };
+        video.onerror = reject;
+      });
+      try { await video.play(); } catch(_) {
+        video.muted = true;
+        await video.play().catch(()=>{ throw new Error("Video playback failed. Please tap the screen to start."); });
+      }
     }
 
-    /* ── canvas / detect ─────────────────────────────── */
+    /* ── canvas helpers ──────────────────────────────── */
     function resizeCanvas() {
       const r=video.getBoundingClientRect();
       canvas.width=r.width*devicePixelRatio; canvas.height=r.height*devicePixelRatio;
       ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
     }
 
-    function drawBox(box, label, isMatch) {
-      const W=canvas.clientWidth, x=W-box.x-box.width, y=box.y, bw=box.width, bh=box.height;
-      const c=isMatch?"#c9ff36":"#ffcc33", cs=18;
+    function dominantExpression(expressions) {
+      return Object.entries(expressions).sort((a,b)=>b[1]-a[1])[0];
+    }
+
+    function drawCyberBox(box, label, confidence, expression, age, gender, distanceText) {
+      const W = canvas.clientWidth;
+      const x = W - box.x - box.width, y = box.y, w = box.width, h = box.height;
+      const cx = x + w/2, cy = y + h/2;
+      const isKnown = label === "ABHIMANYU";
+      const color = isKnown ? "#c9ff36" : "#ffcc33";
+
       ctx.save();
-      ctx.strokeStyle=c; ctx.lineWidth=1.5; ctx.shadowColor=c; ctx.shadowBlur=isMatch?14:7;
-      ctx.strokeRect(x,y,bw,bh);
-      ctx.lineWidth=2.5;
-      [[x,y+cs,x,y,x+cs,y],[x+bw-cs,y,x+bw,y,x+bw,y+cs],
-       [x,y+bh-cs,x,y+bh,x+cs,y+bh],[x+bw-cs,y+bh,x+bw,y+bh,x+bw,y+bh-cs]]
-      .forEach(([x1,y1,x2,y2,x3,y3])=>{ ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.lineTo(x3,y3);ctx.stroke(); });
-      ctx.fillStyle="rgba(23,25,21,.88)"; ctx.fillRect(x,y-20,bw,20);
-      ctx.fillStyle=c; ctx.font="9px 'DM Mono',monospace";
-      ctx.fillText(isMatch?`IDENTIFIED: ${label}`:"SCANNING...", x+8,y-6);
+      ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+      ctx.shadowColor = color; ctx.shadowBlur = isKnown ? 16 : 8;
+      ctx.strokeRect(x, y, w, h);
+
+      const corner = 22;
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(x, y+corner); ctx.lineTo(x, y); ctx.lineTo(x+corner, y);
+      ctx.moveTo(x+w-corner, y); ctx.lineTo(x+w, y); ctx.lineTo(x+w, y+corner);
+      ctx.moveTo(x+w, y+h-corner); ctx.lineTo(x+w, y+h); ctx.lineTo(x+w-corner, y+h);
+      ctx.moveTo(x+corner, y+h); ctx.lineTo(x, y+h); ctx.lineTo(x, y+h-corner);
+      ctx.stroke();
+
+      // animated tick marks
+      const tick = (Date.now() / 20) % 30;
+      ctx.lineWidth = 1;
+      for (let i=0; i<w; i+=30) {
+        ctx.beginPath(); ctx.moveTo(x+i+tick, y-7); ctx.lineTo(x+i+tick+12, y-7); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x+i+tick, y+h+7); ctx.lineTo(x+i+tick+12, y+h+7); ctx.stroke();
+      }
+      for (let i=0; i<h; i+=30) {
+        ctx.beginPath(); ctx.moveTo(x-7, y+i+tick); ctx.lineTo(x-7, y+i+tick+12); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x+w+7, y+i+tick); ctx.lineTo(x+w+7, y+i+tick+12); ctx.stroke();
+      }
+
+      // center crosshair + ring
+      ctx.shadowBlur = 10; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cx-18,cy); ctx.lineTo(cx-5,cy);
+      ctx.moveTo(cx+5,cy);  ctx.lineTo(cx+18,cy);
+      ctx.moveTo(cx,cy-18); ctx.lineTo(cx,cy-5);
+      ctx.moveTo(cx,cy+5);  ctx.lineTo(cx,cy+18);
+      ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, 24, 0, Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI*2);
+      ctx.fillStyle = color; ctx.fill();
+
+      // label tag above box
+      const tagW = isKnown ? 245 : 190, tagH = 58;
+      const tagX = x, tagY = Math.max(10, y - tagH - 12);
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = "rgba(0,0,0,0.72)"; ctx.strokeStyle = color; ctx.lineWidth = 1;
+      ctx.fillRect(tagX, tagY, tagW, tagH);
+      ctx.strokeRect(tagX, tagY, tagW, tagH);
+      ctx.fillStyle = isKnown ? "#f4ffe9" : "#ffcc33";
+      ctx.font = "bold 13px 'DM Mono',monospace";
+      ctx.fillText(isKnown ? `IDENTIFIED: ${label}` : "UNKNOWN SUBJECT", tagX+10, tagY+18);
+      ctx.fillStyle = color; ctx.font = "10px 'DM Mono',monospace";
+      ctx.fillText(`DETECTION_CONF: ${confidence}`, tagX+10, tagY+34);
+      ctx.fillText(`MATCH_DISTANCE: ${distanceText}`, tagX+10, tagY+48);
+
+      // side telemetry panel
+      const panelW = 175, panelH = 96;
+      let panelX = x + w + 16, panelY = y + 8;
+      if (panelX + panelW > W - 18) panelX = x - panelW - 16;
+      if (panelX < 18) panelX = 18;
+      ctx.fillStyle = "rgba(0,0,0,0.58)"; ctx.strokeStyle = "rgba(201,255,54,0.45)";
+      ctx.shadowBlur = 8;
+      ctx.fillRect(panelX, panelY, panelW, panelH);
+      ctx.strokeRect(panelX, panelY, panelW, panelH);
+      ctx.fillStyle = "#c9ff36"; ctx.font = "10px 'DM Mono',monospace";
+      ctx.fillText("LIVE_FACE_TELEMETRY", panelX+10, panelY+16);
+      ctx.fillText(`BOX_W: ${Math.round(w)}px`, panelX+10, panelY+34);
+      ctx.fillText(`BOX_H: ${Math.round(h)}px`, panelX+10, panelY+48);
+      ctx.fillText(`EXPR: ${expression.toUpperCase()}`, panelX+10, panelY+62);
+      ctx.fillText(`AGE: ${Math.round(age)} | ${gender.toUpperCase()}`, panelX+10, panelY+76);
+      ctx.beginPath(); ctx.moveTo(panelX, panelY+panelH/2); ctx.lineTo(cx, cy);
+      ctx.strokeStyle = "rgba(201,255,54,0.45)"; ctx.lineWidth = 1; ctx.stroke();
+
       ctx.restore();
     }
 
-    /* Single detect pass — returns true to keep looping, false to stop */
-    async function detectOnce() {
-      if (!is("SCANNING") || detecting) return false;
+    function drawLandmarks(landmarks) {
+      const W = canvas.clientWidth;
+      const positions = landmarks.positions;
+      ctx.save();
+      ctx.fillStyle = "#38ff7a"; ctx.strokeStyle = "rgba(56,255,122,0.45)";
+      ctx.shadowColor = "#38ff7a"; ctx.shadowBlur = 8; ctx.lineWidth = 1;
+      for (const p of positions) {
+        ctx.beginPath(); ctx.arc(W-p.x, p.y, 2.2, 0, Math.PI*2); ctx.fill();
+      }
+      function connectRange(start, end, close=false) {
+        ctx.beginPath();
+        for (let i=start; i<=end; i++) {
+          const p = positions[i], px = W-p.x, py = p.y;
+          i===start ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+        }
+        if (close) { const p=positions[start]; ctx.lineTo(W-p.x,p.y); }
+        ctx.stroke();
+      }
+      connectRange(0,16); connectRange(17,21); connectRange(22,26);
+      connectRange(27,30); connectRange(31,35);
+      connectRange(36,41,true); connectRange(42,47,true);
+      connectRange(48,59,true); connectRange(60,67,true);
+      ctx.restore();
+    }
+
+    function getDetectorOptions() {
+      const isMobile = window.matchMedia("(max-width: 768px)").matches;
+      return new faceapi.TinyFaceDetectorOptions({ inputSize: isMobile?224:416, scoreThreshold: isMobile?0.42:0.5 });
+    }
+
+    /* ── detect loop ─────────────────────────────────── */
+    async function detectLoop() {
+      if (!is("SCANNING") || detecting) { if (is("SCANNING")) requestAnimationFrame(detectLoop); return; }
       detecting = true;
       try {
         resizeCanvas();
-
+        const opts = getDetectorOptions();
         const dets = await faceapi
-          .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({inputSize:224,scoreThreshold:.42}))
-          .withFaceLandmarks().withAgeAndGender().withFaceDescriptors();
+          .detectAllFaces(video, opts)
+          .withFaceLandmarks()
+          .withFaceExpressions()
+          .withAgeAndGender()
+          .withFaceDescriptors();
 
-        if (!is("SCANNING")) return false; // state changed while awaiting
+        if (!is("SCANNING")) return;
 
-        ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
+        const dims = { width: canvas.clientWidth, height: canvas.clientHeight };
+        const resized = faceapi.resizeResults(dets, dims);
+        ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
-        if (!dets.length) {
+        if (!resized.length) {
           srStatus.textContent="SCANNING..."; srIdent.textContent="---"; srConf.textContent="---";
           scanLabel.classList.remove("show");
           if (!fallbackTimer) armFallback();
-          return true;
+          detecting = false;
+          requestAnimationFrame(detectLoop);
+          return;
         }
 
-        const det=dets[0], box=det.detection.box;
-        let label="UNKNOWN", dist="---";
+        clearFallback();
 
-        if (faceMatcher) {
-          const m=faceMatcher.findBestMatch(det.descriptor);
-          label=m.label; dist=m.distance.toFixed(2);
+        let matchedResult = null;
+
+        for (const result of resized) {
+          const box  = result.detection.box;
+          const [expr] = dominantExpression(result.expressions);
+          let label = "UNKNOWN", dist = "--";
+
+          if (faceMatcher) {
+            const m = faceMatcher.findBestMatch(result.descriptor);
+            dist = m.distance.toFixed(2);
+            if (m.label !== "unknown" && m.distance <= THRESHOLD) {
+              stableMatchCount++; stableUnknownCount = 0;
+            } else {
+              stableUnknownCount++; stableMatchCount = 0;
+            }
+            if (stableMatchCount >= REQUIRED_STABLE_FRAMES)   lastKnownLabel = m.label.toUpperCase();
+            if (stableUnknownCount >= REQUIRED_STABLE_FRAMES) lastKnownLabel = "UNKNOWN";
+            label = lastKnownLabel;
+          }
+
+          const isMatch = label !== "UNKNOWN";
+          const conf = `${Math.round(result.detection.score*100)}%`;
+
+          drawCyberBox(box, label, conf, expr, result.age, result.gender, dist);
+          drawLandmarks(result.landmarks);
+
+          if (isMatch && !matchedResult) matchedResult = { label, gender: result.gender, dist, count: resized.length };
         }
 
-        const isMatch = label!=="unknown" && parseFloat(dist)<THRESHOLD;
-        drawBox(box, label, isMatch);
+        const first = resized[0];
+        srStatus.textContent = matchedResult ? "VERIFIED" : "SCANNING...";
+        srIdent.textContent  = matchedResult ? matchedResult.label : "UNKNOWN";
+        srConf.textContent   = `${Math.round(first.detection.score*100)}% | DIST: ${matchedResult?.dist ?? "--"}`;
+        scanLabel.textContent= matchedResult ? "VERIFIED" : "SCANNING...";
+        scanLabel.classList.toggle("show", !!resized.length);
 
-        const conf=Math.round(det.detection.score*100);
-        srStatus.textContent = isMatch?"VERIFIED":"SCANNING...";
-        srIdent.textContent  = isMatch?label:"UNKNOWN";
-        srConf.textContent   = `${conf}% | DIST: ${dist}`;
-        scanLabel.textContent= isMatch?"VERIFIED":"SCANNING...";
-        scanLabel.classList.add("show");
-
-        if (isMatch) {
-          clearFallback();
-          // Transition BEFORE any async work — no further detectOnce can enter
+        if (matchedResult) {
           transition("GREETING");
-          successH.textContent   = label==="ABHIMANYU"?"WELCOME BACK":`WELCOME, ${label}`;
-          successSub.textContent = `${label} VERIFIED`;
+          successH.textContent   = matchedResult.label==="ABHIMANYU" ? "WELCOME BACK" : `WELCOME, ${matchedResult.label}`;
+          successSub.textContent = `${matchedResult.label} VERIFIED`;
           successOverlay.classList.add("on");
-          detecting = false; // release before long async so it doesn't block anything else
-          await _greetingFlow(label, det.gender, dets.length);
-          return false;
+          detecting = false;
+          await _greetingFlow(matchedResult.label, matchedResult.gender, matchedResult.count);
+          return;
         }
 
-        if (!fallbackTimer) armFallback();
-        return true;
-      } finally {
         detecting = false;
+        requestAnimationFrame(detectLoop);
+      } catch(e) {
+        detecting = false;
+        if (is("SCANNING")) requestAnimationFrame(detectLoop);
       }
-    }
-
-    /* Internal greeting body — used by both detectOnce (post-transition) and fallback */
-    async function _greetingFlow(identity, gender, count) {
-      chime();
-      const key = identity==="ABHIMANYU"?"abhimanyu":count>1?"group":gender==="female"?"unknown_female":"unknown_male";
-      const files=AUDIO[key], pick=files[Math.floor(Math.random()*files.length)];
-      waveLabel.textContent = identity==="ABHIMANYU"?"WELCOME BACK":"WELCOME VISITOR";
-      waveBar.classList.add("on");
-      await playFile(pick);
-      waveLabel.textContent="AWAITING COMMAND";
-      await playFile(AUDIO.prompt);
-      waveBar.classList.remove("on");
-      navRow.style.display="flex";
-      transition("LISTENING");
-      startSTT();
-    }
-
-    /* Override runGreeting to use the fixed flow */
-    async function runGreeting(identity, gender, count) {
-      if (!is("SCANNING")) return;
-      transition("GREETING");
-      await _greetingFlow(identity, gender, count);
-    }
-
-    async function detectLoop() {
-      const cont = await detectOnce();
-      if (cont) requestAnimationFrame(detectLoop);
     }
 
     /* ── init (auth scan) ────────────────────────────── */
@@ -984,7 +1086,7 @@
 
       try {
         setProgress(5,"REQUESTING CAMERA & MICROPHONE...");
-        const pf=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
+        const pf = await navigator.mediaDevices.getUserMedia({video:true,audio:true});
         pf.getTracks().forEach(t=>t.stop());
         setProgress(10,"PERMISSIONS GRANTED");
         await ensureModels();
@@ -1000,18 +1102,16 @@
         transition("IDLE");
         loadingOverlay.classList.add("hidden");
         ctaWrap.style.display="flex";
-        showToast(e.name==="NotAllowedError"
-          ?"CAMERA & MICROPHONE PERMISSION DENIED — allow in browser settings."
-          :"COULD NOT START — "+(e.message||"unknown error"));
+        let msg = "COULD NOT START — "+(e.message||"unknown error");
+        if (e.name==="NotAllowedError") msg = "CAMERA & MICROPHONE PERMISSION DENIED — allow in browser settings.";
+        else if (e.name==="NotFoundError") msg = "NO CAMERA FOUND — connect a camera and retry.";
+        else if (e.name==="NotReadableError") msg = "CAMERA IN USE BY ANOTHER APPLICATION.";
+        showToast(msg);
       }
     }
 
-    /* ── face registration ───────────────────────────────────────────────────
-     *  Opens the register overlay, starts camera, captures REG_FRAMES
-     *  descriptors with the face-api, averages them, saves to localStorage.
-     *  Does NOT interfere with the auth state machine.
-     * ─────────────────────────────────────────────────────────────────── */
-    let regStream  = null;
+    /* ── face registration ───────────────────────────── */
+    let regStream    = null;
     let regCapturing = false;
 
     async function openRegister() {
@@ -1022,31 +1122,24 @@
       regStatus.textContent=""; regStartBtn.disabled=false;
       regOverlay.classList.add("on");
 
-      // Ensure models are loaded (silently, no loading overlay)
       if (!modelsLoaded) {
         regStatus.textContent="LOADING MODELS...";
         regStartBtn.disabled=true;
-        // Hijack the loading UI briefly
         loadingOverlay.classList.remove("hidden");
         setProgress(0,"LOADING FOR REGISTRATION...");
-        try {
-          await ensureModels();
-        } catch(e) { regStatus.textContent="MODEL LOAD FAILED"; loadingOverlay.classList.add("hidden"); return; }
+        try { await ensureModels(); } catch(e) { regStatus.textContent="MODEL LOAD FAILED"; loadingOverlay.classList.add("hidden"); return; }
         loadingOverlay.classList.add("hidden");
         regStatus.textContent="MODELS READY";
         regStartBtn.disabled=false;
       }
 
-      // Start camera preview in main video element
       try {
         regStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:640},height:{ideal:480}},audio:false});
         video.srcObject=regStream;
         await new Promise(r=>{ video.onloadedmetadata=r; });
         await video.play().catch(()=>{});
         regStatus.textContent="CAMERA READY — POSITION YOUR FACE";
-      } catch(e) {
-        regStatus.textContent="CAMERA DENIED"; return;
-      }
+      } catch(e) { regStatus.textContent="CAMERA DENIED"; return; }
     }
 
     function closeRegister() {
@@ -1060,8 +1153,7 @@
       const name = regName.value.trim().toUpperCase();
       if (!name) { regStatus.textContent="ENTER A NAME FIRST"; return; }
       if (regCapturing) return;
-      regCapturing=true;
-      regStartBtn.disabled=true;
+      regCapturing=true; regStartBtn.disabled=true;
       regStatus.textContent="CAPTURING — HOLD STILL";
 
       const collected=[];
@@ -1070,38 +1162,23 @@
       while(collected.length < REG_FRAMES && regCapturing) {
         const det = await faceapi.detectSingleFace(video, opts).withFaceLandmarks().withFaceDescriptor();
         if (det) {
-          collected.push(Array.from(det.descriptor)); // plain array for JSON
+          collected.push(Array.from(det.descriptor));
           const pct = Math.round((collected.length/REG_FRAMES)*100);
           regFill.style.width=pct+"%";
           regCount.textContent=`${collected.length} / ${REG_FRAMES} FRAMES`;
-          tone(400+collected.length*40, .06, "sine", .05); // ascending beep per frame
-        } else {
-          regStatus.textContent="NO FACE — ALIGN CLOSER";
-        }
-        // small gap between captures
+          tone(400+collected.length*40,.06,"sine",.05);
+        } else { regStatus.textContent="NO FACE — ALIGN CLOSER"; }
         await new Promise(r=>setTimeout(r,200));
       }
 
-      if (!regCapturing) return; // cancelled
+      if (!regCapturing) return;
+      if (collected.length < REG_FRAMES) { regStatus.textContent="CAPTURE INCOMPLETE — TRY AGAIN"; regStartBtn.disabled=false; regCapturing=false; return; }
 
-      if (collected.length < REG_FRAMES) {
-        regStatus.textContent="CAPTURE INCOMPLETE — TRY AGAIN";
-        regStartBtn.disabled=false; regCapturing=false; return;
-      }
-
-      // save to localStorage
-      const stored=loadRegistered();
-      stored[name]=collected;
-      saveRegistered(stored);
-
-      regCapturing=false;
-      chime();
+      const stored=loadRegistered(); stored[name]=collected; saveRegistered(stored);
+      regCapturing=false; chime();
       regStatus.textContent=`✓ ${name} REGISTERED — READY TO SCAN`;
       regCount.textContent=REG_FRAMES+" / "+REG_FRAMES+" FRAMES";
-
-      // Rebuild matcher so the new face works immediately on next scan
       await buildMatcher();
-
       setTimeout(closeRegister, 2000);
     }
 
@@ -1111,18 +1188,13 @@
     /* ── button wiring ───────────────────────────────── */
     initBtn.addEventListener("click", init);
     initBtn.addEventListener("touchend", e=>{ e.preventDefault(); init(); });
-
     skipBtn.addEventListener("click", ()=>go("/"));
-
     openRegBtn.addEventListener("click", openRegister);
-
     regStartBtn.addEventListener("click", captureRegistration);
     regCancelBtn.addEventListener("click", closeRegister);
-
     navRow.querySelectorAll(".nav-btn").forEach(btn=>{
       btn.addEventListener("click", ()=>go(btn.dataset.path));
     });
-
     window.addEventListener("resize", ()=>{ if(is("SCANNING","GREETING","LISTENING")) resizeCanvas(); });
   })();
   </script>
