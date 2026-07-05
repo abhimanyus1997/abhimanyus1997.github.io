@@ -1,4 +1,4 @@
-const CACHE_NAME = 'as-portfolio-v21';
+const CACHE_NAME = 'as-portfolio-v22';
 const ASSETS = [
   './',
   './index.html',
@@ -10,16 +10,17 @@ const ASSETS = [
   './static/images/icon-192.png',
   './static/images/icon-512.png',
   './static/images/profile_ghibli.png',
+  './static/images/cyber_profile.png',
   './static/images/pilot_sync.png',
-  './static/images/pilot_sync.svg',
-  './static/vendor/three-legacy.min.js',
-  './static/vendor/GLTFLoader-legacy.js'
+  './static/images/pilot_sync.svg'
 ];
 
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(ASSETS);
+      return Promise.allSettled(
+        ASSETS.map(url => cache.add(url).catch(err => console.warn('[SW] Failed to cache:', url, err)))
+      );
     }).then(() => self.skipWaiting())
   );
 });
