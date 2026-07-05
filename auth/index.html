@@ -1477,18 +1477,21 @@
       const W = canvas.clientWidth;
       const positions = landmarks.positions;
       ctx.save();
+      // Apply mirroring transformation to context
+      ctx.scale(-1, 1);
+      ctx.translate(-W, 0);
       ctx.fillStyle = "#38ff7a"; ctx.strokeStyle = "rgba(56,255,122,0.45)";
       ctx.shadowColor = "#38ff7a"; ctx.shadowBlur = 8; ctx.lineWidth = 1;
       for (const p of positions) {
-        ctx.beginPath(); ctx.arc(W-p.x, p.y, 2.2, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(p.x, p.y, 2.2, 0, Math.PI*2); ctx.fill();
       }
       function connectRange(start, end, close=false) {
         ctx.beginPath();
         for (let i=start; i<=end; i++) {
-          const p = positions[i], px = W-p.x, py = p.y;
-          i===start ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+          const p = positions[i];
+          i===start ? ctx.moveTo(p.x,p.y) : ctx.lineTo(p.x,p.y);
         }
-        if (close) { const p=positions[start]; ctx.lineTo(W-p.x,p.y); }
+        if (close) { const p=positions[start]; ctx.lineTo(p.x,p.y); }
         ctx.stroke();
       }
       connectRange(0,16); connectRange(17,21); connectRange(22,26);
