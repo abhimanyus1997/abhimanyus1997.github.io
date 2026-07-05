@@ -780,7 +780,10 @@ async function runBootSequence() {
     }, { passive: false });
   }
 
-  if (sessionStorage.getItem('auth_done') || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  const AUTH_TTL = 2 * 60 * 60 * 1000; // 2 hours
+  const authTs = parseInt(localStorage.getItem('auth_done') || '0', 10);
+  const authValid = authTs && (Date.now() - authTs < AUTH_TTL);
+  if (authValid || matchMedia('(prefers-reduced-motion: reduce)').matches) {
     finishIntro();
     return;
   }
