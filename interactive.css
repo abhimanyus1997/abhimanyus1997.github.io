@@ -597,156 +597,179 @@
 
 .mobile-gamepad{display:none}
 
+/* ── Gamepad toggle pill (desktop hidden) ─────────────────── */
+.gamepad-toggle {
+  display: none;
+}
+
 @media(max-width:800px){
-  .hero {
+  /* Toggle pill — floats below the visual canvas */
+  .gamepad-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    order: 3;
+    margin: 0 auto 0;
+    padding: 8px 16px;
+    background: rgba(23, 25, 21, 0.82);
+    border: 1px solid rgba(201, 255, 54, 0.22);
+    color: rgba(201, 255, 54, 0.7);
+    font: 9px var(--mono);
+    letter-spacing: 0.14em;
+    cursor: pointer;
+    border-radius: 2px;
+    backdrop-filter: blur(8px);
+    transition: border-color 0.2s, color 0.2s;
+    pointer-events: auto;
+    z-index: 10;
+  }
+  .gamepad-toggle[aria-expanded="true"] {
+    border-color: rgba(201, 255, 54, 0.55);
+    color: var(--acid);
+  }
+
+  /* Gamepad panel — hidden until toggle */
+  .mobile-gamepad {
+    display: none;
+    order: 4;
+    width: 100%;
+    pointer-events: auto;
+    background: rgba(17, 19, 15, 0.96);
+    border: 1px solid rgba(201, 255, 54, 0.14);
+    border-radius: 4px;
+    padding: 14px 16px;
+    gap: 16px;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(10px);
+    animation: fadeUp 0.2s ease both;
+  }
+  .mobile-gamepad.open {
     display: flex !important;
-    flex-direction: column !important;
-    padding-top: 110px !important;
-    padding-bottom: 40px !important;
-    min-height: auto !important;
-    gap: 24px !important;
   }
-  .hero-copy {
-    order: 1 !important;
-  }
-  .visual {
-    order: 2 !important;
-    position: relative !important;
-    inset: auto !important;
-    width: 100% !important;
-    height: 340px !important;
-    opacity: 1 !important;
-    background: transparent !important;
-    border: none !important;
-    overflow: visible !important;
-  }
-  .visual-label, .model-status {
-    display: none !important;
-  }
+  /* Override model-ready auto-show — we control visibility via .open */
   .model-ready .mobile-gamepad {
-    order: 3 !important;
-    display: flex !important;
+    display: none !important;
     position: relative !important;
     bottom: auto !important;
     left: auto !important;
     right: auto !important;
-    width: 100% !important;
     z-index: 10 !important;
-    pointer-events: auto !important;
-    background: #171915 !important; /* Cockpit panel background */
-    border: 1px solid rgba(201, 255, 54, 0.12) !important;
-    border-radius: 4px !important;
-    padding: 16px !important;
-    gap: 20px !important;
-    justify-content: space-between !important;
-    align-items: center !important;
   }
-  
+  .model-ready .mobile-gamepad.open {
+    display: flex !important;
+  }
+
+  /* Joystick */
   .joystick-container {
-    flex: 0 0 80px !important;
-    pointer-events: auto !important;
+    flex: 0 0 84px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    pointer-events: auto;
+  }
+  .joystick-label {
+    font: 7px var(--mono);
+    letter-spacing: 0.16em;
+    color: rgba(201, 255, 54, 0.35);
+    text-align: center;
   }
   .joystick-base {
-    width: 80px !important;
-    height: 80px !important;
-    background: #10120e !important;
-    border: 1px dashed rgba(201, 255, 54, 0.3) !important;
-    border-radius: 4px !important; /* Square base! */
-    position: relative !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    touch-action: none !important;
+    width: 84px;
+    height: 84px;
+    background: rgba(10, 12, 8, 0.9);
+    border: 1px solid rgba(201, 255, 54, 0.22);
+    border-radius: 3px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
   }
-  /* Crosshairs */
+  /* Crosshair lines */
   .joystick-base::before {
-    content: '' !important;
-    position: absolute !important;
-    top: 50% !important;
-    left: 10% !important;
-    right: 10% !important;
-    height: 1px !important;
-    background: rgba(201, 255, 54, 0.15) !important;
+    content: '';
+    position: absolute;
+    top: 50%; left: 12%; right: 12%;
+    height: 1px;
+    background: rgba(201, 255, 54, 0.12);
+    transform: translateY(-50%);
   }
   .joystick-base::after {
-    content: '' !important;
-    position: absolute !important;
-    left: 50% !important;
-    top: 10% !important;
-    bottom: 10% !important;
-    width: 1px !important;
-    background: rgba(201, 255, 54, 0.15) !important;
+    content: '';
+    position: absolute;
+    left: 50%; top: 12%; bottom: 12%;
+    width: 1px;
+    background: rgba(201, 255, 54, 0.12);
+    transform: translateX(-50%);
   }
   .joystick-stick {
-    width: 16px !important;
-    height: 16px !important;
-    background: none !important;
-    border: 2px solid var(--acid) !important;
-    border-radius: 2px !important; /* Square cursor! */
-    position: absolute !important;
-    box-shadow: 0 0 6px var(--acid) !important;
-    transition: none !important;
+    width: 14px;
+    height: 14px;
+    background: none;
+    border: 2px solid var(--acid);
+    border-radius: 2px;
+    position: absolute;
+    box-shadow: 0 0 8px rgba(201, 255, 54, 0.5);
+    transition: none;
+    pointer-events: none;
   }
-  
+
+  /* Buttons column */
   .gamepad-buttons {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 8px !important;
-    flex: 1 !important;
-    align-items: stretch !important;
-    pointer-events: auto !important;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    pointer-events: auto;
   }
   .gamepad-btn {
-    background: #11130f !important;
-    border: 1px solid rgba(201, 255, 54, 0.2) !important;
-    color: #c9cbbe !important;
-    font: 9px var(--mono) !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.05em !important;
-    padding: 10px 14px !important;
-    border-radius: 2px !important; /* Rectangular! */
-    cursor: pointer !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    transition: all 0.2s !important;
-    box-shadow: none !important;
-    min-width: auto !important;
-    text-align: left !important;
+    background: rgba(10, 12, 8, 0.8);
+    border: 1px solid rgba(201, 255, 54, 0.15);
+    color: rgba(180, 182, 172, 0.8);
+    font: 9px var(--mono);
+    letter-spacing: 0.1em;
+    padding: 10px 12px;
+    border-radius: 2px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
   }
-  /* Status LED dot on the right of the button */
-  .gamepad-btn::after {
-    content: '' !important;
-    display: inline-block !important;
-    width: 5px !important;
-    height: 5px !important;
-    border-radius: 50% !important;
-    background: #3e413b !important;
-    margin-left: 10px !important;
-    transition: background 0.3s, box-shadow 0.3s !important;
+  .btn-led {
+    display: inline-block;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: rgba(60, 62, 56, 0.8);
+    transition: background 0.3s, box-shadow 0.3s;
   }
-  /* Active states */
+  /* GYRO active */
   .gamepad-btn.gyro-btn.active {
-    border-color: var(--acid) !important;
-    color: #fff !important;
-    background: rgba(201, 255, 54, 0.05) !important;
+    border-color: rgba(201, 255, 54, 0.5);
+    color: var(--acid);
+    background: rgba(201, 255, 54, 0.06);
   }
-  .gamepad-btn.gyro-btn.active::after {
-    background: var(--acid) !important;
-    box-shadow: 0 0 6px var(--acid) !important;
+  .gamepad-btn.gyro-btn.active .btn-led {
+    background: var(--acid);
+    box-shadow: 0 0 6px var(--acid);
   }
-  .gamepad-btn.boost-btn:active, .gamepad-btn.boost-btn.active {
-    border-color: var(--acid) !important;
-    color: #fff !important;
-    background: rgba(201, 255, 54, 0.1) !important;
+  /* GEAR open */
+  .gamepad-btn.gear-btn.open {
+    border-color: rgba(201, 255, 54, 0.4);
+    color: var(--acid);
+    background: rgba(201, 255, 54, 0.05);
   }
-  .gamepad-btn.boost-btn::after {
-    background: #ff5500 !important; /* Thruster orange! */
+  .gamepad-btn.gear-btn.open .btn-led {
+    background: var(--acid);
+    box-shadow: 0 0 6px var(--acid);
   }
-  .gamepad-btn.boost-btn:active::after, .gamepad-btn.boost-btn.active::after {
-    box-shadow: 0 0 6px #ff5500 !important;
+  /* GEAR closed */
+  .gamepad-btn.gear-btn.closed .btn-led {
+    background: rgba(255, 85, 0, 0.7);
   }
-  
+
   .flight-controls{display:none !important}
   .metrics{grid-template-columns:1fr;padding:0 5vw}
   .metrics>div{border-left:0;border-bottom:1px solid var(--line);padding:24px 0}
@@ -2060,7 +2083,57 @@ header {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
-  transition: background 0.35s ease, border-color 0.35s ease, color 0.35s ease;
+  transition: background 0.35s ease, border-color 0.35s ease, color 0.35s ease,
+              transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* Mark / wordmark styles */
+.mark {
+  text-decoration: none;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.mark-initials {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -2px;
+}
+.mark-dot {
+  color: #769b00;
+  font-size: 11px;
+  margin-left: 1px;
+}
+.mark-full {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Available text — hide span on very small screens */
+.available-text {
+  display: inline;
+}
+
+/* Mobile: header hidden initially, slides in after hero */
+@media (max-width: 800px) {
+  header {
+    height: 60px;
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  header.header-visible {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  .mark-full {
+    display: none;
+  }
+  .available-text {
+    display: none;
+  }
 }
 
 header nav a {
@@ -2069,11 +2142,11 @@ header nav a {
 }
 
 header nav a.active {
-  color: #71a400 !important; /* Deep Greenish highlight on light background */
+  color: #71a400 !important;
   font-weight: bold;
 }
 
-/* Sticky header dark mode overrides when scrolled over dark sections (Experience) */
+/* Dark header — experience section */
 header.dark-header {
   background: rgba(23, 25, 21, 0.94) !important;
   border-bottom-color: rgba(242, 240, 233, 0.12) !important;
@@ -2085,10 +2158,17 @@ header.dark-header nav a {
 }
 
 header.dark-header nav a.active {
-  color: var(--acid) !important; /* Cyber neon green highlight on dark background */
+  color: var(--acid) !important;
 }
 
 header.dark-header .available {
   border-color: rgba(242, 240, 233, 0.2) !important;
   color: #f2f0e9 !important;
+}
+
+header.dark-header .mark-full {
+  color: #85897e !important;
+}
+header.dark-header .mark-dot {
+  color: var(--acid) !important;
 }

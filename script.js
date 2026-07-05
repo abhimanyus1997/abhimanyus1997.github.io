@@ -297,8 +297,9 @@ async function initThree() {
     if (!THREE?.GLTFLoader) throw new Error('Three.js or GLTFLoader did not initialize');
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(42, 1, .1, 100);
-    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: window.devicePixelRatio === 1, powerPreference: 'default' });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    const isMobileDevice = window.innerWidth <= 800;
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: !isMobileDevice, powerPreference: 'default' });
+    renderer.setPixelRatio(isMobileDevice ? 1 : Math.min(devicePixelRatio, 2));
     renderer.setClearColor(0x000000, 0); renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
     camera.position.set(0, 0, 7);
     const group = new THREE.Group();
@@ -414,12 +415,23 @@ async function initThree() {
       const joystickBase = document.getElementById('joystick-base');
       const joystickStick = document.getElementById('joystick-stick');
       const gyroBtn = document.getElementById('gyro-btn');
-      const boostBtn = document.getElementById('boost-btn');
+      const gearBtn = document.getElementById('gear-btn');
+      const gamepadEl = document.getElementById('mobile-gamepad');
+      const toggleBtn = document.getElementById('gamepad-toggle');
+
+      // Toggle panel open/close
+      if (toggleBtn && gamepadEl) {
+        toggleBtn.addEventListener('click', () => {
+          const isOpen = gamepadEl.classList.toggle('open');
+          toggleBtn.setAttribute('aria-expanded', String(isOpen));
+          gamepadEl.setAttribute('aria-hidden', String(!isOpen));
+        });
+      }
 
       if (joystickBase && joystickStick) {
         let active = false;
         let startX = 0, startY = 0;
-        const maxDistance = 30;
+        const maxDistance = 32;
 
         function onStart(e) {
           active = true;
@@ -431,17 +443,15 @@ async function initThree() {
 
         function onMove(e) {
           if (!active) return;
+          e.preventDefault();
           const t = e.touches ? e.touches[0] : e;
           const dx = t.clientX - startX;
           const dy = t.clientY - startY;
           const dist = Math.min(Math.sqrt(dx * dx + dy * dy), maxDistance);
           const angle = Math.atan2(dy, dx);
-
           const px = Math.cos(angle) * dist;
           const py = Math.sin(angle) * dist;
-
           joystickStick.style.transform = `translate(${px}px, ${py}px)`;
-
           mx = px / maxDistance;
           my = py / maxDistance;
         }
@@ -449,7 +459,7 @@ async function initThree() {
         function onEnd() {
           if (!active) return;
           active = false;
-          joystickStick.style.transition = 'transform 0.2s ease';
+          joystickStick.style.transition = 'transform 0.18s ease';
           joystickStick.style.transform = 'translate(0px,0px)';
           mx = 0;
           my = 0;
@@ -466,23 +476,16 @@ async function initThree() {
         if (e.beta !== null && e.gamma !== null) {
           let pitch = 0;
           let roll = 0;
-
           const orientation = window.orientation || (window.screen && window.screen.orientation && window.screen.orientation.angle) || 0;
-
           if (orientation === 90) {
-            pitch = e.gamma / 22;
-            roll = -e.beta / 22;
+            pitch = e.gamma / 22; roll = -e.beta / 22;
           } else if (orientation === -90 || orientation === 270) {
-            pitch = -e.gamma / 22;
-            roll = e.beta / 22;
+            pitch = -e.gamma / 22; roll = e.beta / 22;
           } else if (orientation === 180) {
-            pitch = -(e.beta - 48) / 22;
-            roll = -e.gamma / 22;
+            pitch = -(e.beta - 48) / 22; roll = -e.gamma / 22;
           } else {
-            pitch = (e.beta - 48) / 22;
-            roll = e.gamma / 22;
+            pitch = (e.beta - 48) / 22; roll = e.gamma / 22;
           }
-
           mx = Math.max(-1, Math.min(1, roll));
           my = Math.max(-1, Math.min(1, pitch));
         }
@@ -492,46 +495,54 @@ async function initThree() {
         gyroBtn.addEventListener('click', async () => {
           if (gyroActive) {
             gyroActive = false;
-            gyroBtn.textContent = 'GYRO: OFF';
             gyroBtn.classList.remove('active');
             removeEventListener('deviceorientation', onOrientation);
-            mx = 0;
-            my = 0;
+            mx = 0; my = 0;
           } else {
             try {
               if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 const res = await DeviceOrientationEvent.requestPermission();
-                if (res === 'granted') {
-                  enableGyro();
-                } else {
-                  alert('Gyroscope access denied');
-                }
-              } else {
-                enableGyro();
-              }
-            } catch (err) {
-              console.warn('Gyro error', err);
-              enableGyro();
-            }
+                if (res === 'granted') { enableGyro(); }
+                else { alert('Gyroscope access denied'); }
+              } else { enableGyro(); }
+            } catch (err) { console.warn('Gyro error', err); enableGyro(); }
           }
         });
 
         function enableGyro() {
           gyroActive = true;
-          gyroBtn.textContent = 'GYRO: ON';
           gyroBtn.classList.add('active');
           addEventListener('deviceorientation', onOrientation);
         }
       }
 
-      if (boostBtn) {
-        boostBtn.addEventListener('touchstart', e => {
-          e.preventDefault();
-          boostUntil = performance.now() + 900;
-          boostBtn.classList.add('active');
-        });
-        boostBtn.addEventListener('touchend', () => {
-          boostBtn.classList.remove('active');
+      // Gear button: manual override toggle
+      let gearManual = false; // false = auto, true = manual force-open
+      if (gearBtn) {
+        gearBtn.addEventListener('click', () => {
+          gearManual = !gearManual;
+          if (gearManual) {
+            gearBtn.classList.add('open');
+            gearBtn.classList.remove('closed');
+            // Force gear open via the same path as auto logic
+            if (gearAction && !gearOpen) {
+              gearOpen = true;
+              gearAction.paused = false;
+              gearAction.timeScale = 1;
+              gearAction.play();
+              Sfx.playGear(true);
+            }
+          } else {
+            gearBtn.classList.remove('open');
+            gearBtn.classList.add('closed');
+            if (gearAction && gearOpen) {
+              gearOpen = false;
+              gearAction.paused = false;
+              gearAction.timeScale = -1;
+              gearAction.play();
+              Sfx.playGear(false);
+            }
+          }
         });
       }
 
@@ -1039,12 +1050,13 @@ console.log('[Config] TTS URL:', TTS_DIRECT_URL);
 console.log('[Config] LiteLLM URL:', baseUrl);
 
 
-function typeOutAnimation(element, text) {
+function typeOutAnimation(element, text, fast = false) {
   try {
     if (!element || !text) return;
     element.textContent = '';
     const chars = text.split('');
     let i = 0;
+    const delay = fast ? Math.max(4, Math.floor(1000 / chars.length)) : 30;
     const interval = setInterval(() => {
       try {
         if (i < chars.length) {
@@ -1057,7 +1069,7 @@ function typeOutAnimation(element, text) {
         clearInterval(interval);
         console.warn('[Animation] typeOutAnimation interval error:', e);
       }
-    }, 30); // 30ms delay between characters
+    }, delay);
   } catch (e) {
     console.warn('[Animation] typeOutAnimation failed:', e);
   }
@@ -1218,7 +1230,7 @@ function toggle(open) {
       if (isVoiceModeActive && ready) {
         setTimeout(startVoiceListening, 400);
       }
-      if (ready && !isVoiceModeActive) input.focus();
+      if (ready && !isVoiceModeActive) { /* no autofocus */ }
     } else {
       stopVoiceListening();
       if (currentAudio) {
@@ -1274,7 +1286,6 @@ if (switchToTextBtn) {
     isVoiceModeActive = false;
     stopVoiceListening();
     updateModeUI();
-    input.focus();
   });
 }
 
@@ -1467,7 +1478,21 @@ async function speakText(text, buttonElement) {
       }
     }
     if (messageP && !messageP.textContent.trim()) {
-      typeOutAnimation(messageP, cleanText);
+      // For voice mode, reveal line by line
+      if (isVoiceModeActive) {
+        const lines = cleanText.split(/\n|(?<=\.) /g).filter(line => line.trim().length > 0);
+        let lineIndex = 0;
+        const showNextLine = () => {
+          if (lineIndex < lines.length) {
+            messageP.textContent = lines.slice(0, lineIndex + 1).join('\n');
+            lineIndex++;
+            setTimeout(showNextLine, 300);
+          }
+        };
+        showNextLine();
+      } else {
+        typeOutAnimation(messageP, cleanText, true); // keyboard mode: fast 8ms/char
+      }
     }
 
     const TTS_TIMEOUT_MS = 15000;
@@ -1656,7 +1681,7 @@ async function loadAI() {
   try {
     const webllm = await import('https://esm.run/@mlc-ai/web-llm@0.2.84');
     engine = await webllm.CreateMLCEngine('SmolLM2-360M-Instruct-q4f16_1-MLC', { initProgressCallback: p => { const pct = Math.round((p.progress || 0) * 100); progressEl.style.width = `${pct}%`; statusEl.textContent = `${p.text || 'LOADING MODEL'} · ${pct}%` } });
-    ready = true; busy = false; gate.style.display = 'none'; input.disabled = false; send.disabled = false; if (micBtn) micBtn.disabled = false; if (centralMicBtn) { centralMicBtn.disabled = false; if (voiceStatus) voiceStatus.textContent = 'Voice Mode Connected'; } addMessage('I’m ready. What would you like to know?'); input.focus();
+    ready = true; busy = false; gate.style.display = 'none'; input.disabled = false; send.disabled = false; if (micBtn) micBtn.disabled = false; if (centralMicBtn) { centralMicBtn.disabled = false; if (voiceStatus) voiceStatus.textContent = 'Voice Mode Connected'; } addMessage("I'm ready. What would you like to know?");
     if (pendingPrompt) { input.value = pendingPrompt; pendingPrompt = ''; form.requestSubmit() }
   } catch (err) { busy = false; start.disabled = false; statusEl.textContent = 'MODEL COULD NOT LOAD · TRY AGAIN'; addMessage('The local model could not start. Check WebGPU support and available device memory, then try again.'); console.error(err) }
 }
@@ -1733,7 +1758,7 @@ form.addEventListener('submit', async e => {
       history.push({ role: 'assistant', content: answer });
       if (autoSpeakResponse) {
         autoSpeakResponse = false;
-        speakText(answer, null); // fire concurrently, no await
+        speakText(answer, null); // fire concurrently, no await (uses voice mode if isVoiceModeActive)
       }
     } catch (err) {
       if (typingRow.parentNode) typingRow.remove();
@@ -1747,7 +1772,7 @@ form.addEventListener('submit', async e => {
       if (modelSelect) modelSelect.style.display = 'none';
       if (gate) gate.style.display = 'block';
     } finally {
-      busy = false; input.disabled = false; send.disabled = false; if (micBtn) micBtn.disabled = false; if (centralMicBtn) centralMicBtn.disabled = false; input.focus();
+      busy = false; input.disabled = false; send.disabled = false; if (micBtn) micBtn.disabled = false; if (centralMicBtn) centralMicBtn.disabled = false;
     }
   } else {
     try {
@@ -1772,7 +1797,7 @@ form.addEventListener('submit', async e => {
       history.push({ role: 'assistant', content: answer });
       if (autoSpeakResponse) {
         autoSpeakResponse = false;
-        speakText(answer, null); // fire concurrently, no await
+        speakText(answer, null); // fire concurrently, no await (uses voice mode if isVoiceModeActive)
       }
     }
     catch (err) {
@@ -1958,10 +1983,28 @@ addEventListener('appinstalled', () => {
 
     const headerEl = document.querySelector('header');
     if (headerEl) {
-      if (activeSec === 'experience') {
+      // Dark header when over dark sections (experience)
+      const darkSections = ['experience'];
+      const isDark = darkSections.some(id => {
+        const el = document.getElementById(id);
+        if (!el) return false;
+        const rect = el.getBoundingClientRect();
+        return rect.top < window.innerHeight * 0.5 && rect.bottom > 0;
+      });
+      if (isDark) {
         headerEl.classList.add('dark-header');
       } else {
         headerEl.classList.remove('dark-header');
+      }
+      // Mobile: show header after scrolling past hero (top ~80px)
+      if (window.innerWidth <= 800) {
+        if (window.scrollY > 80) {
+          headerEl.classList.add('header-visible');
+        } else {
+          headerEl.classList.remove('header-visible');
+        }
+      } else {
+        headerEl.classList.add('header-visible');
       }
     }
 
