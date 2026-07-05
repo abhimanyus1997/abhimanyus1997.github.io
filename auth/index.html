@@ -17,6 +17,7 @@
       --ink:   #171915;
       --paper: #f2f0e9;
       --acid:  #c9ff36;
+      --reg:   #36c9ff;
       --muted: #6b6e65;
       --dim:   rgba(201,255,54,.15);
       --mono:  'DM Mono', monospace;
@@ -398,6 +399,107 @@
       40%,80%{transform:translateX(calc(-50% + 6px))}
     }
 
+    /* ── register button ─────────────────────────────────── */
+    .btn-register {
+      padding: 10px 28px;
+      background: transparent;
+      border: 1px solid rgba(54,201,255,.35);
+      color: var(--reg);
+      font: 400 10px var(--mono);
+      letter-spacing: .13em;
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-register:hover { background: rgba(54,201,255,.1); border-color: var(--reg); }
+
+    /* ── register overlay ────────────────────────────────── */
+    .reg-overlay {
+      position: fixed; inset: 0; z-index: 75;
+      display: grid; place-items: center;
+      background: rgba(23,25,21,.97);
+      opacity: 0; visibility: hidden;
+      transition: opacity .35s, visibility .35s;
+    }
+    .reg-overlay.on { opacity: 1; visibility: visible; }
+
+    .reg-box {
+      width: min(340px, 92vw);
+      padding: 28px 24px;
+      border: 1px solid rgba(54,201,255,.25);
+      background: rgba(23,25,21,.98);
+      display: flex; flex-direction: column; align-items: center; gap: 18px;
+      animation: fadeUp .4s ease both;
+    }
+
+    .reg-title {
+      font: 400 10px var(--mono); letter-spacing: .18em; color: var(--reg);
+    }
+
+    .reg-hint {
+      font: 400 8px var(--mono); letter-spacing: .1em; color: var(--muted);
+      text-align: center; line-height: 1.7;
+    }
+
+    .reg-name-row {
+      display: flex; gap: 8px; width: 100%;
+    }
+
+    .reg-input {
+      flex: 1; padding: 10px 12px;
+      background: rgba(54,201,255,.06);
+      border: 1px solid rgba(54,201,255,.2);
+      color: var(--paper);
+      font: 400 11px var(--mono); letter-spacing: .08em;
+      outline: none;
+    }
+    .reg-input::placeholder { color: var(--muted); }
+    .reg-input:focus { border-color: var(--reg); }
+
+    .reg-progress-wrap {
+      width: 100%;
+    }
+
+    .reg-track {
+      height: 3px; background: rgba(54,201,255,.12); overflow: hidden;
+    }
+    .reg-fill {
+      height: 100%; width: 0%; background: var(--reg);
+      transition: width .25s ease;
+      box-shadow: 0 0 6px var(--reg);
+    }
+
+    .reg-count {
+      margin-top: 8px;
+      font: 400 9px var(--mono); letter-spacing: .1em; color: var(--reg);
+      text-align: center;
+    }
+
+    .reg-actions {
+      display: flex; gap: 10px; width: 100%;
+    }
+
+    .btn-reg-start {
+      flex: 1; padding: 11px;
+      background: var(--reg); border: none;
+      color: var(--ink); font: 500 10px var(--mono); letter-spacing: .12em;
+      cursor: pointer; transition: box-shadow .2s;
+    }
+    .btn-reg-start:hover { box-shadow: 0 0 20px rgba(54,201,255,.4); }
+    .btn-reg-start:disabled { opacity: .4; cursor: default; }
+
+    .btn-reg-cancel {
+      padding: 11px 18px;
+      background: transparent;
+      border: 1px solid rgba(201,255,54,.18);
+      color: var(--muted); font: 400 10px var(--mono); letter-spacing: .1em;
+      cursor: pointer; transition: all .2s;
+    }
+    .btn-reg-cancel:hover { border-color: var(--acid); color: var(--acid); }
+
+    .reg-status {
+      font: 400 9px var(--mono); letter-spacing: .1em;
+      color: var(--reg); text-align: center; min-height: 14px;
+    }
+
     /* ── mobile tweaks ───────────────────────────────────── */
     @media (max-width: 640px) {
       .shell { padding: 32px 16px; gap: 20px; }
@@ -451,6 +553,7 @@
     <!-- CTA -->
     <div class="cta-wrap" id="ctaWrap">
       <button class="btn-init" id="initBtn">INITIALIZE SCAN</button>
+      <button class="btn-register" id="openRegBtn">REGISTER FACE</button>
     </div>
 
     <!-- nav buttons (hidden until greeting done) -->
@@ -504,37 +607,71 @@
   <!-- error toast -->
   <div class="toast" id="toast"></div>
 
+  <!-- register overlay -->
+  <div class="reg-overlay" id="regOverlay">
+    <div class="reg-box">
+      <div class="reg-title">REGISTER FACE</div>
+      <div class="reg-hint">
+        Enter your name, look at the camera,<br>
+        then hold still while we capture 10 frames.
+      </div>
+      <div class="reg-name-row">
+        <input class="reg-input" id="regName" type="text" placeholder="YOUR NAME" maxlength="32" autocomplete="off" />
+      </div>
+      <div class="reg-progress-wrap">
+        <div class="reg-track"><div class="reg-fill" id="regFill"></div></div>
+        <div class="reg-count" id="regCount">0 / 10 FRAMES</div>
+      </div>
+      <div class="reg-status" id="regStatus"></div>
+      <div class="reg-actions">
+        <button class="btn-reg-start" id="regStartBtn">CAPTURE</button>
+        <button class="btn-reg-cancel" id="regCancelBtn">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
   <script>
   (() => {
     /* ── element refs ──────────────────────────────── */
-    const video         = document.getElementById("video");
-    const canvas        = document.getElementById("overlay");
-    const ctx           = canvas.getContext("2d");
-    const initBtn       = document.getElementById("initBtn");
-    const skipBtn       = document.getElementById("skipBtn");
-    const ctaWrap       = document.getElementById("ctaWrap");
-    const navRow        = document.getElementById("navRow");
-    const scanLabel     = document.getElementById("scanLabel");
-    const srStatus      = document.getElementById("srStatus");
-    const srIdent       = document.getElementById("srIdent");
-    const srConf        = document.getElementById("srConf");
-    const waveBar       = document.getElementById("waveBar");
-    const waveLabel     = document.getElementById("waveLabel");
-    const sttPanel      = document.getElementById("sttPanel");
-    const sttText       = document.getElementById("sttText");
-    const loadingOverlay= document.getElementById("loadingOverlay");
-    const loadFill      = document.getElementById("loadFill");
-    const loadInfo      = document.getElementById("loadInfo");
-    const successOverlay= document.getElementById("successOverlay");
-    const successH      = document.getElementById("successH");
-    const successSub    = document.getElementById("successSub");
-    const toast         = document.getElementById("toast");
+    const video          = document.getElementById("video");
+    const canvas         = document.getElementById("overlay");
+    const ctx            = canvas.getContext("2d");
+    const initBtn        = document.getElementById("initBtn");
+    const skipBtn        = document.getElementById("skipBtn");
+    const openRegBtn     = document.getElementById("openRegBtn");
+    const ctaWrap        = document.getElementById("ctaWrap");
+    const navRow         = document.getElementById("navRow");
+    const scanLabel      = document.getElementById("scanLabel");
+    const srStatus       = document.getElementById("srStatus");
+    const srIdent        = document.getElementById("srIdent");
+    const srConf         = document.getElementById("srConf");
+    const waveBar        = document.getElementById("waveBar");
+    const waveLabel      = document.getElementById("waveLabel");
+    const sttPanel       = document.getElementById("sttPanel");
+    const sttText        = document.getElementById("sttText");
+    const loadingOverlay = document.getElementById("loadingOverlay");
+    const loadFill       = document.getElementById("loadFill");
+    const loadInfo       = document.getElementById("loadInfo");
+    const successOverlay = document.getElementById("successOverlay");
+    const successH       = document.getElementById("successH");
+    const successSub     = document.getElementById("successSub");
+    const toast          = document.getElementById("toast");
+    // register
+    const regOverlay  = document.getElementById("regOverlay");
+    const regName     = document.getElementById("regName");
+    const regFill     = document.getElementById("regFill");
+    const regCount    = document.getElementById("regCount");
+    const regStatus   = document.getElementById("regStatus");
+    const regStartBtn = document.getElementById("regStartBtn");
+    const regCancelBtn= document.getElementById("regCancelBtn");
 
     /* ── constants ─────────────────────────────────── */
     const MODEL_URL  = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights";
     const REF_IMAGE  = "/abhimanyu-reference.jpg";
     const THRESHOLD  = 0.55;
     const AUDIO_BASE = "/static/audio/";
+    const LS_KEY     = "registered_faces"; // localStorage key
+    const REG_FRAMES = 10;
 
     const AUDIO = {
       abhimanyu:      ["welcome-abhimanyu-1.wav","welcome-abhimanyu-2.wav","welcome-abhimanyu-3.wav","welcome-abhimanyu-4.wav"],
@@ -544,55 +681,39 @@
       prompt:         "welcome-prompt-query.wav"
     };
 
-    /* ── state machine ─────────────────────────────────────────────────────
-     *  States: IDLE → LOADING → SCANNING → GREETING → LISTENING → DONE
-     *  Transitions are the only place state changes; no other code mutates.
-     *  This prevents every re-entry / loop bug.
+    /* ── state machine ──────────────────────────────────────────────────────
+     *  IDLE → LOADING → SCANNING → GREETING → LISTENING → DONE
+     *  IDLE → REGISTERING (parallel path, returns to IDLE)
      * ─────────────────────────────────────────────────────────────────── */
     let STATE = "IDLE";
+    function is(...ss) { return ss.includes(STATE); }
+    function transition(s) { console.debug(`[auth] ${STATE}→${s}`); STATE = s; }
 
-    function is(...states) { return states.includes(STATE); }
-
-    function transition(next) {
-      console.debug(`[auth] ${STATE} → ${next}`);
-      STATE = next;
-    }
-
-    /* ── audio context (lazy) ──────────────────────── */
+    /* ── audio ──────────────────────────────────────── */
     let audioCtx = null;
-
     function getACtx() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       return audioCtx;
     }
-
-    function tone(freq, dur, type = "sine", gain = 0.09) {
-      const ac  = getACtx();
-      const now = ac.currentTime;
-      const osc = ac.createOscillator();
-      const g   = ac.createGain();
-      osc.type = type; osc.frequency.value = freq;
-      g.gain.setValueAtTime(0.001, now);
-      g.gain.exponentialRampToValueAtTime(gain, now + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+    function tone(freq, dur, type="sine", gain=0.09) {
+      const ac=getACtx(), now=ac.currentTime;
+      const osc=ac.createOscillator(), g=ac.createGain();
+      osc.type=type; osc.frequency.value=freq;
+      g.gain.setValueAtTime(0.001,now);
+      g.gain.exponentialRampToValueAtTime(gain, now+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, now+dur);
       osc.connect(g); g.connect(ac.destination);
-      osc.start(now); osc.stop(now + dur + 0.05);
+      osc.start(now); osc.stop(now+dur+0.05);
     }
+    function chime() { tone(523,.14); setTimeout(()=>tone(659,.14),160); setTimeout(()=>tone(784,.22,"sine",.11),320); }
 
-    function chime() {
-      tone(523, .14); setTimeout(() => tone(659, .14), 160); setTimeout(() => tone(784, .22, "sine", .11), 320);
-    }
-
-    /* Resolves when the audio file finishes (or errors). Shows wave bar. */
     function playFile(file) {
       return new Promise(resolve => {
         const a = new Audio(AUDIO_BASE + file);
         setWaves(true);
-        a.play().catch(() => {});
-        const done = () => { setWaves(false); resolve(); };
-        a.onended = done;
-        a.onerror = done;
-        // safety timeout: 12 s max per file
+        a.play().catch(()=>{});
+        let resolved = false;
+        const done = () => { if(resolved) return; resolved=true; setWaves(false); resolve(); };
         const guard = setTimeout(done, 12000);
         a.onended = () => { clearTimeout(guard); done(); };
         a.onerror = () => { clearTimeout(guard); done(); };
@@ -600,260 +721,242 @@
     }
 
     function setWaves(active) {
-      if (active) {
-        waveBar.classList.add("on");
-        document.querySelectorAll(".wave").forEach(w => w.classList.remove("flat"));
-      } else {
-        document.querySelectorAll(".wave").forEach(w => w.classList.add("flat"));
-        setTimeout(() => { if (!is("GREETING")) waveBar.classList.remove("on"); }, 400);
-      }
+      document.querySelectorAll(".wave").forEach(w => w.classList.toggle("flat", !active));
+      if (active) waveBar.classList.add("on");
+      else setTimeout(() => { if (!is("GREETING")) waveBar.classList.remove("on"); }, 400);
     }
 
-    /* ── greeting + STT flow (called exactly once) ── */
+    /* ── greeting (runs exactly once — state guards entry) ── */
     async function runGreeting(identity, gender, count) {
-      if (!is("SCANNING")) return; // guard: only enter from SCANNING
+      if (!is("SCANNING")) return;
       transition("GREETING");
-
       chime();
 
-      let key = identity === "ABHIMANYU" ? "abhimanyu"
-              : count > 1               ? "group"
-              : gender === "female"     ? "unknown_female"
-              : "unknown_male";
+      const key = identity === "ABHIMANYU" ? "abhimanyu"
+                : count > 1               ? "group"
+                : gender === "female"     ? "unknown_female"
+                : "unknown_male";
 
       const files = AUDIO[key];
       const pick  = files[Math.floor(Math.random() * files.length)];
-
       waveLabel.textContent = identity === "ABHIMANYU" ? "WELCOME BACK" : "WELCOME VISITOR";
       waveBar.classList.add("on");
 
-      await playFile(pick);             // welcome audio
-
+      await playFile(pick);
       waveLabel.textContent = "AWAITING COMMAND";
-      await playFile(AUDIO.prompt);     // "where do you want to go?"
-
+      await playFile(AUDIO.prompt);
       waveBar.classList.remove("on");
 
-      // Show nav buttons
       navRow.style.display = "flex";
-
-      // Start STT
       transition("LISTENING");
       startSTT();
     }
 
-    /* ── fallback: greet without face match (6 s) ─── */
+    /* ── fallback greet (6 s after scan starts with no match) ── */
     let fallbackTimer = null;
-
     function armFallback() {
-      fallbackTimer = setTimeout(() => {
-        if (is("SCANNING")) runGreeting("UNKNOWN", "male", 0);
-      }, 6000);
+      if (fallbackTimer) return;
+      fallbackTimer = setTimeout(() => { if (is("SCANNING")) runGreeting("UNKNOWN","male",0); }, 6000);
     }
+    function clearFallback() { if(fallbackTimer){clearTimeout(fallbackTimer);fallbackTimer=null;} }
 
-    function clearFallback() {
-      if (fallbackTimer) { clearTimeout(fallbackTimer); fallbackTimer = null; }
-    }
-
-    /* ── Speech Recognition ─────────────────────────
-     *  - Only one instance ever; restart only in LISTENING state
-     * ───────────────────────────────────────────── */
+    /* ── STT (single instance, only restarts in LISTENING) ── */
     let rec = null;
-
     function startSTT() {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) { sttPanel.classList.add("on"); sttText.textContent = "Voice not supported — use buttons below."; return; }
-
+      if (!SR) { sttPanel.classList.add("on"); sttText.textContent="Voice not supported — use buttons."; return; }
       if (!rec) {
         rec = new SR();
-        rec.continuous     = false;
-        rec.interimResults = true;
-        rec.lang           = "en-US";
-
-        rec.onstart  = () => { sttPanel.classList.add("on"); sttText.textContent = "Listening..."; };
-        rec.onresult = (e) => {
-          const t = e.results[0][0].transcript.toLowerCase();
-          sttText.textContent = t;
-          if (e.results[0].isFinal) routeVoice(t);
-        };
-        rec.onerror  = () => { sttText.textContent = "Not recognised – try again or use buttons."; };
-        rec.onend    = () => {
-          // Only auto-restart while in LISTENING state
-          if (is("LISTENING")) setTimeout(() => { try { rec.start(); } catch(_){} }, 800);
-        };
+        rec.continuous=false; rec.interimResults=true; rec.lang="en-US";
+        rec.onstart  = () => { sttPanel.classList.add("on"); sttText.textContent="Listening..."; };
+        rec.onresult = e => { const t=e.results[0][0].transcript.toLowerCase(); sttText.textContent=t; if(e.results[0].isFinal) routeVoice(t); };
+        rec.onerror  = () => { sttText.textContent="Not recognised — try again or use buttons."; };
+        rec.onend    = () => { if(is("LISTENING")) setTimeout(()=>{ try{rec.start();}catch(_){} },800); };
       }
-
       try { rec.start(); } catch(_) {}
     }
 
-    const VOICE_MAP = {
-      "projects": "/#projects", "project":  "/#projects",
-      "about":    "/#about",    "about me": "/#about",
-      "contact":  "/#contact",  "email":    "/#contact",
-      "home":     "/",          "main":     "/",
-      "skip":     "/",          "enter":    "/"
-    };
-
-    function routeVoice(transcript) {
-      for (const [cmd, path] of Object.entries(VOICE_MAP)) {
-        if (transcript.includes(cmd)) { go(path); return; }
-      }
-      sttText.textContent = `"${transcript}" — say: home · projects · about · contact`;
+    const VOICE_MAP = { "projects":"/#projects","project":"/#projects","about":"/#about","about me":"/#about","contact":"/#contact","email":"/#contact","home":"/","main":"/","skip":"/","enter":"/" };
+    function routeVoice(t) {
+      for(const[cmd,path] of Object.entries(VOICE_MAP)) if(t.includes(cmd)){go(path);return;}
+      sttText.textContent=`"${t}" — say: home · projects · about · contact`;
     }
-
     function go(path) {
-      if (is("DONE")) return;
+      if(is("DONE")) return;
       transition("DONE");
-
-      if (rec) { try { rec.stop(); } catch(_){} }
-      sttPanel.classList.remove("on");
-      waveBar.classList.remove("on");
-      chime();
-      sessionStorage.setItem("auth_done", "true");
-      setTimeout(() => { window.location.href = path; }, 750);
+      if(rec){try{rec.stop();}catch(_){}}
+      sttPanel.classList.remove("on"); waveBar.classList.remove("on");
+      chime(); sessionStorage.setItem("auth_done","true");
+      setTimeout(()=>{ window.location.href=path; },750);
     }
 
-    /* ── progress helpers ───────────────────────────── */
-    function setProgress(pct, text) {
-      loadFill.style.width = pct + "%";
-      loadInfo.textContent = text;
-    }
+    /* ── progress ───────────────────────────────────── */
+    function setProgress(pct, text) { loadFill.style.width=pct+"%"; loadInfo.textContent=text; }
 
-    /* ── face-api setup ─────────────────────────────── */
-    let faceMatcher = null;
+    /* ── face-api models ─────────────────────────────── */
+    let modelsLoaded = false;
+    let faceMatcher  = null;
 
-    async function loadModels() {
+    async function ensureModels() {
+      if (modelsLoaded) return;
       setProgress(0,  "LOADING NEURAL MODELS...");
-      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);  setProgress(30, "FACE DETECTOR READY");
-      await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL); setProgress(55, "LANDMARKS READY");
-      await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);setProgress(78, "RECOGNITION READY");
-      await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);      setProgress(95, "AGE/GENDER READY");
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);   setProgress(30,"FACE DETECTOR READY");
+      await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);  setProgress(55,"LANDMARKS READY");
+      await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL); setProgress(78,"RECOGNITION READY");
+      await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);       setProgress(95,"AGE/GENDER READY");
+      modelsLoaded = true;
     }
 
-    async function loadReference() {
-      setProgress(97, "LOADING REFERENCE...");
+    /* Build FaceMatcher from: static reference image + localStorage entries */
+    async function buildMatcher() {
+      setProgress(97,"LOADING REFERENCE...");
+      const descriptors = [];
+
+      // static reference
       try {
         const img = await faceapi.fetchImage(REF_IMAGE);
-        const det = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions())
-          .withFaceLandmarks().withFaceDescriptor();
-        if (det) {
-          faceMatcher = new faceapi.FaceMatcher(
-            new faceapi.LabeledFaceDescriptors("ABHIMANYU", [det.descriptor]), THRESHOLD
-          );
-        }
-      } catch(e) { console.warn("Reference not found:", e); }
-      setProgress(100, "SYSTEM READY");
+        const det = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+        if (det) descriptors.push(new faceapi.LabeledFaceDescriptors("ABHIMANYU",[det.descriptor]));
+      } catch(e) { console.warn("Static reference missing:", e); }
+
+      // registered faces from localStorage
+      const stored = loadRegistered();
+      for (const [name, arr] of Object.entries(stored)) {
+        // arr is array of plain float arrays → Float32Array descriptors
+        const descs = arr.map(d => new Float32Array(d));
+        // average descriptor for robustness
+        const avg = averageDescriptor(descs);
+        descriptors.push(new faceapi.LabeledFaceDescriptors(name.toUpperCase(),[avg]));
+      }
+
+      if (descriptors.length) faceMatcher = new faceapi.FaceMatcher(descriptors, THRESHOLD);
+      setProgress(100,"SYSTEM READY");
+    }
+
+    /* ── localStorage helpers ────────────────────────── */
+    function loadRegistered() {
+      try { return JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch(_){ return {}; }
+    }
+    function saveRegistered(data) { localStorage.setItem(LS_KEY, JSON.stringify(data)); }
+
+    function averageDescriptor(descs) {
+      const len = descs[0].length;
+      const avg = new Float32Array(len);
+      for (const d of descs) for (let i=0;i<len;i++) avg[i]+=d[i];
+      for (let i=0;i<len;i++) avg[i]/=descs.length;
+      // normalise
+      let mag=0; for(let i=0;i<len;i++) mag+=avg[i]*avg[i]; mag=Math.sqrt(mag);
+      for(let i=0;i<len;i++) avg[i]/=mag;
+      return avg;
     }
 
     /* ── camera ─────────────────────────────────────── */
     async function startCamera() {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode:"user", width:{ideal:640}, height:{ideal:480} },
-        audio: true
+        video:{facingMode:"user",width:{ideal:640},height:{ideal:480}}, audio:true
       });
       video.srcObject = stream;
-      await new Promise(r => { video.onloadedmetadata = r; });
+      await new Promise(r=>{ video.onloadedmetadata=r; });
       try { await video.play(); } catch(_) {}
     }
 
-    /* ── canvas + detect loop ───────────────────────────────────────────────
-     *  Single loop; each frame waits for the async faceapi call to finish
-     *  before scheduling the next — no stack-up possible.
-     * ─────────────────────────────────────────────────────────────────── */
+    /* ── canvas / detect ─────────────────────────────── */
     function resizeCanvas() {
-      const r = video.getBoundingClientRect();
-      canvas.width  = r.width  * devicePixelRatio;
-      canvas.height = r.height * devicePixelRatio;
-      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+      const r=video.getBoundingClientRect();
+      canvas.width=r.width*devicePixelRatio; canvas.height=r.height*devicePixelRatio;
+      ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
     }
 
-    function drawBox(box, isMatch) {
-      const W  = canvas.clientWidth;
-      const x  = W - box.x - box.width;
-      const y  = box.y;
-      const bw = box.width;
-      const bh = box.height;
-      const c  = isMatch ? "#c9ff36" : "#ffcc33";
-      const cs = 18;
-
+    function drawBox(box, label, isMatch) {
+      const W=canvas.clientWidth, x=W-box.x-box.width, y=box.y, bw=box.width, bh=box.height;
+      const c=isMatch?"#c9ff36":"#ffcc33", cs=18;
       ctx.save();
-      ctx.strokeStyle = c; ctx.lineWidth = 1.5;
-      ctx.shadowColor = c; ctx.shadowBlur = isMatch ? 14 : 7;
-
-      // main rect
-      ctx.strokeRect(x, y, bw, bh);
-
-      // corner accents
-      ctx.lineWidth = 2.5;
+      ctx.strokeStyle=c; ctx.lineWidth=1.5; ctx.shadowColor=c; ctx.shadowBlur=isMatch?14:7;
+      ctx.strokeRect(x,y,bw,bh);
+      ctx.lineWidth=2.5;
       [[x,y+cs,x,y,x+cs,y],[x+bw-cs,y,x+bw,y,x+bw,y+cs],
        [x,y+bh-cs,x,y+bh,x+cs,y+bh],[x+bw-cs,y+bh,x+bw,y+bh,x+bw,y+bh-cs]]
-      .forEach(([x1,y1,x2,y2,x3,y3]) => {
-        ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.lineTo(x3,y3); ctx.stroke();
-      });
-
-      // label strip
-      ctx.fillStyle = "rgba(23,25,21,.88)";
-      ctx.fillRect(x, y-20, bw, 20);
-      ctx.fillStyle = c;
-      ctx.font = "9px 'DM Mono', monospace";
-      ctx.fillText(isMatch ? "IDENTIFIED: ABHIMANYU" : "SCANNING...", x+8, y-6);
+      .forEach(([x1,y1,x2,y2,x3,y3])=>{ ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.lineTo(x3,y3);ctx.stroke(); });
+      ctx.fillStyle="rgba(23,25,21,.88)"; ctx.fillRect(x,y-20,bw,20);
+      ctx.fillStyle=c; ctx.font="9px 'DM Mono',monospace";
+      ctx.fillText(isMatch?`IDENTIFIED: ${label}`:"SCANNING...", x+8,y-6);
       ctx.restore();
     }
 
+    /* Single detect pass — returns true to keep looping, false to stop */
     async function detectOnce() {
-      if (!is("SCANNING")) return false; // stop loop
+      if (!is("SCANNING")) return false;
       resizeCanvas();
 
       const dets = await faceapi
-        .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize:224, scoreThreshold:.42 }))
+        .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({inputSize:224,scoreThreshold:.42}))
         .withFaceLandmarks().withAgeAndGender().withFaceDescriptors();
 
-      ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+      if (!is("SCANNING")) return false; // state changed while awaiting
+
+      ctx.clearRect(0,0,canvas.clientWidth,canvas.clientHeight);
 
       if (!dets.length) {
-        srStatus.textContent = "SCANNING...";
-        srIdent.textContent  = "---";
-        srConf.textContent   = "---";
+        srStatus.textContent="SCANNING..."; srIdent.textContent="---"; srConf.textContent="---";
         scanLabel.classList.remove("show");
-        return true; // continue loop
+        return true;
       }
 
-      const det   = dets[0];
-      const box   = det.detection.box;
-      let label   = "UNKNOWN";
-      let dist    = "---";
+      const det=dets[0], box=det.detection.box;
+      let label="UNKNOWN", dist="---";
 
       if (faceMatcher) {
-        const m = faceMatcher.findBestMatch(det.descriptor);
-        label   = m.label;
-        dist    = m.distance.toFixed(2);
+        const m=faceMatcher.findBestMatch(det.descriptor);
+        label=m.label; dist=m.distance.toFixed(2);
       }
 
-      const isMatch = label === "ABHIMANYU" && parseFloat(dist) < THRESHOLD;
-      drawBox(box, isMatch);
+      const isMatch = label!=="unknown" && parseFloat(dist)<THRESHOLD;
+      drawBox(box, label, isMatch);
 
-      const conf = Math.round(det.detection.score * 100);
-      srStatus.textContent = isMatch ? "VERIFIED" : "SCANNING...";
-      srIdent.textContent  = isMatch ? "ABHIMANYU" : "UNKNOWN";
+      const conf=Math.round(det.detection.score*100);
+      srStatus.textContent = isMatch?"VERIFIED":"SCANNING...";
+      srIdent.textContent  = isMatch?label:"UNKNOWN";
       srConf.textContent   = `${conf}% | DIST: ${dist}`;
-
-      scanLabel.textContent = isMatch ? "VERIFIED" : "SCANNING...";
+      scanLabel.textContent= isMatch?"VERIFIED":"SCANNING...";
       scanLabel.classList.add("show");
 
       if (isMatch) {
         clearFallback();
-        // Show success flash + greet (runGreeting guards double-entry)
-        successH.textContent   = "WELCOME BACK";
-        successSub.textContent = "ABHIMANYU VERIFIED";
+        // STOP loop immediately before any async work
+        transition("GREETING");
+        successH.textContent   = label==="ABHIMANYU"?"WELCOME BACK":`WELCOME, ${label}`;
+        successSub.textContent = `${label} VERIFIED`;
         successOverlay.classList.add("on");
-        await runGreeting("ABHIMANYU", det.gender, dets.length);
-        return false; // stop loop
+        // runGreeting checks is("SCANNING") so call the async part directly
+        await _greetingFlow(label, det.gender, dets.length);
+        return false;
       }
 
-      // Unknown face visible — arm fallback greet (only once)
       if (!fallbackTimer) armFallback();
+      return true;
+    }
 
-      return true; // continue loop
+    /* Internal greeting body — used by both detectOnce (post-transition) and fallback */
+    async function _greetingFlow(identity, gender, count) {
+      chime();
+      const key = identity==="ABHIMANYU"?"abhimanyu":count>1?"group":gender==="female"?"unknown_female":"unknown_male";
+      const files=AUDIO[key], pick=files[Math.floor(Math.random()*files.length)];
+      waveLabel.textContent = identity==="ABHIMANYU"?"WELCOME BACK":"WELCOME VISITOR";
+      waveBar.classList.add("on");
+      await playFile(pick);
+      waveLabel.textContent="AWAITING COMMAND";
+      await playFile(AUDIO.prompt);
+      waveBar.classList.remove("on");
+      navRow.style.display="flex";
+      transition("LISTENING");
+      startSTT();
+    }
+
+    /* Override runGreeting to use the fixed flow */
+    async function runGreeting(identity, gender, count) {
+      if (!is("SCANNING")) return;
+      transition("GREETING");
+      await _greetingFlow(identity, gender, count);
     }
 
     async function detectLoop() {
@@ -861,74 +964,160 @@
       if (cont) requestAnimationFrame(detectLoop);
     }
 
-    /* ── init flow ───────────────────────────────────── */
+    /* ── init (auth scan) ────────────────────────────── */
     async function init() {
       if (!is("IDLE")) return;
       transition("LOADING");
+      if (typeof faceapi==="undefined") { showToast("Face API still loading – please wait."); transition("IDLE"); return; }
 
-      if (typeof faceapi === "undefined") {
-        showToast("Face API still loading – please wait.");
-        transition("IDLE"); return;
-      }
-
-      ctaWrap.style.display = "none";
+      ctaWrap.style.display="none";
       loadingOverlay.classList.remove("hidden");
-      srStatus.textContent = "REQUESTING PERMISSIONS...";
-      getACtx(); // unlock audio on user gesture
+      srStatus.textContent="REQUESTING PERMISSIONS...";
+      getACtx();
 
       try {
-        setProgress(5, "REQUESTING CAMERA & MICROPHONE...");
-
-        // Preflight permission request (iOS/Safari/Android needs explicit grant)
-        const preflight = await navigator.mediaDevices.getUserMedia({ video:true, audio:true });
-        preflight.getTracks().forEach(t => t.stop());
-
-        setProgress(10, "PERMISSIONS GRANTED");
-
-        await loadModels();
-        await loadReference();
+        setProgress(5,"REQUESTING CAMERA & MICROPHONE...");
+        const pf=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
+        pf.getTracks().forEach(t=>t.stop());
+        setProgress(10,"PERMISSIONS GRANTED");
+        await ensureModels();
+        await buildMatcher();
         await startCamera();
-
         loadingOverlay.classList.add("hidden");
-
-        srStatus.textContent = "READY";
-        waveBar.classList.add("on");
-        waveLabel.textContent = "ALIGN YOUR FACE";
-        setWaves(false); // show idle flat waves
-
+        srStatus.textContent="READY";
+        waveBar.classList.add("on"); waveLabel.textContent="ALIGN YOUR FACE"; setWaves(false);
         transition("SCANNING");
         armFallback();
         detectLoop();
-
       } catch(e) {
         console.error(e);
         transition("IDLE");
         loadingOverlay.classList.add("hidden");
-        ctaWrap.style.display = "flex";
-        const msg = e.name === "NotAllowedError"
-          ? "CAMERA & MICROPHONE PERMISSION DENIED — allow in browser settings."
-          : "COULD NOT START — " + (e.message || "unknown error");
-        showToast(msg);
+        ctaWrap.style.display="flex";
+        showToast(e.name==="NotAllowedError"
+          ?"CAMERA & MICROPHONE PERMISSION DENIED — allow in browser settings."
+          :"COULD NOT START — "+(e.message||"unknown error"));
       }
     }
 
-    function showToast(msg) {
-      toast.textContent = msg;
-      toast.classList.add("on");
-      setTimeout(() => toast.classList.remove("on"), 4500);
+    /* ── face registration ───────────────────────────────────────────────────
+     *  Opens the register overlay, starts camera, captures REG_FRAMES
+     *  descriptors with the face-api, averages them, saves to localStorage.
+     *  Does NOT interfere with the auth state machine.
+     * ─────────────────────────────────────────────────────────────────── */
+    let regStream  = null;
+    let regCapturing = false;
+
+    async function openRegister() {
+      if (!is("IDLE")) { showToast("Stop the scan before registering."); return; }
+      if (typeof faceapi==="undefined") { showToast("Face API still loading – please wait."); return; }
+
+      regName.value=""; regFill.style.width="0%"; regCount.textContent="0 / "+REG_FRAMES+" FRAMES";
+      regStatus.textContent=""; regStartBtn.disabled=false;
+      regOverlay.classList.add("on");
+
+      // Ensure models are loaded (silently, no loading overlay)
+      if (!modelsLoaded) {
+        regStatus.textContent="LOADING MODELS...";
+        regStartBtn.disabled=true;
+        // Hijack the loading UI briefly
+        loadingOverlay.classList.remove("hidden");
+        setProgress(0,"LOADING FOR REGISTRATION...");
+        try {
+          await ensureModels();
+        } catch(e) { regStatus.textContent="MODEL LOAD FAILED"; loadingOverlay.classList.add("hidden"); return; }
+        loadingOverlay.classList.add("hidden");
+        regStatus.textContent="MODELS READY";
+        regStartBtn.disabled=false;
+      }
+
+      // Start camera preview in main video element
+      try {
+        regStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:{ideal:640},height:{ideal:480}},audio:false});
+        video.srcObject=regStream;
+        await new Promise(r=>{ video.onloadedmetadata=r; });
+        await video.play().catch(()=>{});
+        regStatus.textContent="CAMERA READY — POSITION YOUR FACE";
+      } catch(e) {
+        regStatus.textContent="CAMERA DENIED"; return;
+      }
     }
+
+    function closeRegister() {
+      regCapturing=false;
+      if(regStream){regStream.getTracks().forEach(t=>t.stop());regStream=null;}
+      video.srcObject=null;
+      regOverlay.classList.remove("on");
+    }
+
+    async function captureRegistration() {
+      const name = regName.value.trim().toUpperCase();
+      if (!name) { regStatus.textContent="ENTER A NAME FIRST"; return; }
+      if (regCapturing) return;
+      regCapturing=true;
+      regStartBtn.disabled=true;
+      regStatus.textContent="CAPTURING — HOLD STILL";
+
+      const collected=[];
+      const opts=new faceapi.TinyFaceDetectorOptions({inputSize:224,scoreThreshold:.45});
+
+      while(collected.length < REG_FRAMES && regCapturing) {
+        const det = await faceapi.detectSingleFace(video, opts).withFaceLandmarks().withFaceDescriptor();
+        if (det) {
+          collected.push(Array.from(det.descriptor)); // plain array for JSON
+          const pct = Math.round((collected.length/REG_FRAMES)*100);
+          regFill.style.width=pct+"%";
+          regCount.textContent=`${collected.length} / ${REG_FRAMES} FRAMES`;
+          tone(400+collected.length*40, .06, "sine", .05); // ascending beep per frame
+        } else {
+          regStatus.textContent="NO FACE — ALIGN CLOSER";
+        }
+        // small gap between captures
+        await new Promise(r=>setTimeout(r,200));
+      }
+
+      if (!regCapturing) return; // cancelled
+
+      if (collected.length < REG_FRAMES) {
+        regStatus.textContent="CAPTURE INCOMPLETE — TRY AGAIN";
+        regStartBtn.disabled=false; regCapturing=false; return;
+      }
+
+      // save to localStorage
+      const stored=loadRegistered();
+      stored[name]=collected;
+      saveRegistered(stored);
+
+      regCapturing=false;
+      chime();
+      regStatus.textContent=`✓ ${name} REGISTERED — READY TO SCAN`;
+      regCount.textContent=REG_FRAMES+" / "+REG_FRAMES+" FRAMES";
+
+      // Rebuild matcher so the new face works immediately on next scan
+      await buildMatcher();
+
+      setTimeout(closeRegister, 2000);
+    }
+
+    /* ── toast ──────────────────────────────────────── */
+    function showToast(msg) { toast.textContent=msg; toast.classList.add("on"); setTimeout(()=>toast.classList.remove("on"),4500); }
 
     /* ── button wiring ───────────────────────────────── */
     initBtn.addEventListener("click", init);
-    initBtn.addEventListener("touchend", e => { e.preventDefault(); init(); });
+    initBtn.addEventListener("touchend", e=>{ e.preventDefault(); init(); });
 
-    skipBtn.addEventListener("click", () => go("/"));
+    skipBtn.addEventListener("click", ()=>go("/"));
 
-    navRow.querySelectorAll(".nav-btn").forEach(btn => {
-      btn.addEventListener("click", () => go(btn.dataset.path));
+    openRegBtn.addEventListener("click", openRegister);
+
+    regStartBtn.addEventListener("click", captureRegistration);
+    regCancelBtn.addEventListener("click", closeRegister);
+
+    navRow.querySelectorAll(".nav-btn").forEach(btn=>{
+      btn.addEventListener("click", ()=>go(btn.dataset.path));
     });
 
-    window.addEventListener("resize", () => { if (is("SCANNING","GREETING","LISTENING")) resizeCanvas(); });
+    window.addEventListener("resize", ()=>{ if(is("SCANNING","GREETING","LISTENING")) resizeCanvas(); });
   })();
   </script>
 
