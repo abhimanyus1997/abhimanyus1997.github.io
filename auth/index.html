@@ -257,7 +257,7 @@
     /* ── audio wave bar ──────────────────────────────────── */
     .wave-bar {
       position: fixed; bottom:22px; left:50%; transform:translateX(-50%);
-      z-index:55;
+      z-index:68;
       display: none; /* flex when active */
       align-items: center; gap: 14px;
       padding: 10px 20px;
@@ -286,7 +286,7 @@
     /* ── STT panel ───────────────────────────────────────── */
     .stt-panel {
       position: fixed; bottom:72px; left:50%; transform:translateX(-50%);
-      z-index:55;
+      z-index:68;
       display: none;
       flex-direction: column; align-items:center; gap:10px;
       padding: 16px 24px;
@@ -343,10 +343,14 @@
     /* ── success flash ───────────────────────────────────── */
     .success-overlay {
       position: fixed; inset:0; z-index:65;
-      display: grid; place-items: center;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 28px;
       background: var(--ink);
       opacity:0; visibility:hidden;
       transition: opacity .45s, visibility .45s;
+      padding: 40px 24px;
+      overflow-y: auto;
     }
     .success-overlay.on { opacity:1; visibility:visible; }
 
@@ -371,6 +375,64 @@
     .success-sub {
       font: 400 9px var(--mono); letter-spacing:.12em; color:var(--acid);
     }
+
+    /* ── live analytics panel (shown in success overlay) ─── */
+    .analytics-panel {
+      display: none;
+      flex-direction: column; align-items: center; gap: 10px;
+      width: min(320px, 88vw);
+      padding: 16px 20px;
+      border: 1px solid rgba(201,255,54,.18);
+      background: rgba(23,25,21,.72);
+      animation: fadeUp .5s ease both;
+    }
+    .analytics-panel.on { display: flex; }
+
+    .analytics-title {
+      font: 400 9px var(--mono); letter-spacing:.18em; color: var(--acid);
+      margin-bottom: 2px;
+    }
+
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px; width: 100%;
+    }
+    .analytics-cell {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 10px 6px;
+      border: 1px solid rgba(201,255,54,.1);
+      background: rgba(0,0,0,.3);
+    }
+    .analytics-cell-label {
+      font: 400 7px var(--mono); letter-spacing:.12em; color: var(--muted);
+    }
+    .analytics-cell-val {
+      font: 500 13px var(--mono); color: var(--acid);
+    }
+
+    /* ── success overlay nav ─────────────────────────────── */
+    .success-nav {
+      display: none;
+      gap: 10px; flex-wrap: wrap; justify-content: center;
+      width: min(320px, 88vw);
+      animation: fadeUp .55s ease .15s both;
+    }
+    .success-nav.on { display: flex; }
+    .success-nav .nav-btn {
+      flex: 1; min-width: 100px; max-width: 140px;
+    }
+
+    .success-skip {
+      position: absolute; top:18px; right:18px;
+      padding: 9px 16px;
+      background: transparent;
+      border: 1px solid rgba(201,255,54,.18);
+      color: var(--muted);
+      font: 400 9px var(--mono); letter-spacing:.1em;
+      cursor: pointer; transition: all .2s;
+    }
+    .success-skip:hover { border-color: var(--acid); color: var(--acid); }
 
     /* ── error toast ─────────────────────────────────────── */
     .toast {
@@ -595,12 +657,38 @@
 
   <!-- success flash -->
   <div class="success-overlay" id="successOverlay">
+    <button class="success-skip" id="successSkipBtn">SKIP →</button>
     <div class="success-box">
       <div class="success-ring">
         <svg viewBox="0 0 24 24"><polyline points="4,12 9,17 20,6"></polyline></svg>
       </div>
       <div class="success-h" id="successH">ACCESS GRANTED</div>
       <div class="success-sub" id="successSub">IDENTITY VERIFIED</div>
+    </div>
+    <!-- live analytics panel -->
+    <div class="analytics-panel" id="analyticsPanel">
+      <div class="analytics-title">LIVE BIOMETRIC FEED</div>
+      <div class="analytics-grid">
+        <div class="analytics-cell">
+          <div class="analytics-cell-label">EMOTION</div>
+          <div class="analytics-cell-val" id="liveEmotion">—</div>
+        </div>
+        <div class="analytics-cell">
+          <div class="analytics-cell-label">AGE EST.</div>
+          <div class="analytics-cell-val" id="liveAge">—</div>
+        </div>
+        <div class="analytics-cell">
+          <div class="analytics-cell-label">GENDER</div>
+          <div class="analytics-cell-val" id="liveGender">—</div>
+        </div>
+      </div>
+    </div>
+    <!-- nav row inside overlay so it's on top -->
+    <div class="success-nav" id="successNav">
+      <button class="nav-btn" data-path="/">HOME</button>
+      <button class="nav-btn" data-path="/#projects">PROJECTS</button>
+      <button class="nav-btn" data-path="/#about">ABOUT</button>
+      <button class="nav-btn" data-path="/#contact">CONTACT</button>
     </div>
   </div>
 
@@ -655,6 +743,12 @@
     const successOverlay = document.getElementById("successOverlay");
     const successH       = document.getElementById("successH");
     const successSub     = document.getElementById("successSub");
+    const successSkipBtn = document.getElementById("successSkipBtn");
+    const analyticsPanel = document.getElementById("analyticsPanel");
+    const liveEmotion    = document.getElementById("liveEmotion");
+    const liveAge        = document.getElementById("liveAge");
+    const liveGender     = document.getElementById("liveGender");
+    const successNav     = document.getElementById("successNav");
     const toast          = document.getElementById("toast");
     // register
     const regOverlay  = document.getElementById("regOverlay");
@@ -758,9 +852,35 @@
       if(is("DONE")) return;
       transition("DONE");
       if(rec){try{rec.stop();}catch(_){}}
+      if(analyticsRaf){cancelAnimationFrame(analyticsRaf);analyticsRaf=null;}
       sttPanel.classList.remove("on"); waveBar.classList.remove("on");
       chime(); sessionStorage.setItem("auth_done","true");
       setTimeout(()=>{ window.location.href=path; },750);
+    }
+
+    /* ── live analytics loop (runs in GREETING/LISTENING) ── */
+    let analyticsRaf = null;
+    async function startAnalyticsLoop() {
+      if (analyticsRaf) return;
+      analyticsPanel.classList.add("on");
+      const opts = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 });
+      async function tick() {
+        if (!is("GREETING","LISTENING")) { analyticsRaf=null; return; }
+        try {
+          const det = await faceapi
+            .detectSingleFace(video, opts)
+            .withFaceExpressions()
+            .withAgeAndGender();
+          if (det) {
+            const [expr] = dominantExpression(det.expressions);
+            liveEmotion.textContent = expr.toUpperCase();
+            liveAge.textContent     = Math.round(det.age);
+            liveGender.textContent  = det.gender.toUpperCase();
+          }
+        } catch(_) {}
+        analyticsRaf = requestAnimationFrame(tick);
+      }
+      analyticsRaf = requestAnimationFrame(tick);
     }
 
     /* ── greeting ───────────────────────────────────── */
@@ -770,11 +890,12 @@
       const files=AUDIO[key], pick=files[Math.floor(Math.random()*files.length)];
       waveLabel.textContent = identity==="ABHIMANYU"?"WELCOME BACK":"WELCOME VISITOR";
       waveBar.classList.add("on");
+      startAnalyticsLoop();
       await playFile(pick);
       waveLabel.textContent="AWAITING COMMAND";
       await playFile(AUDIO.prompt);
       waveBar.classList.remove("on");
-      navRow.style.display="flex";
+      successNav.classList.add("on");
       transition("LISTENING");
       startSTT();
     }
@@ -785,6 +906,9 @@
       fallbackTimer = setTimeout(() => {
         if (!is("SCANNING")) return;
         transition("GREETING");
+        successH.textContent   = "WELCOME, VISITOR";
+        successSub.textContent = "UNREGISTERED USER";
+        successOverlay.classList.add("on");
         _greetingFlow("UNKNOWN","male",0);
       }, 6000);
     }
@@ -1065,6 +1189,19 @@
           return;
         }
 
+        // Trigger unknown visitor flow after enough stable unknown frames
+        if (stableUnknownCount >= REQUIRED_STABLE_FRAMES * 5 && is("SCANNING")) {
+          clearFallback();
+          transition("GREETING");
+          const g = resized[0]?.gender ?? "male";
+          successH.textContent   = "WELCOME, VISITOR";
+          successSub.textContent = "UNREGISTERED USER";
+          successOverlay.classList.add("on");
+          detecting = false;
+          await _greetingFlow("UNKNOWN", g, resized.length);
+          return;
+        }
+
         detecting = false;
         requestAnimationFrame(detectLoop);
       } catch(e) {
@@ -1189,10 +1326,14 @@
     initBtn.addEventListener("click", init);
     initBtn.addEventListener("touchend", e=>{ e.preventDefault(); init(); });
     skipBtn.addEventListener("click", ()=>go("/"));
+    successSkipBtn.addEventListener("click", ()=>go("/"));
     openRegBtn.addEventListener("click", openRegister);
     regStartBtn.addEventListener("click", captureRegistration);
     regCancelBtn.addEventListener("click", closeRegister);
     navRow.querySelectorAll(".nav-btn").forEach(btn=>{
+      btn.addEventListener("click", ()=>go(btn.dataset.path));
+    });
+    successNav.querySelectorAll(".nav-btn").forEach(btn=>{
       btn.addEventListener("click", ()=>go(btn.dataset.path));
     });
     window.addEventListener("resize", ()=>{ if(is("SCANNING","GREETING","LISTENING")) resizeCanvas(); });
