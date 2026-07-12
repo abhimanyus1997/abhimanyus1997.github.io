@@ -11,7 +11,8 @@ export default defineConfig({
         main: './index.html',
         scanProfile: './scan-profile.html',
         faceScan: './face-scan.html',
-        auth: './auth/index.html'
+        auth: './auth/index.html',
+        dhristiPrivacy: './dhristi/privacy/index.html'
       }
     }
   },
