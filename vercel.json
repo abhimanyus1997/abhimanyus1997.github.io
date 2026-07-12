@@ -1,6 +1,12 @@
 {
+  "redirects": [
+    { "source": "/cryptoTracker", "destination": "https://cryptotracker.abhimanyu.fyi/dashboard", "permanent": true },
+    { "source": "/cryptoTracker/", "destination": "https://cryptotracker.abhimanyu.fyi/dashboard", "permanent": true },
+    { "source": "/cryptoTracker/(.*)", "destination": "https://cryptotracker.abhimanyu.fyi/$1", "permanent": true }
+  ],
   "rewrites": [
     { "source": "/auth", "destination": "/auth/index.html" },
     { "source": "/auth/", "destination": "/auth/index.html" }
   ]
 }
+
