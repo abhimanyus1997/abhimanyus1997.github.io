@@ -5,10 +5,12 @@
     { "source": "/cryptoTracker/(.*)", "destination": "https://cryptotracker.abhimanyu.fyi/$1", "permanent": true }
   ],
   "rewrites": [
+    { "source": "/adivox/api/:path*", "destination": "https://adivox.vercel.app/adivox/api/:path*" },
+    { "source": "/adivox", "destination": "https://adivox-web.vercel.app/" },
+    { "source": "/adivox/:path*", "destination": "https://adivox-web.vercel.app/:path*" },
     { "source": "/auth", "destination": "/auth/index.html" },
     { "source": "/auth/", "destination": "/auth/index.html" },
     { "source": "/dhristi/privacy", "destination": "/dhristi/privacy/index.html" },
     { "source": "/dhristi/privacy/", "destination": "/dhristi/privacy/index.html" }
   ]
 }
-
