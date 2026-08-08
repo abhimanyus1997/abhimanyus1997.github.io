@@ -987,6 +987,58 @@ a:hover .ui-arrow[style*="rotate(90deg)"], button:hover .ui-arrow[style*="rotate
   animation: pulseRadarPoly 2s infinite ease-in-out;
 }
 
+/* AdiVox: multi-speaker timeline and live waveform */
+.project-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+}
+
+.project-links a {
+  margin-top: 0;
+}
+
+.adivox-progress {
+  transform-origin: 33px 28.5px;
+}
+
+.project:hover .adivox-progress {
+  animation: adivoxProgress 2.4s infinite ease-in-out;
+}
+
+.project:hover .adivox-speaker-one,
+.project:hover .adivox-speaker-two {
+  animation: adivoxSpeakerPulse 1.4s infinite ease-in-out;
+}
+
+.project:hover .adivox-speaker-two {
+  animation-delay: 0.7s;
+}
+
+.project:hover .adivox-wave line {
+  animation: adivoxWave 1s infinite ease-in-out;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.project:hover .adivox-wave line:nth-child(2n) { animation-delay: 0.15s; }
+.project:hover .adivox-wave line:nth-child(3n) { animation-delay: 0.3s; }
+
+@keyframes adivoxProgress {
+  0%, 100% { transform: scaleX(0.45); opacity: 0.7; }
+  50% { transform: scaleX(1.75); opacity: 1; }
+}
+
+@keyframes adivoxSpeakerPulse {
+  0%, 100% { opacity: 0.52; }
+  50% { opacity: 1; }
+}
+
+@keyframes adivoxWave {
+  0%, 100% { transform: scaleY(0.55); }
+  50% { transform: scaleY(1.25); }
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
