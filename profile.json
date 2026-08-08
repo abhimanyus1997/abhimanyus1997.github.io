@@ -56,6 +56,10 @@
   ],
   "projects": [
     {
+      "name": "AdiVox",
+      "description": "BYOK audio transcription workspace using Gemini 2.5 Flash and FastAPI, with multi-speaker diarization, recording, searchable timestamps, transcript export, and token cost estimates"
+    },
+    {
       "name": "MicroClaw",
       "description": "Agentic ESP32 firmware using C++, FreeRTOS, Gemini/Groq, and FastAPI"
     },
