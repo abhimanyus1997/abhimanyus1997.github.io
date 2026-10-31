@@ -1,14 +1,49 @@
 {
   "redirects": [
-    { "source": "/cryptoTracker", "destination": "https://cryptotracker.abhimanyu.fyi/dashboard", "permanent": true },
-    { "source": "/cryptoTracker/", "destination": "https://cryptotracker.abhimanyu.fyi/dashboard", "permanent": true },
-    { "source": "/cryptoTracker/(.*)", "destination": "https://cryptotracker.abhimanyu.fyi/$1", "permanent": true }
+    {
+      "source": "/cryptoTracker",
+      "destination": "https://cryptotracker.abhimanyu.fyi/dashboard",
+      "permanent": true
+    },
+    {
+      "source": "/cryptoTracker/",
+      "destination": "https://cryptotracker.abhimanyu.fyi/dashboard",
+      "permanent": true
+    },
+    {
+      "source": "/cryptoTracker/(.*)",
+      "destination": "https://cryptotracker.abhimanyu.fyi/$1",
+      "permanent": true
+    }
   ],
   "rewrites": [
-    { "source": "/auth", "destination": "/auth/index.html" },
-    { "source": "/auth/", "destination": "/auth/index.html" },
-    { "source": "/dhristi/privacy", "destination": "/dhristi/privacy/index.html" },
-    { "source": "/dhristi/privacy/", "destination": "/dhristi/privacy/index.html" }
+    {
+      "source": "/jivika",
+      "destination": "https://jivika-pied.vercel.app/jivika"
+    },
+    {
+      "source": "/jivika/",
+      "destination": "https://jivika-pied.vercel.app/jivika/"
+    },
+    {
+      "source": "/jivika/:path*",
+      "destination": "https://jivika-pied.vercel.app/jivika/:path*"
+    },
+    {
+      "source": "/auth",
+      "destination": "/auth/index.html"
+    },
+    {
+      "source": "/auth/",
+      "destination": "/auth/index.html"
+    },
+    {
+      "source": "/dhristi/privacy",
+      "destination": "/dhristi/privacy/index.html"
+    },
+    {
+      "source": "/dhristi/privacy/",
+      "destination": "/dhristi/privacy/index.html"
+    }
   ]
 }
-
