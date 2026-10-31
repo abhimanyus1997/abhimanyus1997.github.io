@@ -22,12 +22,8 @@
       "destination": "https://jivika-pied.vercel.app/jivika"
     },
     {
-      "source": "/jivika/",
-      "destination": "https://jivika-pied.vercel.app/jivika/"
-    },
-    {
-      "source": "/jivika/:path*",
-      "destination": "https://jivika-pied.vercel.app/jivika/:path*"
+      "source": "/jivika/(.*)",
+      "destination": "https://jivika-pied.vercel.app/jivika/$1"
     },
     {
       "source": "/auth",
