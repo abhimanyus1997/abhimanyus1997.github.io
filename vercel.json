@@ -14,17 +14,19 @@
       "source": "/cryptoTracker/(.*)",
       "destination": "https://cryptotracker.abhimanyu.fyi/$1",
       "permanent": true
-    }
-  ],
-  "rewrites": [
+    },
     {
       "source": "/jivika",
-      "destination": "https://jivika-pied.vercel.app/jivika"
+      "destination": "https://jivika.abhimanyu.fyi/",
+      "permanent": true
     },
     {
       "source": "/jivika/(.*)",
-      "destination": "https://jivika-pied.vercel.app/jivika/$1"
-    },
+      "destination": "https://jivika.abhimanyu.fyi/$1",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
     {
       "source": "/auth",
       "destination": "/auth/index.html"
