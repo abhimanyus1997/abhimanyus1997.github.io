@@ -24,9 +24,18 @@
       "source": "/jivika/(.*)",
       "destination": "https://jivika.abhimanyu.fyi/$1",
       "permanent": true
+    },
+    {
+      "source": "/litellm",
+      "destination": "/litellm/ui/",
+      "permanent": false
     }
   ],
   "rewrites": [
+    {
+      "source": "/litellm/(.*)",
+      "destination": "https://13-202-143-130.sslip.io/litellm/$1"
+    },
     {
       "source": "/auth",
       "destination": "/auth/index.html"
